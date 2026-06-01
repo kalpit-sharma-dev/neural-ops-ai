@@ -1,0 +1,9 @@
+# Placeholder Helm chart wrapper for raw Kubernetes manifests.
+# Wire to infra/k8s manifests or replace with a packaged chart in CI.
+
+apiVersion: v2
+name: neuralops
+description: NeuralOps AI observability platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

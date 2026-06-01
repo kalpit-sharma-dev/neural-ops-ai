@@ -1,0 +1,68 @@
+:root {
+  /* Backgrounds */
+  --bg-base: #070b14;
+  --bg-surface: #0d1424;
+  --bg-elevated: #131b2e;
+  --bg-highlight: #1a2540;
+  --border-subtle: #1e2d47;
+  --border-strong: #2a3d5c;
+
+  /* Accents */
+  --accent-primary: #3b82f6;
+  --accent-secondary: #6366f1;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+
+  /* Severity */
+  --severity-critical: #ef4444;
+  --severity-p1: #f97316;
+  --severity-p2: #f59e0b;
+  --severity-p3: #3b82f6;
+  --severity-p4: #6b7280;
+
+  /* Status */
+  --status-healthy: #10b981;
+  --status-degraded: #f59e0b;
+  --status-down: #ef4444;
+  --status-unknown: #6b7280;
+
+  /* Text */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+
+  /* Semantic */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Typography */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --topbar-height: 56px;
+
+  /* Effects */
+  --glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+  --glow-red: 0 0 20px rgba(239, 68, 68, 0.3);
+  --glass-bg: rgba(13, 20, 36, 0.8);
+  --glass-blur: blur(12px);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.25);
+}

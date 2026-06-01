@@ -1,0 +1,31 @@
+server:
+  port: 8083
+  environment: development
+
+kafka:
+  brokers:
+    - kafka:9092
+  event_topics:
+    - raw-events
+  trace_topics:
+    - raw-traces
+  log_topics:
+    - enriched-logs
+  consumer_group: correlation-engine
+  concurrency: 8
+
+postgres:
+  dsn: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+
+clickhouse:
+  dsn: clickhouse://default:@clickhouse:9000/neuralops
+  transaction_table: transaction_journeys
+
+redis:
+  url: redis://redis:6379/0
+
+correlation:
+  deployment_watch_window: 15m
+  deployment_eval_window: 10m
+  temporal_window: 5m
+  graph_flush_interval: 1m

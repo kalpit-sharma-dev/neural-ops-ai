@@ -1,0 +1,93 @@
+{{- $root := . -}}
+{{- $services := list "ingestion" "analysis" "correlation" "incident" "search" "alerting" -}}
+{{- range $name := $services }}
+{{- $cfg := index $root.Values.backend $name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "neuralops.namespace" $root }}
+  labels:
+    app: {{ $name }}
+    {{- include "neuralops.labels" $root | nindent 4 }}
+spec:
+  replicas: {{ $cfg.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+        {{- include "neuralops.labels" $root | nindent 8 }}
+    spec:
+      serviceAccountName: neuralops
+      containers:
+        - name: {{ $name }}
+          image: "{{ $root.Values.global.imageRegistry }}/{{ $name }}:{{ $root.Values.global.imageTag }}"
+          imagePullPolicy: {{ $root.Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ $cfg.port }}
+          envFrom:
+            - configMapRef:
+                name: neuralops-config
+          env:
+            - name: SERVICE_NAME
+              value: {{ $name | quote }}
+            - name: HTTP_PORT
+              value: {{ $cfg.port | quote }}
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: {{ $cfg.port }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ $cfg.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "neuralops.namespace" $root }}
+  labels:
+    app: {{ $name }}
+spec:
+  selector:
+    app: {{ $name }}
+  ports:
+    - port: {{ $cfg.port }}
+      targetPort: {{ $cfg.port }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "neuralops.namespace" $root }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: {{ $cfg.replicas }}
+  maxReplicas: {{ add $cfg.replicas 6 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "neuralops.namespace" $root }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: {{ $name }}
+{{- end }}

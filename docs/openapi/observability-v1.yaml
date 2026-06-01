@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: NeuralOps Observability API
+  version: 1.0.0
+paths:
+  /api/v1/apm/retention:
+    get:
+      summary: Get trace retention policy
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/cloud/metrics:
+    get:
+      summary: Federated cloud metrics
+      parameters:
+        - in: query
+          name: provider
+          schema: { type: string }
+        - in: query
+          name: metric
+          schema: { type: string }
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/notebooks/{id}/execute:
+    post:
+      summary: Execute notebook cells
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/integrations/{id}/oauth/start:
+    get:
+      summary: Begin integration OAuth
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "302":
+          description: redirect to IdP
+  /api/v1/integrations/{id}/disconnect:
+    post:
+      summary: Disconnect integration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/admin/sso:
+    get:
+      summary: Get SSO config
+      responses:
+        "200":
+          description: success envelope
+    put:
+      summary: Update SSO config
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/admin/oncall:
+    get:
+      summary: List on-call schedules
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/admin/oncall/{id}/sync-pagerduty:
+    post:
+      summary: Sync rotation from PagerDuty
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: success envelope
+  /api/v1/mobile/push/register:
+    post:
+      summary: Register Expo push token
+      responses:
+        "200":
+          description: success envelope

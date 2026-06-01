@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: neuralops-config
+  namespace: {{ include "neuralops.namespace" . }}
+  labels:
+    {{- include "neuralops.labels" . | nindent 4 }}
+data:
+  ENVIRONMENT: {{ .Values.global.environment | quote }}
+  DEMO_MODE: {{ .Values.config.demoMode | quote }}
+  AUTH_DISABLED: {{ .Values.config.authDisabled | quote }}
+  INGESTION_URL: http://ingestion:{{ .Values.backend.ingestion.port }}
+  ANALYSIS_URL: http://analysis:{{ .Values.backend.analysis.port }}
+  CORRELATION_URL: http://correlation:{{ .Values.backend.correlation.port }}
+  INCIDENT_URL: http://incident:{{ .Values.backend.incident.port }}
+  SEARCH_URL: http://search:{{ .Values.backend.search.port }}
+  ALERTING_URL: http://alerting:{{ .Values.backend.alerting.port }}

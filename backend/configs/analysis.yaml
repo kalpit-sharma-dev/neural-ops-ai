@@ -1,0 +1,55 @@
+server:
+  port: 8082
+  environment: development
+
+kafka:
+  brokers:
+    - kafka:9092
+  log_topics:
+    - raw-logs
+    - enriched-logs
+  metric_topics:
+    - raw-metrics
+  anomaly_topic: anomalies
+  consumer_groups:
+    logs: analysis-errors
+    metrics: analysis-metrics
+  concurrency: 8
+
+postgres:
+  dsn: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+
+elasticsearch:
+  url: http://elasticsearch:9200
+  index: enriched-logs
+
+redis:
+  url: redis://redis:6379/0
+  classification_ttl: 1h
+  explanation_ttl: 1h
+
+qdrant:
+  url: http://qdrant:6333
+  collection: log_embeddings
+  vector_size: 1536
+
+llm:
+  provider: openai
+  openai_base_url: https://api.openai.com/v1
+  openai_api_key: ""
+  openai_model: gpt-4o-mini
+  embedding_model: text-embedding-3-small
+  anthropic_api_key: ""
+  anthropic_model: claude-3-5-sonnet-latest
+  ollama_base_url: http://ollama:11434
+  ollama_model: llama3.1
+  explain_timeout: 30s
+  rca_timeout: 60s
+  max_retries: 3
+  initial_backoff: 2s
+
+analysis:
+  llm_confidence_threshold: 0.8
+  embed_batch_size: 100
+  recurring_exception_window: 100
+  anomaly_zscore_threshold: 3.0

@@ -1,0 +1,16 @@
+[Unit]
+Description=NeuralOps OneAgent
+After=network.target
+
+[Service]
+Type=simple
+Environment=NEURALOPS_SERVICE=%H
+Environment=NEURALOPS_INGEST_URL=http://localhost:8080/api/v1/apm/profiles
+Environment=NEURALOPS_TENANT_ID=default
+WorkingDirectory=/opt/neuralops/oneagent
+ExecStart=/usr/bin/node /opt/neuralops/oneagent/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

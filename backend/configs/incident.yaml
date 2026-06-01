@@ -1,0 +1,43 @@
+server:
+  port: 8084
+  environment: development
+
+kafka:
+  brokers:
+    - kafka:9092
+  log_topics:
+    - enriched-logs
+  anomaly_topics:
+    - anomalies
+  consumer_group: incident-engine
+  concurrency: 8
+
+postgres:
+  dsn: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+
+clickhouse:
+  dsn: clickhouse://default:@clickhouse:9000/neuralops
+  transaction_table: transaction_journeys
+
+redis:
+  url: redis://redis:6379/0
+
+llm:
+  provider: openai
+  openai_base_url: https://api.openai.com/v1
+  openai_api_key: ""
+  openai_model: gpt-4o-mini
+  anthropic_api_key: ""
+  ollama_base_url: http://ollama:11434
+  ollama_model: llama3.1
+  rca_timeout: 60s
+  max_retries: 3
+  initial_backoff: 2s
+
+incident:
+  dedup_window: 5m
+  default_tenant: default
+  payment_services:
+    - upi-service
+    - payment-api
+    - ledger-service

@@ -1,0 +1,5 @@
+*.ndjson
+*.csv
+*.sql
+manifest.json
+!/.gitkeep

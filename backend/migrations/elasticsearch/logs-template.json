@@ -1,0 +1,36 @@
+{
+  "index_patterns": ["logs-*", "tenant-*-logs-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.codec": "best_compression",
+      "index.lifecycle.name": "neuralops-logs-policy",
+      "index.lifecycle.rollover_alias": "neuralops-logs"
+    },
+    "mappings": {
+      "dynamic": false,
+      "_source": {
+        "enabled": true
+      },
+      "properties": {
+        "id": { "type": "keyword" },
+        "timestamp": { "type": "date" },
+        "tenantId": { "type": "keyword" },
+        "service": { "type": "keyword" },
+        "environment": { "type": "keyword" },
+        "severity": { "type": "keyword" },
+        "message": { "type": "text" },
+        "traceId": { "type": "keyword" },
+        "txnId": { "type": "keyword" },
+        "host": { "type": "keyword" },
+        "pod": { "type": "keyword" },
+        "classification": { "type": "keyword" },
+        "classification_conf": { "type": "float" },
+        "plain_english": { "type": "text" },
+        "embedding_id": { "type": "keyword" },
+        "labels": { "type": "object", "enabled": false }
+      }
+    }
+  }
+}

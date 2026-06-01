@@ -1,0 +1,56 @@
+server:
+  port: 8081
+  environment: development
+
+kafka:
+  brokers:
+    - kafka:9092
+  topic_prefix: ""
+  batch_size: 500
+  flush_interval: 1s
+  dlq_topic: dlq-logs
+
+clickhouse:
+  dsn: clickhouse://default:@clickhouse:9000/neuralops
+  flush_interval: 1s
+  max_batch_size: 50000
+  metrics_table: metrics
+
+rate_limit:
+  per_tenant:
+    startup: 10000
+    business: 100000
+    enterprise: 0
+
+parser:
+  stack_trace_languages:
+    - Java
+    - Golang
+    - Python
+    - NodeJS
+  trace_id_patterns:
+    - '(?i)trace[_-]?id[=:\s]+([a-f0-9]{16,32})'
+    - '(?i)traceId["\s:=]+([a-f0-9]{16,32})'
+  txn_id_patterns:
+    - '(?i)txn[_-]?id[=:\s]+([A-Z0-9]{8,32})'
+    - '(?i)(UPI[0-9]{12,20})'
+    - '(?i)(NEFT[0-9A-Z]{10,20})'
+
+connectors:
+  file_tail:
+    enabled: false
+    paths: []
+  syslog:
+    enabled: false
+    udp_port: 5140
+    tcp_port: 5140
+  fluent:
+    enabled: false
+    port: 24224
+
+ingestion:
+  ingestor_id: ingestion-1
+  datacenter: local
+  geoip_enabled: false
+  max_batch_size: 10000
+  timestamp_skew: 1h

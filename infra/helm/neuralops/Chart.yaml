@@ -1,0 +1,12 @@
+apiVersion: v2
+name: neuralops
+description: NeuralOps AI observability platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - observability
+  - logs
+  - ai
+maintainers:
+  - name: NeuralOps Platform Team

@@ -1,0 +1,44 @@
+server:
+  port: 8085
+  environment: development
+
+elasticsearch:
+  url: http://elasticsearch:9200
+  index: enriched-logs
+  index_alias: neuralops-logs
+  index_prefix: neuralops-logs
+  initial_index: neuralops-logs-000001
+  ilm_policy: neuralops-logs-policy
+  rollover_max_size: 50gb
+  rollover_max_age: 7d
+  hot_days: 7
+  warm_days: 30
+  cold_days: 90
+  delete_days: 365
+
+qdrant:
+  url: http://qdrant:6333
+  collection: log_embeddings
+  vector_size: 1536
+
+clickhouse:
+  dsn: clickhouse://default:@clickhouse:9000/neuralops
+  transaction_table: transaction_journeys
+
+llm:
+  provider: openai
+  openai_base_url: https://api.openai.com/v1
+  openai_api_key: ""
+  openai_model: gpt-4o-mini
+  embedding_model: text-embedding-3-small
+  anthropic_api_key: ""
+  ollama_base_url: http://ollama:11434
+  ollama_model: llama3.1
+  max_retries: 3
+  initial_backoff: 2s
+
+search:
+  default_page_size: 50
+  max_page_size: 500
+  hybrid_bm25_weight: 0.5
+  hybrid_vector_weight: 0.5

@@ -1,0 +1,28 @@
+{
+  "realm": "neuralops",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "clients": [
+    {
+      "clientId": "neuralops-ui",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "neuralops-ui-secret",
+      "redirectUris": ["http://localhost:5173/auth/callback"],
+      "webOrigins": ["http://localhost:5173"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "demo@neuralops.ai",
+      "email": "demo@neuralops.ai",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "demo1234", "temporary": false }]
+    }
+  ]
+}

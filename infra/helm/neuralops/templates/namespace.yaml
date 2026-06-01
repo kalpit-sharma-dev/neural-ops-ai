@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "neuralops.namespace" . }}
+  labels:
+    {{- include "neuralops.labels" . | nindent 4 }}

@@ -1,0 +1,12 @@
+global:
+  environment: production
+  imageTag: latest
+
+gateway:
+  replicas: 2
+
+ingress:
+  enabled: true
+  hosts:
+    app: app.neuralops.example
+    api: api.neuralops.example

@@ -1,0 +1,158 @@
+# NeuralOps Gateway API v1 — full contract
+openapi: 3.0.3
+info:
+  title: NeuralOps Gateway API
+  version: 1.0.0
+  description: Complete gateway surface (observability, auth, search, incidents, alerting proxy)
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /info:
+    get:
+      summary: Platform metadata
+  /auth/config:
+    get:
+      summary: Client auth configuration
+  /auth/oidc/start:
+    post:
+      summary: Begin OIDC PKCE login
+  /auth/oidc/callback:
+    get:
+      summary: OIDC callback
+  /auth/dev/login:
+    post:
+      summary: Dev login
+  /dashboard/overview:
+    get:
+      summary: Command center overview
+  /chat/query:
+    post:
+      summary: AI chat SSE stream
+  /search/logs:
+    post:
+      summary: Structured log search
+  /search/semantic:
+    post:
+      summary: Semantic search
+  /search/ai:
+    post:
+      summary: AI log search
+  /search/trace/{traceId}:
+    get:
+      summary: Trace log correlation
+  /incidents:
+    get:
+      summary: List incidents
+  /alerts:
+    get:
+      summary: List alerts (proxied)
+  /metrics/catalog:
+    get:
+      summary: Metric catalog
+  /metrics/query:
+    get:
+      summary: Metric time series
+  /metrics/promql:
+    get:
+      summary: PromQL proxy
+  /dashboards:
+    get:
+      summary: List dashboards
+    post:
+      summary: Create dashboard
+  /dashboards/{id}:
+    get:
+      summary: Get dashboard
+    put:
+      summary: Update dashboard
+    delete:
+      summary: Delete dashboard
+  /apm/retention:
+    get:
+      summary: Trace retention policy
+    put:
+      summary: Update retention
+  /apm/profiles:
+    post:
+      summary: Ingest profile sample
+  /topology:
+    get:
+      summary: Service topology
+  /slos:
+    get:
+      summary: List SLOs
+    post:
+      summary: Create SLO
+  /slos/{id}/burn-alert:
+    put:
+      summary: SLO burn alert
+  /integrations:
+    get:
+      summary: List integrations
+  /integrations/{id}/connect:
+    post:
+      summary: Connect integration
+  /integrations/{id}/disconnect:
+    post:
+      summary: Disconnect integration
+  /integrations/{id}/oauth/start:
+    get:
+      summary: OAuth start (Jira/Slack/ServiceNow)
+  /integrations/oauth/callback:
+    get:
+      summary: OAuth callback
+  /cloud/dashboards:
+    get:
+      summary: Cloud dashboard catalog
+  /cloud/metrics:
+    get:
+      summary: Cloud metric federation
+  /notebooks:
+    get:
+      summary: List notebooks
+    post:
+      summary: Create notebook
+  /notebooks/{id}/execute:
+    post:
+      summary: Execute notebook
+  /workflows:
+    get:
+      summary: List workflows
+  /workflows/trigger:
+    post:
+      summary: Trigger workflows
+  /admin/users:
+    get:
+      summary: Admin users
+  /admin/api-keys:
+    get:
+      summary: API keys
+    post:
+      summary: Create API key
+  /admin/sso:
+    get:
+      summary: SSO config (per tenant)
+    put:
+      summary: Update SSO (multi-tenant reload)
+  /admin/oncall:
+    get:
+      summary: On-call schedules
+    post:
+      summary: Create schedule
+  /admin/oncall/{id}:
+    put:
+      summary: Update schedule
+    delete:
+      summary: Delete schedule
+  /admin/oncall/{id}/sync-pagerduty:
+    post:
+      summary: PagerDuty sync
+  /mobile/push/register:
+    post:
+      summary: Register Expo push token
+  /rum/beacon:
+    post:
+      summary: RUM beacon
+  /rum/consent:
+    post:
+      summary: GDPR consent

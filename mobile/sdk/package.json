@@ -1,0 +1,13 @@
+{
+  "name": "@neuralops/mobile-sdk",
+  "version": "1.0.0",
+  "description": "NeuralOps native mobile RUM and push SDK for iOS/Android",
+  "main": "index.ts",
+  "types": "index.ts",
+  "keywords": ["rum", "observability", "expo", "react-native"],
+  "peerDependencies": {
+    "expo": ">=49",
+    "expo-notifications": "*",
+    "react-native": ">=0.72"
+  }
+}

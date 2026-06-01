@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: neuralops-oneagent
+  namespace: neuralops
+  labels:
+    app: neuralops-oneagent
+spec:
+  selector:
+    matchLabels:
+      app: neuralops-oneagent
+  template:
+    metadata:
+      labels:
+        app: neuralops-oneagent
+    spec:
+      hostPID: true
+      containers:
+        - name: oneagent
+          image: neuralops/oneagent:1.0.0
+          env:
+            - name: NEURALOPS_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NEURALOPS_INGEST_URL
+              value: "http://gateway.neuralops.svc:8080/api/v1/apm/profiles"
+            - name: NEURALOPS_TENANT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: neuralops-config
+                  key: tenantId
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: host-proc
+              mountPath: /host/proc
+              readOnly: true
+      volumes:
+        - name: host-proc
+          hostPath:
+            path: /proc
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: neuralops-beyla
+  namespace: neuralops
+spec:
+  selector:
+    matchLabels:
+      app: neuralops-beyla
+  template:
+    metadata:
+      labels:
+        app: neuralops-beyla
+    spec:
+      hostPID: true
+      containers:
+        - name: beyla
+          image: grafana/beyla:1.6.4
+          securityContext:
+            privileged: true
+          env:
+            - name: BEYLA_OPEN_PORT
+              value: "8080,8081,8082,8083,8084,8085,8086"
+            - name: BEYLA_PROMETHEUS_PORT
+              value: "8999"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://gateway.neuralops.svc:8080"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neuralops-pyroscope
+  namespace: neuralops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pyroscope
+  template:
+    metadata:
+      labels:
+        app: pyroscope
+    spec:
+      containers:
+        - name: pyroscope
+          image: grafana/pyroscope:1.7.1
+          args: ["server", "--storage-path=/data"]
+          ports:
+            - containerPort: 4040
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: neuralops-profiler
+  namespace: neuralops
+spec:
+  selector:
+    matchLabels:
+      app: neuralops-profiler
+  template:
+    metadata:
+      labels:
+        app: neuralops-profiler
+    spec:
+      containers:
+        - name: profiler
+          image: neuralops/profiler:1.0.0
+          env:
+            - name: PYROSCOPE_SERVER
+              value: "http://pyroscope.neuralops.svc:4040"
+            - name: API_BASE
+              value: "http://gateway.neuralops.svc:8080/api/v1"
+            - name: SERVICE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName

@@ -1,0 +1,50 @@
+global:
+  namespace: neuralops
+  environment: production
+  imageRegistry: neuralops
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+
+gateway:
+  replicas: 2
+  port: 8080
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilization: 70
+
+backend:
+  ingestion:
+    replicas: 2
+    port: 8081
+  analysis:
+    replicas: 2
+    port: 8082
+  correlation:
+    replicas: 1
+    port: 8083
+  incident:
+    replicas: 2
+    port: 8084
+  search:
+    replicas: 2
+    port: 8085
+  alerting:
+    replicas: 1
+    port: 8086
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    app: app.neuralops.example
+    api: api.neuralops.example
+
+config:
+  demoMode: false
+  authDisabled: false
+
+secrets:
+  create: false
+  name: neuralops-secrets

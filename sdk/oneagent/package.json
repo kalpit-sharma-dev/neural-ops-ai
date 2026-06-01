@@ -1,0 +1,6 @@
+{
+  "name": "@neuralops/oneagent",
+  "version": "1.0.0",
+  "description": "NeuralOps OneAgent HTTP auto-instrumentation",
+  "main": "index.js"
+}

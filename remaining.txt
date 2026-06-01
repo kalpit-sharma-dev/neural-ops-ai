@@ -1,0 +1,58 @@
+NeuralOps platform — audit-grade spec compliance (2026-05-31)
+
+
+
+See docs/AUDIT_COMPLIANCE.md for full traceability to cursor_prompt_ai_log_analyzer.md.
+
+
+
+Phase 20 — quality gates (CI-enforced)
+
+- Coverage gate: parser ≥80%, auth ≥25%, middleware ≥20%, security ≥55% (scripts/coverage-gate.sh)
+
+- Integration: seed→ES, Kafka→analysis→ES, incident→alert, auth (backend/tests/integration/)
+
+- CI: .github/workflows/ci.yml — unit, integration, compose-smoke, Playwright E2E
+
+- Load test: make loadtest (100k/sec target)
+
+
+
+Phase 18 — production auth
+
+- OIDC + Keycloak (dual issuer); verified by scripts/verify-keycloak-oidc.sh in quickstart/CI
+
+- Production SAML: crewjam/saml + SAML_METADATA_URL; scripts/verify-saml-metadata.sh
+
+- mTLS: client transport + nginx server verify (infra/mtls-proxy/); scripts/verify-mtls.sh
+
+- RBAC + DEVELOPER service scope in search
+
+
+
+Phase 9 — frontend: Tailwind v4 + TanStack Router (docs/FRONTEND_STACK.md)
+
+
+
+Phase 0/19 — Helm, Terraform helm_release, HPA/PDB, observability dashboards
+
+
+
+Quick start
+
+```bash
+
+bash scripts/quickstart.sh   # mTLS certs, stack, seed, OIDC/SAML/mTLS verify
+
+make test-coverage
+
+make test-integration        # requires Docker
+
+```
+
+
+
+Demo: demo@neuralops.ai · tenant 00000000-0000-0000-0000-000000000002
+
+Keycloak: http://localhost:8088 · OIDC client neuralops-ui · password demo1234
+

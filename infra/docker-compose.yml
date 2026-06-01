@@ -1,0 +1,704 @@
+name: neuralops
+
+x-observability-env: &observability-env
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+  SERVICE_VERSION: 0.1.0
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: neuralops-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc localhost 2181 | grep -q Zookeeper"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: neuralops-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - ./kafka/entrypoint-wrap.sh:/usr/local/bin/kafka-entrypoint-wrap.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/kafka-entrypoint-wrap.sh"]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 30s
+      retries: 10
+      start_period: 90s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: neuralops-postgres
+    environment:
+      POSTGRES_USER: neuralops
+      POSTGRES_PASSWORD: neuralops
+      POSTGRES_DB: neuralops
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuralops -d neuralops"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    container_name: neuralops-clickhouse
+    environment:
+      CLICKHOUSE_DB: neuralops
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--host", "127.0.0.1", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.2
+    container_name: neuralops-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health | grep -q '\"status\":\"\\(green\\|yellow\\)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: neuralops-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333 && printf \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && head -1 <&3 | grep -q \"200\"'"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: neuralops-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: neuralops-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8088
+      KC_HOSTNAME: localhost
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./keycloak/neuralops-realm.json:/opt/keycloak/data/import/neuralops-realm.json:ro
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8088"]
+      interval: 30s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+  gateway:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: gateway
+    container_name: neuralops-gateway
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: gateway
+      ENVIRONMENT: development
+      HTTP_PORT: 8080
+      AUTH_DISABLED: "false"
+      AUTH_ALLOW_DEV_LOGIN: "true"
+      OIDC_ENABLED: "true"
+      OIDC_ISSUER: http://localhost:8088/realms/neuralops
+      OIDC_ISSUER_INTERNAL: http://keycloak:8088/realms/neuralops
+      OIDC_BROWSER_ISSUER: http://localhost:8088/realms/neuralops
+      OIDC_CLIENT_ID: neuralops-ui
+      OIDC_CLIENT_SECRET: neuralops-ui-secret
+      OIDC_REDIRECT_URL: http://localhost:8080/api/v1/auth/oidc/callback
+      SAML_ENABLED: "true"
+      SAML_ENTITY_ID: neuralops-gateway
+      SAML_METADATA_URL: http://keycloak:8088/realms/neuralops/protocol/saml/descriptor
+      SAML_ACS_URL: http://localhost:8080/api/v1/auth/saml/acs
+      SAML_CERT_FILE: /etc/neuralops/mtls/internal-server.crt
+      SAML_KEY_FILE: /etc/neuralops/mtls/internal-server.key
+      INTERNAL_MTLS_ENABLED: "true"
+      INTERNAL_MTLS_CERT_FILE: /etc/neuralops/mtls/gateway-client.crt
+      INTERNAL_MTLS_KEY_FILE: /etc/neuralops/mtls/gateway-client.key
+      INTERNAL_MTLS_CA_FILE: /etc/neuralops/mtls/ca.crt
+      FRONTEND_URL: http://localhost:5173
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      CLICKHOUSE_DSN: clickhouse://default:@clickhouse:9000/neuralops
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      QDRANT_URL: http://qdrant:6333
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:9092
+      INGESTION_URL: http://ingestion:8081
+      ANALYSIS_URL: http://analysis:8082
+      CORRELATION_URL: http://correlation:8083
+      INCIDENT_URL: http://incident:8084
+      SEARCH_URL: http://search:8085
+      ALERTING_URL: http://alerting:8086
+      PROMETHEUS_URL: http://prometheus:9090
+      LLM_PROVIDER: openai
+      DEMO_MODE: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./certs:/etc/neuralops/mtls:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ingestion:
+        condition: service_healthy
+      analysis:
+        condition: service_healthy
+      incident:
+        condition: service_healthy
+      search:
+        condition: service_healthy
+      alerting:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  ingestion:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: ingestion
+    container_name: neuralops-ingestion
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: ingestion
+      ENVIRONMENT: development
+      HTTP_PORT: 8081
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8081/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mtls-proxy:
+    image: nginx:1.27-alpine
+    container_name: neuralops-mtls-proxy
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./mtls-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      ingestion:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --no-check-certificate --certificate=/etc/nginx/certs/gateway-client.crt --private-key=/etc/nginx/certs/gateway-client.key https://127.0.0.1:8443/health | grep -q ok"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  analysis:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: analysis
+    container_name: neuralops-analysis
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: analysis
+      ENVIRONMENT: development
+      HTTP_PORT: 8082
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      QDRANT_URL: http://qdrant:6333
+      REDIS_URL: redis://redis:6379/0
+      LLM_PROVIDER: openai
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8082/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  correlation:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: correlation
+    container_name: neuralops-correlation
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: correlation
+      ENVIRONMENT: development
+      HTTP_PORT: 8083
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      CLICKHOUSE_DSN: clickhouse://default:@clickhouse:9000/neuralops
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8083/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  incident:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: incident
+    container_name: neuralops-incident
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: incident
+      ENVIRONMENT: development
+      HTTP_PORT: 8084
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      CLICKHOUSE_DSN: clickhouse://default:@clickhouse:9000/neuralops
+      REDIS_URL: redis://redis:6379/0
+      LLM_PROVIDER: openai
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8084/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  search:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: search
+    container_name: neuralops-search
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: search
+      ENVIRONMENT: development
+      HTTP_PORT: 8085
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      QDRANT_URL: http://qdrant:6333
+      CLICKHOUSE_DSN: clickhouse://default:@clickhouse:9000/neuralops
+      REDIS_URL: redis://redis:6379/0
+      LLM_PROVIDER: openai
+    ports:
+      - "8085:8085"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8085/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  alerting:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: alerting
+    container_name: neuralops-alerting
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: alerting
+      ENVIRONMENT: development
+      HTTP_PORT: 8086
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      REDIS_URL: redis://redis:6379/0
+      INCIDENT_URL: http://incident:8084
+      LLM_PROVIDER: openai
+      DEMO_MODE: "true"
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8086/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  collector:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: collector
+    container_name: neuralops-collector
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: collector
+      ENVIRONMENT: development
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+      CLICKHOUSE_DSN: clickhouse://clickhouse:9000/neuralops
+      PROMETHEUS_URL: http://prometheus:9090
+      TENANT_ID: "00000000-0000-0000-0000-000000000002"
+      COLLECTOR_INTERVAL: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      gateway:
+        condition: service_started
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
+  kube-state-metrics:
+    image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0
+    container_name: neuralops-kube-state-metrics
+    ports:
+      - "8087:8080"
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: neuralops-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      gateway:
+        condition: service_healthy
+      ingestion:
+        condition: service_healthy
+      analysis:
+        condition: service_healthy
+      correlation:
+        condition: service_healthy
+      incident:
+        condition: service_healthy
+      search:
+        condition: service_healthy
+      alerting:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: neuralops-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - neuralops-net
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: neuralops-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_DEFAULT_THEME: dark
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana/dashboards/neuralops-overview.json:/etc/grafana/provisioning/dashboards/json/neuralops-overview.json:ro
+      - ./grafana/dashboards/kafka-ingestion.json:/etc/grafana/provisioning/dashboards/json/kafka-ingestion.json:ro
+      - ./grafana/dashboards/search-incidents.json:/etc/grafana/provisioning/dashboards/json/search-incidents.json:ro
+      - ./grafana/dashboards/ai-api-usage.json:/etc/grafana/provisioning/dashboards/json/ai-api-usage.json:ro
+      - ./grafana/dashboards/gateway-api.json:/etc/grafana/provisioning/dashboards/json/gateway-api.json:ro
+      - ./grafana/dashboards/log-ingestion-rate.json:/etc/grafana/provisioning/dashboards/json/log-ingestion-rate.json:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - neuralops-net
+
+  pyroscope:
+    image: grafana/pyroscope:1.7.1
+    container_name: neuralops-pyroscope
+    command:
+      - server
+      - --storage-path=/data
+    ports:
+      - "4040:4040"
+    volumes:
+      - pyroscope_data:/data
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
+  beyla:
+    image: grafana/beyla:1.6.4
+    container_name: neuralops-beyla
+    privileged: true
+    pid: host
+    environment:
+      BEYLA_OPEN_PORT: "8080,8081,8082,8083,8084,8085,8086"
+      BEYLA_PRINT_TRACES: "false"
+      BEYLA_PROMETHEUS_PORT: "8999"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://gateway:8080
+      OTEL_SERVICE_NAME: beyla-ebpf
+    depends_on:
+      gateway:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
+  profiler:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE: profiler
+    container_name: neuralops-profiler
+    environment:
+      API_BASE: http://gateway:8080/api/v1
+      PYROSCOPE_SERVER: http://pyroscope:4040
+      SERVICE_NAME: payment-api
+      TENANT_ID: "00000000-0000-0000-0000-000000000002"
+      PROFILER_INTERVAL: 30s
+    depends_on:
+      gateway:
+        condition: service_healthy
+      pyroscope:
+        condition: service_started
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
+  oneagent:
+    build:
+      context: ../sdk/oneagent
+      dockerfile: Dockerfile
+    container_name: neuralops-oneagent
+    environment:
+      NEURALOPS_SERVICE: api-gateway
+      NEURALOPS_INGEST_URL: http://gateway:8080/api/v1/apm/profiles
+      NEURALOPS_TENANT_ID: "00000000-0000-0000-0000-000000000002"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: neuralops-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  neuralops-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  elasticsearch_data:
+  qdrant_data:
+  redis_data:
+  grafana_data:
+  prometheus_data:
+  pyroscope_data:

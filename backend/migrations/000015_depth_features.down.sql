@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS rum_consent_logs;
+DROP TABLE IF EXISTS observability_integrations;
+DROP TABLE IF EXISTS observability_cloud_dashboards;
+DROP TABLE IF EXISTS observability_workflow_runs;
+ALTER TABLE observability_slos DROP COLUMN IF EXISTS burn_alert_enabled;
+ALTER TABLE observability_slos DROP COLUMN IF EXISTS burn_alert_threshold;
+DROP TABLE IF EXISTS collector_k8s_deployments;
+DROP TABLE IF EXISTS collector_k8s_namespaces;
+DROP TABLE IF EXISTS apm_profiles;
+DROP TABLE IF EXISTS trace_retention_policies;

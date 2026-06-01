@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: neuralops-config
+  namespace: neuralops
+data:
+  ENVIRONMENT: production
+  AUTH_DISABLED: "false"
+  AUTH_ALLOW_DEV_LOGIN: "false"
+  FRONTEND_URL: https://app.neuralops.example
+  POSTGRES_DSN: postgres://neuralops:CHANGE_ME@postgres.neuralops.svc.cluster.local:5432/neuralops?sslmode=disable
+  CLICKHOUSE_DSN: clickhouse://default:@clickhouse.neuralops.svc.cluster.local:9000/neuralops
+  ELASTICSEARCH_URL: http://elasticsearch.neuralops.svc.cluster.local:9200
+  QDRANT_URL: http://qdrant.neuralops.svc.cluster.local:6333
+  REDIS_URL: redis://redis.neuralops.svc.cluster.local:6379/0
+  KAFKA_BROKERS: kafka.neuralops.svc.cluster.local:9092
+  INGESTION_URL: http://ingestion.neuralops.svc.cluster.local:8081
+  ANALYSIS_URL: http://analysis.neuralops.svc.cluster.local:8082
+  CORRELATION_URL: http://correlation.neuralops.svc.cluster.local:8083
+  INCIDENT_URL: http://incident.neuralops.svc.cluster.local:8084
+  SEARCH_URL: http://search.neuralops.svc.cluster.local:8085
+  ALERTING_URL: http://alerting.neuralops.svc.cluster.local:8086
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger.neuralops.svc.cluster.local:4318
+  LLM_PROVIDER: openai
+  DEMO_MODE: "false"

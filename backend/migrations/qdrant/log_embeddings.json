@@ -1,0 +1,14 @@
+{
+  "collection": "log_embeddings",
+  "vectors": {
+    "size": 1536,
+    "distance": "Cosine"
+  },
+  "payload_schema": {
+    "log_id": "keyword",
+    "service": "keyword",
+    "timestamp": "integer",
+    "severity": "keyword",
+    "tenant_id": "keyword"
+  }
+}

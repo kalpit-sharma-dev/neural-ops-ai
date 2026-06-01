@@ -1,0 +1,166 @@
+# NeuralOps monorepo — one repo for UI, backend, mobile, infra, deploy, sdk.
+# Ignore build outputs, dependencies, secrets, and local/runtime data only.
+# Source under frontend/, backend/, mobile/, infra/, deploy/, sdk/, scripts/, docs/ is tracked.
+
+# =============================================================================
+# Secrets & environment (all packages)
+# =============================================================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Generated dev mTLS (regenerate: bash scripts/gen-mtls-certs.sh)
+infra/certs/*.crt
+infra/certs/*.key
+infra/certs/*.csr
+infra/certs/*.srl
+infra/certs/*.p12
+infra/certs/*.pem
+!infra/certs/README.md
+
+# =============================================================================
+# Dependencies (Node / Go)
+# =============================================================================
+node_modules/
+vendor/
+
+# =============================================================================
+# Frontend — UI (Vite + React)
+# =============================================================================
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/*.tsbuildinfo
+
+# =============================================================================
+# Mobile (Expo / React Native)
+# =============================================================================
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/android/
+mobile/ios/
+mobile/.gradle/
+mobile/sdk/node_modules/
+mobile/sdk/dist/
+
+# Signing & store credentials — never commit
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+
+# =============================================================================
+# Backend — Go services
+# =============================================================================
+backend/bin/
+backend/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+*.coverprofile
+
+# Large generated seed datasets (keep folder + .gitignore)
+backend/scripts/seed/output/*
+!backend/scripts/seed/output/.gitignore
+!backend/scripts/seed/output/.gitkeep
+
+# =============================================================================
+# SDK packages
+# =============================================================================
+sdk/**/node_modules/
+sdk/**/dist/
+sdk/**/bin/
+
+# =============================================================================
+# Infra & deploy
+# =============================================================================
+# Terraform state & local plugins (track *.tf and .terraform.lock.hcl)
+infra/terraform/.terraform/
+infra/terraform/**/*.tfstate
+infra/terraform/**/*.tfstate.*
+infra/terraform/**/crash.log
+infra/terraform/**/*.tfvars
+!infra/terraform/**/*.tfvars.example
+
+# Local Docker overrides
+docker-compose.override.yml
+docker-compose.*.local.yml
+.docker/
+
+# Helm / K8s local render output
+**/charts/**/*.tgz
+rendered/
+
+# =============================================================================
+# IDE & editor
+# =============================================================================
+.idea/
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+*~
+
+# Cursor local session/cache (keep .cursor/rules/ if you use shared rules)
+.cursor/projects/
+.cursor/**/*.log
+
+# =============================================================================
+# Logs & temp files (do not use "logs/" — conflicts with frontend/src/components/logs)
+# =============================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+/runtime-logs/
+/tmp/
+*.tmp
+*.temp
+.cache/
+
+# =============================================================================
+# Test & coverage (repo-wide)
+# =============================================================================
+coverage/
+htmlcov/
+.nyc_output/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+test-results/
+playwright/.cache/
+
+# =============================================================================
+# Build & package artifacts
+# =============================================================================
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
