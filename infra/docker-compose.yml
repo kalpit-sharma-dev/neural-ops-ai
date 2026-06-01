@@ -179,6 +179,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: gateway
     container_name: neuralops-gateway
@@ -256,6 +257,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: ingestion
     container_name: neuralops-ingestion
@@ -312,6 +314,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: analysis
     container_name: neuralops-analysis
@@ -354,6 +357,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: correlation
     container_name: neuralops-correlation
@@ -390,6 +394,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: incident
     container_name: neuralops-incident
@@ -427,6 +432,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: search
     container_name: neuralops-search
@@ -464,6 +470,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: alerting
     container_name: neuralops-alerting
@@ -500,6 +507,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: collector
     container_name: neuralops-collector
@@ -523,9 +531,35 @@ services:
       - neuralops-net
     restart: unless-stopped
 
+  # Dev mock: real kube-state-metrics needs in-cluster K8s API (use profile "kubernetes").
   kube-state-metrics:
-    image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0
+    build:
+      context: ./k8s-metrics-mock
+      dockerfile: Dockerfile
+    image: neuralops-kube-state-metrics-mock:latest
     container_name: neuralops-kube-state-metrics
+    ports:
+      - "8087:8080"
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  kube-state-metrics-real:
+    profiles: ["kubernetes"]
+    image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0
+    container_name: neuralops-kube-state-metrics-real
+    command:
+      - --host=0.0.0.0
+      - --port=8080
+    environment:
+      KUBECONFIG: /kube/config
+    volumes:
+      - ${KUBECONFIG:-${HOME}/.kube/config}:/kube/config:ro
     ports:
       - "8087:8080"
     networks:
@@ -636,6 +670,7 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+      target: runtime
       args:
         SERVICE: profiler
     container_name: neuralops-profiler

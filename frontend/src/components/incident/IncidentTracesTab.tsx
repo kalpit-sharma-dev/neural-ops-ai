@@ -1,19 +1,38 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { searchTrace } from '../../api/search';
 import type { Incident } from '../../api/types';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { SearchInput } from '../ui/SearchInput';
+import { Input } from '../ui/Input';
 import { ErrorState, LoadingState } from '../ui/PageStates';
 
 interface IncidentTracesTabProps {
   incident: Incident;
 }
 
+const TRACE_ID_RE = /\b(trace-[a-z0-9-]+|[0-9a-f]{32})\b/i;
+
+function extractTraceIds(incident: Incident): string[] {
+  const ids = new Set<string>();
+  for (const ev of incident.timeline ?? []) {
+    const m = ev.description?.match(TRACE_ID_RE);
+    if (m) ids.add(m[1]);
+  }
+  for (const ev of incident.rootCauseAnalysis?.evidence ?? []) {
+    if (ev.type === 'TRACE' && ev.snippet) ids.add(ev.snippet.trim());
+    const m = ev.description.match(TRACE_ID_RE);
+    if (m) ids.add(m[1]);
+  }
+  return [...ids];
+}
+
 export function IncidentTracesTab({ incident }: IncidentTracesTabProps) {
   const [traceId, setTraceId] = useState('');
   const [searchId, setSearchId] = useState('');
+
+  const deepLinks = useMemo(() => extractTraceIds(incident), [incident]);
 
   const traceQuery = useQuery({
     queryKey: ['incident-trace', searchId],
@@ -21,42 +40,37 @@ export function IncidentTracesTab({ incident }: IncidentTracesTabProps) {
     enabled: searchId.length > 0,
   });
 
-  const suggestedTraces = incident.rootCauseAnalysis?.evidence
-    ?.filter((e) => e.type === 'TRACE' || e.description.toLowerCase().includes('trace'))
-    .slice(0, 3);
-
   return (
     <div className="incident-traces-tab">
-      <div className="incident-traces-tab__search">
-        <SearchInput
-          placeholder="Search trace ID from incident evidence…"
-          value={traceId}
-          onChange={(e) => setTraceId(e.target.value)}
-          shortcut=""
-        />
-        <Button variant="primary" onClick={() => setSearchId(traceId.trim())}>
-          Load trace
-        </Button>
-      </div>
-
-      {suggestedTraces && suggestedTraces.length > 0 && (
-        <div className="incident-traces-suggestions">
-          <span className="muted">From evidence:</span>
-          {suggestedTraces.map((ev) => (
-            <button
-              key={ev.id}
-              type="button"
-              className="pill"
-              onClick={() => {
-                setTraceId(ev.description.slice(0, 36));
-                setSearchId(ev.description.slice(0, 36));
-              }}
-            >
-              {ev.description.slice(0, 40)}…
-            </button>
-          ))}
+      {deepLinks.length > 0 && (
+        <div className="incident-traces-suggestions" style={{ marginBottom: 16 }}>
+          <span className="muted">Correlated traces</span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+            {deepLinks.map((id) => (
+              <Link key={id} to="/traces/$traceId" params={{ traceId: id }} className="pill">
+                {id.length > 24 ? `${id.slice(0, 24)}…` : id}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
+
+      <div className="incident-traces-tab__search">
+        <Input
+          placeholder="Trace ID…"
+          value={traceId}
+          onChange={(e) => setTraceId(e.target.value)}
+          hint="Open full waterfall from evidence or paste an ID"
+        />
+        <Button variant="primary" onClick={() => setSearchId(traceId.trim())}>
+          Load journey
+        </Button>
+        {traceId.trim() && (
+          <Link to="/traces/$traceId" params={{ traceId: traceId.trim() }}>
+            <Button variant="secondary">Open trace detail →</Button>
+          </Link>
+        )}
+      </div>
 
       {traceQuery.isLoading && <LoadingState label="Loading trace journey…" />}
       {traceQuery.error && <ErrorState message="Trace not found" onRetry={() => traceQuery.refetch()} />}
@@ -64,8 +78,8 @@ export function IncidentTracesTab({ incident }: IncidentTracesTabProps) {
       {traceQuery.data && (
         <div className="trace-journey">
           <p className="muted">
-            {traceQuery.data.total} spans · {traceQuery.data.tookMs}ms · affected services:{' '}
-            {incident.affectedServices?.join(', ')}
+            {traceQuery.data.total} spans · {traceQuery.data.tookMs}ms ·{' '}
+            <Link to="/traces/$traceId" params={{ traceId: searchId }}>View waterfall</Link>
           </p>
           {traceQuery.data.hits.map((hit, idx) => (
             <div key={hit.id} className="trace-journey__step">
@@ -80,10 +94,9 @@ export function IncidentTracesTab({ incident }: IncidentTracesTabProps) {
         </div>
       )}
 
-      {!searchId && (
+      {!searchId && deepLinks.length === 0 && (
         <p className="muted">
-          Enter a correlated trace ID to view the distributed journey across{' '}
-          {incident.affectedServices?.length ?? 0} affected services.
+          No trace IDs in incident evidence yet. Paste a trace ID or pick one from logs with a traceId field.
         </p>
       )}
     </div>

@@ -22,6 +22,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { CodeBlock } from '../components/ui/CodeBlock';
+import { Input } from '../components/ui/Input';
+import { Textarea } from '../components/ui/Textarea';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StatusDot } from '../components/ui/StatusDot';
 import { useRealtimeStore } from '../store/realtimeStore';
@@ -56,6 +58,8 @@ export default function IncidentDetail() {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Overview');
   const [mttrClock, setMttrClock] = useState('00:00:00');
   const [appliedRecs, setAppliedRecs] = useState<Record<number, boolean>>({});
+  const [assignee, setAssignee] = useState('');
+  const [resolutionNotes, setResolutionNotes] = useState('');
   const realtimeEvents = useRealtimeStore((s) => s.events);
 
   const incidentQuery = useQuery({
@@ -103,7 +107,8 @@ export default function IncidentDetail() {
   });
 
   const resolveMutation = useMutation({
-    mutationFn: () => resolveIncident(id, 'Resolved via NeuralOps UI'),
+    mutationFn: () =>
+      resolveIncident(id, resolutionNotes.trim() || 'Resolved via NeuralOps UI'),
     onSuccess: () => {
       toast.success('Incident resolved');
       void queryClient.invalidateQueries({ queryKey: ['incident', id] });
@@ -186,17 +191,11 @@ export default function IncidentDetail() {
             </div>
           </div>
           <div className="incident-detail-actions">
-            <Button variant="secondary" onClick={() => ackMutation.mutate()} disabled={ackMutation.isPending}>
-              Acknowledge (A)
-            </Button>
-            <Button variant="primary" onClick={() => resolveMutation.mutate()} disabled={resolveMutation.isPending}>
-              Resolve (R)
-            </Button>
-            <Button variant="secondary" onClick={escalate} disabled={jiraMut.isPending}>
-              <TrendingUp size={14} /> Create Jira ticket
-            </Button>
             <Button variant="ghost" onClick={share}>
               <Share2 size={14} /> Share
+            </Button>
+            <Button variant="secondary" onClick={escalate} disabled={jiraMut.isPending}>
+              <TrendingUp size={14} /> Jira
             </Button>
           </div>
         </div>
@@ -372,6 +371,40 @@ export default function IncidentDetail() {
           </div>
         )}
       </div>
+
+      <aside className="incident-sticky-actions" aria-label="Incident actions">
+        <div className="incident-sticky-actions__fields">
+          <Input
+            label="Assignee"
+            placeholder="owner@company.com"
+            value={assignee}
+            onChange={(e) => setAssignee(e.target.value)}
+            hint={assignee ? `Assigned to ${assignee}` : 'Optional — stored locally until API supports assign'}
+          />
+          <Textarea
+            label="Resolution notes"
+            placeholder="Root cause, mitigation, follow-ups…"
+            value={resolutionNotes}
+            onChange={(e) => setResolutionNotes(e.target.value)}
+            rows={2}
+          />
+        </div>
+        <div className="incident-sticky-actions__buttons">
+          <Button variant="secondary" onClick={() => ackMutation.mutate()} disabled={ackMutation.isPending}>
+            Acknowledge (A)
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              if (assignee) toast.success(`Assigned to ${assignee}`);
+              resolveMutation.mutate();
+            }}
+            disabled={resolveMutation.isPending}
+          >
+            Resolve (R)
+          </Button>
+        </div>
+      </aside>
     </div>
   );
 }

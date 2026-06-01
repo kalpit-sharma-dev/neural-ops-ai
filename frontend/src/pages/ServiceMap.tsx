@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import {
   ReactFlow,
   Background,
@@ -32,6 +33,7 @@ import { useFilterStore } from '../store/filterStore';
 import { exportElementAsPng } from '../utils/exportPng';
 
 function ServiceMapCanvas() {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const { timeRange, setTimeRange } = useFilterStore();
@@ -112,9 +114,13 @@ function ServiceMapCanvas() {
     return graph.nodes.filter((n) => n.data.health !== 'healthy');
   }, [graph.nodes, errorsOnly]);
 
-  const onNodeClick = useCallback((_: MouseEvent, node: Node) => {
-    setSelected(node.id);
-  }, []);
+  const onNodeClick = useCallback(
+    (_: MouseEvent, node: Node) => {
+      setSelected(node.id);
+      void navigate({ to: '/entities/$type/$id', params: { type: 'service', id: node.id } });
+    },
+    [navigate],
+  );
 
   const exportPng = async () => {
     if (!containerRef.current) return;
@@ -221,6 +227,13 @@ function ServiceMapCanvas() {
                   ))}
                 </select>
               )}
+            </div>
+
+            <div className="service-map-legend" aria-label="Topology legend">
+              <span><span className="status-dot status-dot--healthy" /> Healthy</span>
+              <span><span className="status-dot status-dot--degraded" /> Degraded</span>
+              <span><span className="status-dot status-dot--down" /> Down</span>
+              <span className="muted">· Click node → entity</span>
             </div>
 
             <ReactFlow

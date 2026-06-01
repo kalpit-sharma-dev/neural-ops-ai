@@ -1,9 +1,12 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Cpu, Send, Square } from 'lucide-react';
+import { Link, useRouterState } from '@tanstack/react-router';
 import { streamChatQuery, type ChatSource } from '../api/chat';
 import { MarkdownMessage } from '../components/chat/MarkdownMessage';
 import { Button } from '../components/ui/Button';
+import { Textarea } from '../components/ui/Textarea';
 import { PageHeader } from '../components/ui/PageStates';
+import { buildPageContext, suggestedPromptsForPath } from '../lib/pageContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -12,20 +15,29 @@ interface Message {
   sources?: ChatSource[];
 }
 
-const SUGGESTED = [
-  { category: 'Incidents', question: 'What caused the payment failures last night?' },
-  { category: 'Performance', question: 'Which service has the worst latency this week?' },
-  { category: 'Trends', question: 'Is our error rate improving over the past month?' },
-  { category: 'Banking', question: 'Show me all failed UPI transactions today' },
-  { category: 'Deployments', question: 'Did any deployments cause incidents this week?' },
-];
+function sourceLink(source: ChatSource): { to: string; params?: Record<string, string>; search?: Record<string, string> } | null {
+  const msg = source.message ?? '';
+  const traceMatch = msg.match(/\b(trace-[a-z0-9-]+)\b/i);
+  if (traceMatch) return { to: '/traces/$traceId', params: { traceId: traceMatch[1] } };
+  const incMatch = msg.match(/\b(inc-[a-z0-9-]+)\b/i);
+  if (incMatch) return { to: '/incidents/$id', params: { id: incMatch[1] } };
+  if (source.service) return { to: '/logs', search: { service: source.service } };
+  return null;
+}
 
 export default function AIChat() {
+  const router = useRouterState();
+  const pathname = router.location.pathname;
+  const search = router.location.search as Record<string, unknown>;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [status, setStatus] = useState('');
   const abortRef = useRef<AbortController | null>(null);
+
+  const pageContext = useMemo(() => buildPageContext(pathname, search), [pathname, search]);
+  const suggested = useMemo(() => suggestedPromptsForPath(pathname), [pathname]);
 
   const send = async (question: string) => {
     if (!question.trim() || streaming) return;
@@ -52,6 +64,7 @@ export default function AIChat() {
 
     await streamChatQuery({
       question,
+      context: pageContext,
       signal: abortRef.current.signal,
       onSources: (sources) => {
         setMessages((m) => m.map((msg, i) => (i === assistantIdx ? { ...msg, sources } : msg)));
@@ -89,10 +102,14 @@ export default function AIChat() {
     <div>
       <PageHeader title="AI Assistant" subtitle="Senior SRE colleague powered by NeuralOps" />
 
+      <p className="muted" style={{ marginBottom: 16 }}>
+        Context: {pageContext.split('\n')[0]}
+      </p>
+
       <div className="chat-layout">
         <aside className="chat-sidebar">
           <h3 style={{ marginTop: 0, fontFamily: 'var(--font-display)' }}>Suggested Questions</h3>
-          {SUGGESTED.map(({ category, question }) => (
+          {suggested.map(({ category, question }) => (
             <button
               key={question}
               type="button"
@@ -126,15 +143,25 @@ export default function AIChat() {
                   <>
                     <MarkdownMessage content={msg.content || (msg.streaming ? '…' : '')} />
                     {(msg.sources?.length ?? 0) > 0 && (
-                      <details className="chat-sources">
-                        <summary>Sources ({msg.sources!.length})</summary>
+                      <details className="chat-sources" open>
+                        <summary>Citations ({msg.sources!.length})</summary>
                         <ul>
-                          {msg.sources!.map((source, idx) => (
-                            <li key={`${source.service}-${idx}`}>
-                              <strong>{source.service}</strong> · {source.severity}
-                              <p className="muted">{source.message}</p>
-                            </li>
-                          ))}
+                          {msg.sources!.map((source, idx) => {
+                            const link = sourceLink(source);
+                            return (
+                              <li key={`${source.service}-${idx}`}>
+                                {link ? (
+                                  <Link to={link.to} params={link.params} search={link.search}>
+                                    <strong>{source.service}</strong> · {source.severity}
+                                  </Link>
+                                ) : (
+                                  <strong>{source.service}</strong>
+                                )}
+                                {!link && <> · {source.severity}</>}
+                                <p className="muted">{source.message}</p>
+                              </li>
+                            );
+                          })}
                         </ul>
                       </details>
                     )}
@@ -148,10 +175,11 @@ export default function AIChat() {
           </div>
 
           <div className="chat-input-area">
-            <textarea
+            <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about incidents, logs, performance… (Ctrl+Enter to send)"
+              rows={3}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();

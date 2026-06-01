@@ -19,5 +19,6 @@ All long-tail vendor parity items are implemented.
 - K8s fleet: `kubectl apply -f deploy/kubernetes/fleet-profiling.yaml`
 - Mobile submit: `mobile/store/SUBMISSION.md`
 - OpenAPI test: `make openapi-test`
+- **UI improvements (phased):** [UI_IMPROVEMENT_ROADMAP.md](./UI_IMPROVEMENT_ROADMAP.md)
 
 Manual: App Store Connect IDs, Play service account, customer cloud credentials.

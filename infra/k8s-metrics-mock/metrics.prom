@@ -1,0 +1,28 @@
+# Dev-only mock for docker-compose (no Kubernetes API required).
+# Exposes minimal kube-state-metrics series for Prometheus + collector sync.
+
+# HELP kube_node_info Information about a cluster node.
+# TYPE kube_node_info gauge
+kube_node_info{node="node-1"} 1
+kube_node_info{node="node-2"} 1
+kube_node_info{node="node-3"} 1
+
+# HELP kube_pod_info Information about pod.
+# TYPE kube_pod_info gauge
+kube_pod_info{namespace="default",pod="coredns-abc",node="node-1",uid="pod-1"} 1
+kube_pod_info{namespace="payments",pod="payment-api-7f8b9",node="node-1",uid="pod-2"} 1
+kube_pod_info{namespace="payments",pod="ledger-svc-4c2a1",node="node-2",uid="pod-3"} 1
+kube_pod_info{namespace="platform",pod="gateway-9d3e0",node="node-1",uid="pod-4"} 1
+kube_pod_info{namespace="monitoring",pod="prometheus-0",node="node-3",uid="pod-5"} 1
+
+# HELP kube_namespace_created Unix creation timestamp
+# TYPE kube_namespace_created gauge
+kube_namespace_created{namespace="default"} 1
+kube_namespace_created{namespace="payments"} 1
+kube_namespace_created{namespace="platform"} 1
+kube_namespace_created{namespace="monitoring"} 1
+
+# HELP kube_deployment_status_replicas Available replicas per deployment.
+# TYPE kube_deployment_status_replicas gauge
+kube_deployment_status_replicas{namespace="payments",deployment="payment-api"} 3
+kube_deployment_status_replicas{namespace="platform",deployment="gateway"} 2

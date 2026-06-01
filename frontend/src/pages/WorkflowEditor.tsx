@@ -12,11 +12,13 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createWorkflow, fetchWorkflows } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
 const STEP_TYPES = [
@@ -71,6 +73,17 @@ export default function WorkflowEditor() {
     setNodes((nds) => [...nds, { id, position: { x: 80, y: nds.length * 100 + 40 }, data: { label, stepType: type } }]);
   };
 
+  const moveStep = (index: number, dir: -1 | 1) => {
+    const next = index + dir;
+    if (next < 0 || next >= nodes.length) return;
+    setNodes((nds) => {
+      const copy = [...nds];
+      const [item] = copy.splice(index, 1);
+      copy.splice(next, 0, item);
+      return copy.map((n, i) => ({ ...n, position: { ...n.position, y: i * 100 + 40 } }));
+    });
+  };
+
   const createMut = useMutation({
     mutationFn: () =>
       createWorkflow({
@@ -86,6 +99,8 @@ export default function WorkflowEditor() {
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
+
+  const stepList = nodesToSteps(nodes);
 
   return (
     <div>
@@ -113,18 +128,37 @@ export default function WorkflowEditor() {
             ))}
           </div>
         </Card>
-        <Card title="Save workflow">
-          <div className="form-stack">
-            <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-            <input placeholder="Trigger" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
-            <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>Save</Button>
-          </div>
-          {isLoading && <LoadingState />}
-          <h4 style={{ marginTop: 24 }}>Existing</h4>
-          {(workflows ?? []).map((w) => (
-            <p key={w.id} className="muted">{w.name} · {w.trigger}</p>
-          ))}
-        </Card>
+        <div>
+          <Card title="Step list">
+            <ol className="workflow-step-list">
+              {stepList.map((step, index) => (
+                <li key={step.id} className="workflow-step-list__item">
+                  <span>{step.label}</span>
+                  <div className="workflow-step-list__actions">
+                    <Button variant="ghost" size="sm" disabled={index === 0} onClick={() => moveStep(index, -1)} aria-label="Move up">
+                      <ArrowUp size={14} />
+                    </Button>
+                    <Button variant="ghost" size="sm" disabled={index === stepList.length - 1} onClick={() => moveStep(index, 1)} aria-label="Move down">
+                      <ArrowDown size={14} />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Card>
+          <Card title="Save workflow" style={{ marginTop: 16 }}>
+            <div className="form-stack">
+              <Input label="Name" placeholder="P1 incident response" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input label="Trigger" placeholder="incident.p1" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
+              <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>Save</Button>
+            </div>
+            {isLoading && <LoadingState />}
+            <h4 style={{ marginTop: 24 }}>Existing</h4>
+            {(workflows ?? []).map((w) => (
+              <p key={w.id} className="muted">{w.name} · {w.trigger}</p>
+            ))}
+          </Card>
+        </div>
       </div>
     </div>
   );

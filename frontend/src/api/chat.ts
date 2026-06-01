@@ -10,6 +10,8 @@ export interface ChatSource {
 
 export interface ChatStreamOptions {
   question: string;
+  /** Optional page context for route-aware answers */
+  context?: string;
   signal?: AbortSignal;
   onChunk: (chunk: string) => void;
   onSources?: (sources: ChatSource[]) => void;
@@ -18,7 +20,7 @@ export interface ChatStreamOptions {
 }
 
 export async function streamChatQuery(options: ChatStreamOptions): Promise<void> {
-  const { question, signal, onChunk, onSources, onDone, onError } = options;
+  const { question, context, signal, onChunk, onSources, onDone, onError } = options;
   const token = useAuthStore.getState().accessToken;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -26,7 +28,7 @@ export async function streamChatQuery(options: ChatStreamOptions): Promise<void>
   const response = await fetch(`${API_BASE_URL}/chat/query`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, ...(context ? { context } : {}) }),
     signal,
   });
 

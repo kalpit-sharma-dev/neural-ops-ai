@@ -1,20 +1,29 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.25-alpine AS builder
+# Compile all Go microservices once; per-service images only copy one binary.
+# This avoids 8+ parallel `go build` runs that can crash BuildKit (EOF) on limited hardware.
+
+FROM golang:1.25-alpine AS build-all
 
 RUN apk add --no-cache git ca-certificates
 
 WORKDIR /src
 
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 COPY . .
 
-ARG SERVICE=gateway
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/service ./cmd/${SERVICE}
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    set -e; \
+    for svc in gateway ingestion analysis correlation incident search alerting collector profiler; do \
+      echo "==> building ${svc}"; \
+      CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o "/out/${svc}" "./cmd/${svc}"; \
+    done
 
-FROM alpine:3.20
+FROM alpine:3.20 AS runtime
 
 RUN apk add --no-cache ca-certificates wget \
     && addgroup -S neuralops \
@@ -22,9 +31,10 @@ RUN apk add --no-cache ca-certificates wget \
 
 WORKDIR /app
 
-COPY --from=builder /bin/service /app/service
-COPY --from=builder /src/configs /app/configs
-COPY --from=builder /src/migrations /app/migrations
+ARG SERVICE=gateway
+COPY --from=build-all /out/${SERVICE} /app/service
+COPY --from=build-all /src/configs /app/configs
+COPY --from=build-all /src/migrations /app/migrations
 
 USER neuralops
 

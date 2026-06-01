@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router';
 import { createLogMetricRule, createLogParsingRule, fetchLogMetricRules, fetchLogParsingRules } from '../api/observability';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
 export default function LogSettings() {
@@ -29,16 +30,16 @@ export default function LogSettings() {
       <div className="dashboard-row-2">
         <Card title="Log metric rules">
           <div className="form-stack">
-            <input placeholder="Name" value={metricForm.name} onChange={(e) => setMetricForm({ ...metricForm, name: e.target.value })} />
-            <input placeholder="Pattern (regex)" value={metricForm.pattern} onChange={(e) => setMetricForm({ ...metricForm, pattern: e.target.value })} />
+            <Input label="Name" value={metricForm.name} onChange={(e) => setMetricForm({ ...metricForm, name: e.target.value })} />
+            <Input label="Pattern (regex)" value={metricForm.pattern} onChange={(e) => setMetricForm({ ...metricForm, pattern: e.target.value })} />
             <Button variant="primary" onClick={() => createMetric.mutate()}>Add rule</Button>
           </div>
           {(metricsQuery.data ?? []).map((r) => <div key={r.id} className="list-row">{r.name} — <code>{r.pattern}</code></div>)}
         </Card>
         <Card title="Parsing rules">
           <div className="form-stack">
-            <input placeholder="Name" value={parseForm.name} onChange={(e) => setParseForm({ ...parseForm, name: e.target.value })} />
-            <input placeholder="Grok/regex" value={parseForm.pattern} onChange={(e) => setParseForm({ ...parseForm, pattern: e.target.value })} />
+            <Input label="Name" value={parseForm.name} onChange={(e) => setParseForm({ ...parseForm, name: e.target.value })} />
+            <Input label="Grok/regex" value={parseForm.pattern} onChange={(e) => setParseForm({ ...parseForm, pattern: e.target.value })} />
             <Button variant="primary" onClick={() => createParse.mutate()}>Add rule</Button>
           </div>
           {parsingQuery.isLoading && <LoadingState />}

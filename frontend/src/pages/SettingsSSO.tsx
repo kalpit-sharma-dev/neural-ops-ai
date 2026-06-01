@@ -5,6 +5,7 @@ import { fetchSSOConfig, updateSSOConfig } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
 export default function SettingsSSO() {
@@ -40,14 +41,17 @@ export default function SettingsSSO() {
             });
           }}
         >
-          <label>Provider<input name="provider" defaultValue={data.provider} /></label>
-          <label>Metadata URL<input name="metadataUrl" defaultValue={data.metadataUrl ?? ''} /></label>
-          <label>Client ID<input name="clientId" defaultValue={data.clientId ?? ''} /></label>
-          <label>Issuer URL<input name="issuerUrl" defaultValue={data.issuerUrl ?? ''} /></label>
-          <label>
-            Client secret {data.clientSecretSet && <span className="muted">(leave blank to keep existing)</span>}
-            <input name="clientSecret" type="password" placeholder={data.clientSecretSet ? '••••••••' : ''} />
-          </label>
+          <Input name="provider" label="Provider" defaultValue={data.provider} />
+          <Input name="metadataUrl" label="Metadata URL" defaultValue={data.metadataUrl ?? ''} />
+          <Input name="clientId" label="Client ID" defaultValue={data.clientId ?? ''} />
+          <Input name="issuerUrl" label="Issuer URL" defaultValue={data.issuerUrl ?? ''} />
+          <Input
+            name="clientSecret"
+            label="Client secret"
+            type="password"
+            hint={data.clientSecretSet ? 'Leave blank to keep existing' : undefined}
+            placeholder={data.clientSecretSet ? '••••••••' : ''}
+          />
           <Button type="submit" variant="primary">Save & reload</Button>
         </form>
       </Card>

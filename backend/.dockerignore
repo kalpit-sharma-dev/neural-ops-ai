@@ -1,0 +1,23 @@
+# Go build artifacts
+bin/
+tmp/
+*.exe
+*.test
+*.out
+coverage.out
+vendor/
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+
+# Seed output (large generated files)
+scripts/seed/output/
+!scripts/seed/output/.gitkeep
+!scripts/seed/output/.gitignore
+
+# Docs & local env (not needed in image)
+*.md
+.env
+.env.*

@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Minus, Plus, RotateCcw } from 'lucide-react';
 import type { Span } from '../../api/observability';
 import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 
 interface FlameNode {
   span: Span;
@@ -44,15 +46,17 @@ function buildFlameTree(spans: Span[]): FlameNode[] {
 function FlameBar({
   node,
   traceTotalMs,
+  scale,
   selected,
   onSelect,
 }: {
   node: FlameNode;
   traceTotalMs: number;
+  scale: number;
   selected: boolean;
   onSelect: (span: Span) => void;
 }) {
-  const widthPct = Math.max(1.5, (node.span.durationMs / Math.max(traceTotalMs, 1)) * 100);
+  const widthPct = Math.max(1.5, (node.span.durationMs / Math.max(traceTotalMs, 1)) * 100 * scale);
   const hue = (node.depth * 37 + node.span.service.length * 11) % 360;
   const statusVariant = node.span.status === 'ERROR' ? 'critical' : 'healthy';
 
@@ -62,7 +66,7 @@ function FlameBar({
         type="button"
         className={`trace-flame__bar ${selected ? 'trace-flame__bar--selected' : ''}`}
         style={{
-          width: `${widthPct}%`,
+          width: `${Math.min(widthPct, 100)}%`,
           background: `hsl(${hue} 55% 42%)`,
         }}
         onClick={() => onSelect(node.span)}
@@ -78,6 +82,7 @@ function FlameBar({
               key={child.span.spanId}
               node={child}
               traceTotalMs={traceTotalMs}
+              scale={scale}
               selected={selected}
               onSelect={onSelect}
             />
@@ -89,6 +94,9 @@ function FlameBar({
 }
 
 export function TraceFlameGraph({ spans, traceTotalMs, selectedSpanId, onSelectSpan }: TraceFlameGraphProps) {
+  const [scale, setScale] = useState(1);
+  const [internalSelected, setInternalSelected] = useState<string | undefined>();
+  const selected = selectedSpanId ?? internalSelected;
   const roots = useMemo(() => buildFlameTree(spans), [spans]);
 
   if (roots.length === 0) {
@@ -97,15 +105,33 @@ export function TraceFlameGraph({ spans, traceTotalMs, selectedSpanId, onSelectS
 
   return (
     <div className="trace-flame-graph">
-      {roots.map((root) => (
-        <FlameBar
-          key={root.span.spanId}
-          node={root}
-          traceTotalMs={traceTotalMs}
-          selected={root.span.spanId === selectedSpanId}
-          onSelect={(s) => onSelectSpan?.(s)}
-        />
-      ))}
+      <div className="trace-flame-graph__controls">
+        <Button variant="ghost" size="sm" onClick={() => setScale((s) => Math.min(3, s + 0.25))} aria-label="Zoom in">
+          <Plus size={14} />
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setScale((s) => Math.max(0.5, s - 0.25))} aria-label="Zoom out">
+          <Minus size={14} />
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setScale(1)} aria-label="Reset zoom">
+          <RotateCcw size={14} />
+        </Button>
+        <span className="muted">{Math.round(scale * 100)}%</span>
+      </div>
+      <div className="trace-flame-graph__canvas" style={{ transform: `scaleX(${scale})`, transformOrigin: 'left center' }}>
+        {roots.map((root) => (
+          <FlameBar
+            key={root.span.spanId}
+            node={root}
+            traceTotalMs={traceTotalMs}
+            scale={scale}
+            selected={root.span.spanId === selected}
+            onSelect={(s) => {
+              setInternalSelected(s.spanId);
+              onSelectSpan?.(s);
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { createAPIKey, fetchAPIKeys } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
@@ -33,7 +34,7 @@ export default function SettingsApiKeys() {
         subtitle="Programmatic access tokens"
         actions={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input placeholder="Key name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input placeholder="Key name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Key name" />
             <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
               Create key
             </Button>

@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
+import { RefreshCw, Siren } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -12,15 +13,21 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { fetchDashboardOverview } from '../api/dashboard';
+import { fetchDashboardErrorSeries, fetchDashboardOverview } from '../api/dashboard';
 import { getApiErrorMessage } from '../api/client';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
 import { StatusDot } from '../components/ui/StatusDot';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ErrorState, PageHeader } from '../components/ui/PageStates';
 import type { IncidentSummary } from '../api/types';
+import { getChartColors } from '../lib/chartColors';
+import { chartAxisProps, chartGridProps, chartTooltipStyle } from '../lib/chartTheme';
+import { useThemeStore } from '../store/themeStore';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useFilterStore } from '../store/filterStore';
 
 const severityVariant = (s: string) => {
   const map: Record<string, 'p1' | 'p2' | 'p3' | 'p4'> = {
@@ -43,10 +50,28 @@ function countBySeverity(incidents: IncidentSummary[]) {
 }
 
 export default function Dashboard() {
-  const { data, isLoading, error, refetch } = useQuery({
+  const theme = useThemeStore((s) => s.theme);
+  const reducedMotion = useReducedMotion();
+  const navigate = useNavigate();
+  const setErrorsOnly = useFilterStore((s) => s.setErrorsOnly);
+  const chartColors = useMemo(() => getChartColors(), [theme]);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+
+  const { data, isLoading, error, refetch, isFetching, dataUpdatedAt } = useQuery({
     queryKey: ['dashboard-overview'],
     queryFn: fetchDashboardOverview,
     refetchInterval: 30_000,
+  });
+
+  const services = useMemo(
+    () => (data?.topFailingServices ?? []).map((s) => s.service),
+    [data?.topFailingServices],
+  );
+
+  const chartQuery = useQuery({
+    queryKey: ['dashboard-error-series', services],
+    queryFn: () => fetchDashboardErrorSeries(services),
+    enabled: services.length > 0,
   });
 
   const severityCounts = useMemo(
@@ -55,17 +80,7 @@ export default function Dashboard() {
   );
 
   const hasCritical = (severityCounts.P1 ?? 0) + (severityCounts.P2 ?? 0) > 0;
-
-  const chartData = useMemo(() => {
-    const services = data?.topFailingServices ?? [];
-    return Array.from({ length: 12 }, (_, i) => {
-      const point: Record<string, number | string> = { hour: `${i * 2}h` };
-      services.slice(0, 4).forEach((s, idx) => {
-        point[s.service] = Math.max(0, (s.errorCount / 12) * (idx + 1) * (1 + Math.sin(i)));
-      });
-      return point;
-    });
-  }, [data?.topFailingServices]);
+  const openP1 = (data?.activeIncidents ?? []).find((i) => i.severity === 'P1' && i.status !== 'RESOLVED');
 
   const insights = useMemo(() => {
     const items: string[] = [];
@@ -78,11 +93,18 @@ export default function Dashboard() {
     if (data?.deploymentImpactScore && data.deploymentImpactScore > 0.5) {
       items.push(`Deployment impact score ${(data.deploymentImpactScore * 100).toFixed(0)}% — review recent releases`);
     }
-    if (items.length === 0) {
-      items.push('All systems operating within normal parameters');
-    }
+    if (items.length === 0) items.push('All systems operating within normal parameters');
     return items;
   }, [data]);
+
+  const motionProps = reducedMotion
+    ? {}
+    : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.35 } };
+
+  const handleRefresh = () => {
+    void refetch().then(() => setLastRefresh(new Date()));
+    void chartQuery.refetch();
+  };
 
   if (isLoading) {
     return (
@@ -101,47 +123,97 @@ export default function Dashboard() {
   }
 
   return (
-    <motion.div
-      className="dashboard-grid"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-    >
-      <PageHeader title="Command Center" subtitle="Real-time observability overview" />
+    <motion.div className="dashboard-grid" {...motionProps}>
+      <PageHeader
+        title="Command Center"
+        subtitle="Real-time observability overview"
+        actions={
+          <div className="dashboard-header-actions">
+            <span className="muted dashboard-refresh">
+              Updated {formatDistanceToNow(dataUpdatedAt ? new Date(dataUpdatedAt) : lastRefresh, { addSuffix: true })}
+            </span>
+            <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isFetching}>
+              <RefreshCw size={14} className={isFetching ? 'spin' : ''} /> Refresh
+            </Button>
+            {openP1 && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate({ to: '/incidents/$id', params: { id: openP1.id } })}
+              >
+                <Siren size={14} /> War room
+              </Button>
+            )}
+          </div>
+        }
+      />
 
-      <div className="dashboard-kpis">
-        <MetricCard
-          label="Active Incidents"
-          value={data?.activeIncidents.length ?? 0}
-          accent={hasCritical ? 'danger' : 'default'}
-          footer={
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              {(['P1', 'P2', 'P3', 'P4'] as const).map((s) => (
-                <Badge key={s} variant={severityVariant(s)}>
+      {hasCritical && (
+        <Card className="incident-strip">
+          <div className="incident-strip__counts">
+            {(['P1', 'P2'] as const).map((s) => (
+              <Link key={s} to="/incidents" search={{ severity: s }}>
+                <Badge variant={severityVariant(s)}>
                   {s}: {severityCounts[s] ?? 0}
                 </Badge>
-              ))}
-            </div>
-          }
-        />
-        <MetricCard
-          label="Error Rate (1h)"
-          value={`${(data?.errorRateLastHour ?? 0).toFixed(2)}%`}
-          trend={data?.errorRateLastHour ? 12 : -3}
-          sparkline={[2, 3, 2, 5, 4, 6, data?.errorRateLastHour ?? 3]}
-        />
-        <MetricCard
-          label="Avg Latency p99"
-          value={`${Math.round(data?.latencyP99Ms ?? 142)}ms`}
-          trend={data?.latencyP99Ms && data.latencyP99Ms > 150 ? 8 : -8}
-          sparkline={[120, 130, 125, 140, 135, data?.latencyP99Ms ?? 142, 138]}
-        />
-        <MetricCard
-          label="MTTR Today"
-          value={data?.mttrMinutes ? `${Math.round(data.mttrMinutes)}m` : '—'}
-          trend={data?.mttrMinutes && data.mttrMinutes > 30 ? 12 : -15}
-          footer={<span className="muted">resolved incidents</span>}
-        />
+              </Link>
+            ))}
+          </div>
+          <div className="incident-strip__list">
+            {(data?.activeIncidents ?? []).slice(0, 5).map((inc) => (
+              <Link key={inc.id} to="/incidents/$id" params={{ id: inc.id }}>
+                {inc.title}
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <div className="dashboard-kpis">
+        <button
+          type="button"
+          className="dashboard-kpi-btn"
+          onClick={() => navigate({ to: '/incidents' })}
+        >
+          <MetricCard
+            label="Active Incidents"
+            value={data?.activeIncidents.length ?? 0}
+            accent={hasCritical ? 'danger' : 'default'}
+            footer={
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                {(['P1', 'P2', 'P3', 'P4'] as const).map((s) => (
+                  <Badge key={s} variant={severityVariant(s)}>
+                    {s}: {severityCounts[s] ?? 0}
+                  </Badge>
+                ))}
+              </div>
+            }
+          />
+        </button>
+        <button
+          type="button"
+          className="dashboard-kpi-btn"
+          onClick={() => {
+            setErrorsOnly();
+            navigate({ to: '/logs', search: {} });
+          }}
+        >
+          <MetricCard
+            label="Error Rate (1h)"
+            value={`${(data?.errorRateLastHour ?? 0).toFixed(2)}%`}
+            trend={data?.errorRateLastHour ? 12 : -3}
+          />
+        </button>
+        <button type="button" className="dashboard-kpi-btn" onClick={() => navigate({ to: '/traces' })}>
+          <MetricCard label="Avg Latency p99" value={`${Math.round(data?.latencyP99Ms ?? 142)}ms`} />
+        </button>
+        <button type="button" className="dashboard-kpi-btn" onClick={() => navigate({ to: '/incidents' })}>
+          <MetricCard
+            label="MTTR Today"
+            value={data?.mttrMinutes ? `${Math.round(data.mttrMinutes)}m` : '—'}
+            footer={<span className="muted">resolved incidents</span>}
+          />
+        </button>
       </div>
 
       <div className="dashboard-row-2">
@@ -171,46 +243,51 @@ export default function Dashboard() {
 
         <Card title="Top Failing Services">
           {(data?.topFailingServices ?? []).slice(0, 6).map((svc) => (
-            <div key={svc.service} className="service-list-item">
+            <button
+              key={svc.service}
+              type="button"
+              className="service-list-item service-list-item--btn"
+              onClick={() => navigate({ to: '/logs', search: { service: svc.service } })}
+            >
               <div>
-                <StatusDot status={svc.errorCount > 100 ? 'down' : svc.errorCount > 20 ? 'degraded' : 'healthy'} label={svc.service} />
+                <StatusDot
+                  status={svc.errorCount > 100 ? 'down' : svc.errorCount > 20 ? 'degraded' : 'healthy'}
+                  label={svc.service}
+                />
                 <div className="error-bar">
-                  <div
-                    className="error-bar__fill"
-                    style={{ width: `${Math.min(100, svc.errorCount / 2)}%` }}
-                  />
+                  <div className="error-bar__fill" style={{ width: `${Math.min(100, svc.errorCount / 2)}%` }} />
                 </div>
               </div>
               <span className="muted">{svc.errorCount} errs</span>
-              <span className="muted">p99 142ms</span>
-            </div>
+            </button>
           ))}
           {(data?.topFailingServices ?? []).length === 0 && <p className="muted">No failing services detected</p>}
         </Card>
       </div>
 
       <Card title="Error Rate by Service">
+        {chartQuery.isLoading && <p className="muted">Loading metrics…</p>}
+        {chartQuery.error && (
+          <ErrorState message={getApiErrorMessage(chartQuery.error)} onRetry={() => chartQuery.refetch()} />
+        )}
         <div style={{ height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-              <XAxis dataKey="hour" stroke="var(--text-muted)" fontSize={11} />
-              <YAxis stroke="var(--text-muted)" fontSize={11} />
-              <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }} />
-              {(data?.topFailingServices ?? []).slice(0, 4).map((s, idx) => {
-                const colors = ['#3b82f6', '#6366f1', '#f59e0b', '#ef4444'];
-                return (
-                  <Area
-                    key={s.service}
-                    type="monotone"
-                    dataKey={s.service}
-                    stackId="1"
-                    stroke={colors[idx]}
-                    fill={colors[idx]}
-                    fillOpacity={0.3}
-                  />
-                );
-              })}
+            <AreaChart data={chartQuery.data ?? []}>
+              <CartesianGrid {...chartGridProps()} />
+              <XAxis dataKey="hour" {...chartAxisProps()} />
+              <YAxis {...chartAxisProps()} />
+              <Tooltip contentStyle={chartTooltipStyle()} />
+              {services.slice(0, 4).map((s, idx) => (
+                <Area
+                  key={s}
+                  type="monotone"
+                  dataKey={s}
+                  stackId="1"
+                  stroke={chartColors[idx]}
+                  fill={chartColors[idx]}
+                  fillOpacity={0.3}
+                />
+              ))}
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -223,7 +300,9 @@ export default function Dashboard() {
               <div>
                 <StatusDot status="degraded" pulse />
                 <strong>{a.service}</strong>
-                <p className="muted" style={{ margin: '4px 0 0', fontSize: 12 }}>{a.message}</p>
+                <p className="muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
+                  {a.message}
+                </p>
               </div>
               <Badge variant="warning">{a.severity}</Badge>
             </div>
@@ -232,20 +311,7 @@ export default function Dashboard() {
         </Card>
 
         <Card title="Recent Deployments">
-          <div className="service-list-item">
-            <div>
-              <strong>upi-routing</strong>
-              <p className="muted" style={{ margin: '4px 0 0', fontSize: 12 }}>v2.3.1 · Alex Chen</p>
-            </div>
-            <Badge variant="warning">Medium risk</Badge>
-          </div>
-          <div className="service-list-item">
-            <div>
-              <strong>payment-api</strong>
-              <p className="muted" style={{ margin: '4px 0 0', fontSize: 12 }}>v1.8.0 · CI Bot</p>
-            </div>
-            <Badge variant="healthy">Low risk</Badge>
-          </div>
+          <p className="muted">Connect deployment events API for live data</p>
         </Card>
 
         <Card title="AI Insights">
@@ -256,7 +322,7 @@ export default function Dashboard() {
           </ul>
           {data?.generatedAt && (
             <p className="muted" style={{ marginTop: 12, fontSize: 11 }}>
-              Updated {formatDistanceToNow(new Date(data.generatedAt), { addSuffix: true })}
+              Snapshot {formatDistanceToNow(new Date(data.generatedAt), { addSuffix: true })}
             </p>
           )}
         </Card>

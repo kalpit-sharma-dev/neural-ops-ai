@@ -38,7 +38,15 @@ export function exportLogsCsv(hits: LogHit[]) {
   downloadBlob([headers.join(','), ...rows].join('\n'), `logs-${Date.now()}.csv`, 'text/csv');
 }
 
-export function buildShareLink(query: string, start: string, end: string): string {
-  const params = new URLSearchParams({ q: query, start, end });
+export function buildShareLink(
+  query: string,
+  start: string,
+  end: string,
+  extras?: { mode?: string; service?: string; traceId?: string },
+): string {
+  const params = new URLSearchParams({ q: query, from: start, to: end });
+  if (extras?.mode) params.set('mode', extras.mode);
+  if (extras?.service) params.set('service', extras.service);
+  if (extras?.traceId) params.set('traceId', extras.traceId);
   return `${window.location.origin}/logs?${params.toString()}`;
 }

@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.0] - 2026-06-01
+
+### Added (UI)
+
+- Full UI Improvement Roadmap (P1–P11): grouped sidebar with favorites, command palette actions, system theme, mobile nav and filter sheet, shared form components, Command Center war room and KPI drill-down, log histogram and saved searches, incident keyboard nav and sticky actions, trace compare picker and waterfall/flame improvements, dashboard tile drag-and-drop, PromQL editor, RUM vitals and session replay, AI page context and citations, Playwright UI smoke tests, route-level code splitting for heavy pages.
+
+### Changed (UI)
+
+- Global env/time filters sync to URL query params.
+- Dashboard error charts use Prometheus metric API when available.
+
 ## [0.1.0] - 2026-05-31
 
 ### Added

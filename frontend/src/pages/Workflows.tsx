@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
 export default function Workflows() {
@@ -36,8 +37,8 @@ export default function Workflows() {
       <PageHeader title="Workflows" subtitle="Automation and remediation" actions={<Link to="/workflows/editor">Visual editor →</Link>} />
       <Card title="Create workflow" style={{ marginBottom: 24 }}>
         <div className="form-stack">
-          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input placeholder="Trigger (e.g. incident.p1)" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
+          <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input label="Trigger" placeholder="incident.p1" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
           <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>Create</Button>
         </div>
       </Card>

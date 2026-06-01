@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
+import { initTheme } from './store/themeStore';
 import './styles/global.css';
+
+initTheme();
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   Activity,
@@ -33,6 +32,10 @@ import { Select } from '../components/ui/Select';
 import { Skeleton } from '../components/ui/Skeleton';
 import { StatusDot } from '../components/ui/StatusDot';
 import { PageHeader } from '../components/ui/PageStates';
+import { useThemeStore, type ThemePreference } from '../store/themeStore';
+import { Input } from '../components/ui/Input';
+import { Textarea } from '../components/ui/Textarea';
+import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 
 const COLORS = [
   { name: 'bg-base', var: '--bg-base' },
@@ -67,7 +70,8 @@ const chartData = [
 ];
 
 export default function DesignSystem() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const preference = useThemeStore((s) => s.preference);
+  const setPreference = useThemeStore((s) => s.setPreference);
 
   const copyClasses = (text: string) => {
     void navigator.clipboard.writeText(text);
@@ -78,11 +82,16 @@ export default function DesignSystem() {
     <div>
       <PageHeader
         title="Design System"
-        subtitle="Neural Dark — living style guide for NeuralOps"
+        subtitle="Aurora (dark) & Lumen (light) — NeuralOps design language"
         actions={
-          <Select label="Theme" value={theme} onChange={(e) => setTheme(e.target.value as 'dark' | 'light')}>
-            <option value="dark">Dark (default)</option>
-            <option value="light">Light (preview)</option>
+          <Select
+            label="Theme"
+            value={preference}
+            onChange={(e) => setPreference(e.target.value as ThemePreference)}
+          >
+            <option value="dark">Dark — Aurora</option>
+            <option value="light">Light — Lumen</option>
+            <option value="system">System</option>
           </Select>
         }
       />
@@ -189,6 +198,20 @@ export default function DesignSystem() {
             <Button variant="secondary" onClick={() => toast('Info toast')}>Info</Button>
           </div>
         </Card>
+      </section>
+
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)' }}>Forms</h2>
+        <div className="design-grid">
+          <Input label="Email" placeholder="user@company.com" hint="Work email" />
+          <Textarea label="Notes" rows={3} placeholder="Resolution notes…" />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)' }}>Empty states</h2>
+        <DomainEmptyState domain="logs" />
+        <DomainEmptyState domain="incidents" />
       </section>
 
       <section>

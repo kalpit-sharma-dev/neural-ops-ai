@@ -1,71 +1,70 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Command, Search, X } from 'lucide-react';
+import { Command, Plus, Search, X } from 'lucide-react';
+import { ALL_NAV_ITEMS } from '../lib/navConfig';
+import { filterNavByFeature } from '../lib/featureFlags';
+import { useCommandPaletteStore } from '../store/commandPaletteStore';
 
 interface CommandItem {
   id: string;
   label: string;
   hint?: string;
-  path: string;
+  path?: string;
+  action?: () => void;
   keywords?: string[];
 }
 
-const COMMANDS: CommandItem[] = [
-  { id: 'dashboard', label: 'Command Center', path: '/', keywords: ['home', 'overview'] },
-  { id: 'logs', label: 'Log Explorer', path: '/logs', keywords: ['search', 'logs'] },
-  { id: 'incidents', label: 'Incidents', path: '/incidents', keywords: ['p1', 'outage'] },
-  { id: 'traces', label: 'Trace Explorer', path: '/traces' },
-  { id: 'trace-compare', label: 'Compare Traces', path: '/traces/compare', keywords: ['apm', 'diff'] },
-  { id: 'service-flow', label: 'Service Flow', path: '/service-flow' },
-  { id: 'metrics', label: 'Metrics Explorer', path: '/metrics' },
-  { id: 'dashboards', label: 'Dashboards', path: '/dashboards' },
-  { id: 'service-map', label: 'Service Map', path: '/service-map', keywords: ['topology'] },
-  { id: 'infrastructure', label: 'Infrastructure', path: '/infrastructure' },
-  { id: 'kubernetes', label: 'Kubernetes', path: '/kubernetes' },
-  { id: 'databases', label: 'Databases', path: '/databases' },
-  { id: 'slos', label: 'SLOs', path: '/slos' },
-  { id: 'rum', label: 'RUM', path: '/rum' },
-  { id: 'synthetic', label: 'Synthetic', path: '/synthetic' },
-  { id: 'workflows', label: 'Workflows', path: '/workflows' },
-  { id: 'notebooks', label: 'Notebooks', path: '/notebooks' },
-  { id: 'security', label: 'Security', path: '/security' },
-  { id: 'ai-chat', label: 'AI Assistant', path: '/ai-chat', keywords: ['chat', 'copilot'] },
-  { id: 'transactions', label: 'Transaction Journey', path: '/transactions', keywords: ['upi'] },
-  { id: 'anomalies', label: 'Anomaly Detection', path: '/anomalies' },
-  { id: 'alerts', label: 'Alerts', path: '/alerts' },
-  { id: 'settings', label: 'Settings', path: '/settings' },
+const ACTION_COMMANDS: Omit<CommandItem, 'action'>[] = [
+  { id: 'new-dashboard', label: 'New dashboard', path: '/dashboards', keywords: ['create'] },
+  { id: 'new-slo', label: 'Create SLO', path: '/slos', keywords: ['create'] },
+  { id: 'new-workflow', label: 'Create workflow', path: '/workflows/editor', keywords: ['create'] },
+  { id: 'new-notebook', label: 'New notebook', path: '/notebooks', keywords: ['create'] },
+  { id: 'new-alert', label: 'Create alert rule', path: '/alerts', keywords: ['create'] },
 ];
 
 export function CommandPalette() {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const open = useCommandPaletteStore((s) => s.open);
+  const setOpen = useCommandPaletteStore((s) => s.setOpen);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setOpen((value) => !value);
+        useCommandPaletteStore.getState().toggle();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  const commands = useMemo<CommandItem[]>(() => {
+    const nav = filterNavByFeature(ALL_NAV_ITEMS).map((item) => ({
+      id: item.id,
+      label: item.label,
+      path: item.to,
+      keywords: item.keywords,
+      hint: item.to,
+    }));
+    return [...nav, ...ACTION_COMMANDS];
+  }, []);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return COMMANDS;
-    return COMMANDS.filter(
+    if (!q) return commands;
+    return commands.filter(
       (item) =>
         item.label.toLowerCase().includes(q) ||
-        item.path.includes(q) ||
+        item.path?.includes(q) ||
         item.keywords?.some((k) => k.includes(q)),
     );
-  }, [query]);
+  }, [commands, query]);
 
   const run = (item: CommandItem) => {
-    navigate({ to: item.path });
+    if (item.action) item.action();
+    else if (item.path) navigate({ to: item.path });
     setOpen(false);
     setQuery('');
   };
@@ -74,27 +73,27 @@ export function CommandPalette() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="command-palette-overlay" />
-        <Dialog.Content className="command-palette" aria-label="Command palette">
+        <Dialog.Content className="command-palette" aria-label="Command palette" role="dialog">
           <div className="command-palette__header">
-            <Search size={16} />
+            <Search size={16} aria-hidden />
             <input
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Jump to page…"
+              placeholder="Jump to page or action…"
               aria-label="Search commands"
             />
-            <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Close">
+            <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Close palette">
               <X size={16} />
             </button>
           </div>
-          <ul className="command-palette__list">
+          <ul className="command-palette__list" role="listbox">
             {filtered.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} role="option">
                 <button type="button" onClick={() => run(item)}>
-                  <Command size={14} />
+                  {item.id.startsWith('new-') ? <Plus size={14} /> : <Command size={14} />}
                   <span>{item.label}</span>
-                  <span className="muted">{item.path}</span>
+                  <span className="muted">{item.hint ?? item.path}</span>
                 </button>
               </li>
             ))}

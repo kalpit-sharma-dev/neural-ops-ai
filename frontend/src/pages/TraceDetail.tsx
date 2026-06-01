@@ -30,7 +30,7 @@ export default function TraceDetail() {
         actions={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Link to="/traces/settings">Sampling</Link>
-            <Link to="/traces/compare" search={{ a: traceId, b: 'trace-demo-02' }}>Compare</Link>
+            <Link to="/traces/compare" search={{ a: traceId, b: undefined }}>Compare</Link>
             <Link to="/traces">← Back</Link>
           </div>
         }

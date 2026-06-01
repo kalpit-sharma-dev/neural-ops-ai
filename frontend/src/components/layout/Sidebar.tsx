@@ -1,74 +1,82 @@
 import { useEffect } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  Activity,
-  BarChart3,
-  Bell,
-  BookOpen,
-  Cpu,
-  Database,
-  Flame,
-  GitBranch,
-  LayoutGrid,
-  Layers,
-  Route,
-  Server,
-  Settings,
-  Share2,
-  Shield,
-  Terminal,
-  Workflow,
-  ChevronLeft,
-  ChevronRight,
-  Globe,
-  Gauge,
-  Store,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { create } from 'zustand';
+import { ALL_NAV_ITEMS, isNavActive, NAV_SECTIONS, type NavItem } from '../../lib/navConfig';
+import { filterNavByFeature } from '../../lib/featureFlags';
+import { useSidebarPrefsStore } from '../../store/sidebarPrefsStore';
 
 interface SidebarState {
   collapsed: boolean;
+  mobileOpen: boolean;
   toggle: () => void;
+  setMobileOpen: (open: boolean) => void;
 }
 
 export const useSidebarStore = create<SidebarState>((set) => ({
   collapsed: false,
+  mobileOpen: false,
   toggle: () => set((s) => ({ collapsed: !s.collapsed })),
+  setMobileOpen: (mobileOpen) => set({ mobileOpen }),
 }));
 
-const navItems = [
-  { to: '/', icon: LayoutGrid, label: 'Dashboard' },
-  { to: '/incidents', icon: Flame, label: 'Incidents' },
-  { to: '/logs', icon: Terminal, label: 'Log Explorer' },
-  { to: '/traces', icon: GitBranch, label: 'Trace Explorer' },
-  { to: '/service-flow', icon: Route, label: 'Service Flow' },
-  { to: '/metrics', icon: BarChart3, label: 'Metrics' },
-  { to: '/dashboards', icon: Layers, label: 'Dashboards' },
-  { to: '/transactions', icon: Route, label: 'Transactions' },
-  { to: '/anomalies', icon: Activity, label: 'Anomalies' },
-  { to: '/slos', icon: Gauge, label: 'SLOs' },
-  { to: '/service-map', icon: Share2, label: 'Service Map' },
-  { to: '/infrastructure', icon: Server, label: 'Infrastructure' },
-  { to: '/kubernetes', icon: Server, label: 'Kubernetes' },
-  { to: '/databases', icon: Database, label: 'Databases' },
-  { to: '/middleware', icon: Layers, label: 'Middleware' },
-  { to: '/rum', icon: Globe, label: 'RUM' },
-  { to: '/synthetic', icon: Activity, label: 'Synthetic' },
-  { to: '/ai-chat', icon: Cpu, label: 'AI Assistant' },
-  { to: '/cloud', icon: Server, label: 'Cloud' },
-  { to: '/workflows', icon: Workflow, label: 'Workflows' },
-  { to: '/notebooks', icon: BookOpen, label: 'Notebooks' },
-  { to: '/security', icon: Shield, label: 'Security' },
-  { to: '/marketplace', icon: Store, label: 'Marketplace' },
-  { to: '/integrations', icon: Share2, label: 'Integrations' },
-  { to: '/alerts', icon: Bell, label: 'Alerts' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
-];
+function NavLink({
+  item,
+  collapsed,
+  pathname,
+  showPin,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  pathname: string;
+  showPin?: boolean;
+}) {
+  const active = isNavActive(pathname, item.to);
+  const toggleFavorite = useSidebarPrefsStore((s) => s.toggleFavorite);
+  const hasFavorite = useSidebarPrefsStore((s) => s.hasFavorite);
+  const Icon = item.icon;
+
+  return (
+    <div className="sidebar__link-row">
+      <Link
+        to={item.to}
+        className={`sidebar__link ${active ? 'sidebar__link--active' : ''}`}
+        title={item.label}
+        aria-current={active ? 'page' : undefined}
+        onClick={() => useSidebarStore.getState().setMobileOpen(false)}
+      >
+        <Icon size={18} aria-hidden />
+        {!collapsed && <span>{item.label}</span>}
+      </Link>
+      {showPin && !collapsed && (
+        <button
+          type="button"
+          className={`sidebar__pin ${hasFavorite(item.id) ? 'sidebar__pin--active' : ''}`}
+          aria-label={hasFavorite(item.id) ? 'Unpin from favorites' : 'Pin to favorites'}
+          onClick={(e) => {
+            e.preventDefault();
+            toggleFavorite(item.id);
+          }}
+        >
+          <Star size={14} fill={hasFavorite(item.id) ? 'currentColor' : 'none'} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function Sidebar() {
   const collapsed = useSidebarStore((s) => s.collapsed);
+  const mobileOpen = useSidebarStore((s) => s.mobileOpen);
   const toggle = useSidebarStore((s) => s.toggle);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const favorites = useSidebarPrefsStore((s) => s.favorites);
+  const toggleSection = useSidebarPrefsStore((s) => s.toggleSection);
+  const isSectionCollapsed = useSidebarPrefsStore((s) => s.isSectionCollapsed);
+
+  const favoriteItems = favorites
+    .map((id) => ALL_NAV_ITEMS.find((item) => item.id === id))
+    .filter((item): item is NavItem => Boolean(item));
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -78,26 +86,66 @@ export function Sidebar() {
   }, [collapsed]);
 
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`}>
-      <button type="button" className="sidebar__toggle" onClick={toggle} aria-label="Toggle sidebar">
-        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
-      <nav className="sidebar__nav">
-        {navItems.map(({ to, icon: Icon, label }) => {
-          const active = to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`);
-          return (
-            <Link
-              key={to}
-              to={to}
-              className={`sidebar__link ${active ? 'sidebar__link--active' : ''}`}
-              title={label}
-            >
-              <Icon size={18} />
-              {!collapsed && <span>{label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+    <>
+      {mobileOpen && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Close navigation"
+          onClick={() => useSidebarStore.getState().setMobileOpen(false)}
+        />
+      )}
+      <aside
+        className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''} ${mobileOpen ? 'sidebar--mobile-open' : ''}`}
+      >
+        <div className="sidebar__header">
+          {!collapsed && (
+            <div className="sidebar__brand">
+              <span className="sidebar__brand-mark">N</span>
+              <span className="sidebar__brand-text">NeuralOps</span>
+            </div>
+          )}
+          <button type="button" className="sidebar__toggle" onClick={toggle} aria-label="Toggle sidebar width">
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
+
+        <nav className="sidebar__nav" aria-label="Main navigation">
+          {favoriteItems.length > 0 && (
+            <div className="sidebar__section">
+              {!collapsed && <p className="sidebar__section-label">Favorites</p>}
+              {favoriteItems.map((item) => (
+                <NavLink key={`fav-${item.id}`} item={item} collapsed={collapsed} pathname={pathname} />
+              ))}
+            </div>
+          )}
+
+          {NAV_SECTIONS.map((section) => {
+            const items = filterNavByFeature(section.items);
+            if (items.length === 0) return null;
+            const sectionCollapsed = isSectionCollapsed(section.id);
+            return (
+              <div key={section.id} className="sidebar__section">
+                {!collapsed && (
+                  <button
+                    type="button"
+                    className="sidebar__section-toggle"
+                    aria-expanded={!sectionCollapsed}
+                    onClick={() => toggleSection(section.id)}
+                  >
+                    <span>{section.label}</span>
+                    <ChevronDown size={14} className={sectionCollapsed ? 'sidebar__chevron--collapsed' : ''} />
+                  </button>
+                )}
+                {(!sectionCollapsed || collapsed) &&
+                  items.map((item) => (
+                    <NavLink key={item.id} item={item} collapsed={collapsed} pathname={pathname} showPin />
+                  ))}
+              </div>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }

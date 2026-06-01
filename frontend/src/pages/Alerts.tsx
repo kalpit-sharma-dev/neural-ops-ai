@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from '@tanstack/react-router';
 import {
@@ -29,6 +29,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 
 const TABS = ['Active', 'Rules', 'Channels', 'Silences', 'Escalation', 'History'] as const;
@@ -70,6 +71,51 @@ export default function Alerts() {
   const [channelForm, setChannelForm] = useState({ name: '', channelType: 'slack', webhookUrl: '', enabled: true });
   const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
   const [silenceForm, setSilenceForm] = useState({ servicePattern: '', reason: '', duration: '1h' });
+  const [selectedAlertIds, setSelectedAlertIds] = useState<Set<string>>(new Set());
+  const [ruleErrors, setRuleErrors] = useState<Record<string, string>>({});
+
+  const activeAlerts = useMemo(
+    () =>
+      (alertsQuery.data ?? []).filter((a) => a.status === 'FIRING' || a.status === 'ACKNOWLEDGED'),
+    [alertsQuery.data],
+  );
+
+  const alertsByService = useMemo(() => {
+    const groups = new Map<string, AlertRecord[]>();
+    for (const alert of activeAlerts) {
+      const key = alert.service || 'unknown';
+      const list = groups.get(key) ?? [];
+      list.push(alert);
+      groups.set(key, list);
+    }
+    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [activeAlerts]);
+
+  const silencePreviewCount = useMemo(() => {
+    const pattern = silenceForm.servicePattern.trim();
+    if (!pattern) return activeAlerts.length;
+    const re = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`, 'i');
+    return activeAlerts.filter((a) => re.test(a.service)).length;
+  }, [activeAlerts, silenceForm.servicePattern]);
+
+  const validateRuleForm = () => {
+    const errors: Record<string, string> = {};
+    if (!ruleForm.name.trim()) errors.name = 'Name is required';
+    if (!ruleForm.servicePattern.trim()) errors.servicePattern = 'Service pattern is required (use * for all)';
+    setRuleErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const bulkAckMut = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => acknowledgeAlert(id)));
+    },
+    onSuccess: () => {
+      toast.success('Alerts acknowledged');
+      setSelectedAlertIds(new Set());
+      void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
 
   const createRuleMut = useMutation({
     mutationFn: () => createAlertRule(ruleForm as Omit<AlertRule, 'id'>),
@@ -208,30 +254,78 @@ export default function Alerts() {
         <>
           {alertsQuery.isLoading && <LoadingState />}
           {alertsQuery.error && <ErrorState message={getApiErrorMessage(alertsQuery.error)} onRetry={() => alertsQuery.refetch()} />}
-          {(alertsQuery.data ?? []).filter((a) => a.status === 'FIRING' || a.status === 'ACKNOWLEDGED').length === 0 && !alertsQuery.isLoading && (
+          {activeAlerts.length === 0 && !alertsQuery.isLoading && (
             <Card title="No active alerts">All clear — no firing alerts in the last window.</Card>
           )}
-          {(alertsQuery.data ?? []).filter((a) => a.status === 'FIRING' || a.status === 'ACKNOWLEDGED').map((alert) => (
-            <div key={alert.id} className="ui-card" style={{ marginBottom: 12, cursor: 'pointer' }} onClick={() => setSelectedAlert(alert)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                <div>
-                  <Badge variant={alert.severity === 'P1' ? 'p1' : alert.severity === 'P2' ? 'p2' : 'info'}>
-                    {alert.severity}
-                  </Badge>
-                  <strong style={{ marginLeft: 8 }}>{alert.title}</strong>
-                  <p className="muted">{alert.service} · {alert.status}</p>
-                  <p>{alert.description}</p>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {alert.status === 'FIRING' && (
-                    <>
-                      <Button variant="secondary" size="sm" onClick={() => ackMut.mutate(alert.id)}>Ack</Button>
-                      <Button variant="ghost" size="sm" onClick={() => suppressMut.mutate(alert.id)}>Suppress</Button>
-                    </>
-                  )}
-                </div>
-              </div>
+          {activeAlerts.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={selectedAlertIds.size === activeAlerts.length}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelectedAlertIds(new Set(activeAlerts.map((a) => a.id)));
+                    else setSelectedAlertIds(new Set());
+                  }}
+                />
+                Select all
+              </label>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={selectedAlertIds.size === 0 || bulkAckMut.isPending}
+                onClick={() => bulkAckMut.mutate([...selectedAlertIds])}
+              >
+                Acknowledge selected ({selectedAlertIds.size})
+              </Button>
             </div>
+          )}
+          {alertsByService.map(([service, alerts]) => (
+            <Card key={service} title={service} style={{ marginBottom: 16 }}>
+              {alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="ui-card"
+                  style={{ marginBottom: 12, cursor: 'pointer' }}
+                  onClick={() => setSelectedAlert(alert)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedAlertIds.has(alert.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          setSelectedAlertIds((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(alert.id);
+                            else next.delete(alert.id);
+                            return next;
+                          });
+                        }}
+                        aria-label={`Select ${alert.title}`}
+                      />
+                      <div>
+                        <Badge variant={alert.severity === 'P1' ? 'p1' : alert.severity === 'P2' ? 'p2' : 'info'}>
+                          {alert.severity}
+                        </Badge>
+                        <strong style={{ marginLeft: 8 }}>{alert.title}</strong>
+                        <p className="muted">{alert.status}</p>
+                        <p>{alert.description}</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                      {alert.status === 'FIRING' && (
+                        <>
+                          <Button variant="secondary" size="sm" onClick={() => ackMut.mutate(alert.id)}>Ack</Button>
+                          <Button variant="ghost" size="sm" onClick={() => suppressMut.mutate(alert.id)}>Suppress</Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </Card>
           ))}
         </>
       )}
@@ -272,8 +366,20 @@ export default function Alerts() {
         <div className="dashboard-row-2">
           <Card title={editingRuleId ? 'Edit rule' : 'Create rule'}>
             <div className="form-stack">
-              <input placeholder="Rule name" value={ruleForm.name} onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })} />
-              <input placeholder="Service pattern" value={ruleForm.servicePattern} onChange={(e) => setRuleForm({ ...ruleForm, servicePattern: e.target.value })} />
+              <Input
+                label="Rule name"
+                placeholder="High error rate"
+                value={ruleForm.name}
+                onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })}
+                error={ruleErrors.name}
+              />
+              <Input
+                label="Service pattern"
+                placeholder="payment-*"
+                value={ruleForm.servicePattern}
+                onChange={(e) => setRuleForm({ ...ruleForm, servicePattern: e.target.value })}
+                error={ruleErrors.servicePattern}
+              />
               <Select value={ruleForm.severity} onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value })}>
                 <option value="P1">P1</option>
                 <option value="P2">P2</option>
@@ -282,11 +388,11 @@ export default function Alerts() {
               </Select>
               {editingRuleId ? (
                 <>
-                  <Button variant="primary" disabled={!ruleForm.name} onClick={() => updateRuleMut.mutate()}>Save</Button>
+                  <Button variant="primary" disabled={!ruleForm.name} onClick={() => { if (validateRuleForm()) updateRuleMut.mutate(); }}>Save</Button>
                   <Button variant="ghost" onClick={() => { setEditingRuleId(null); setRuleForm({ name: '', source: 'PROMETHEUS', servicePattern: '', severity: 'P2', enabled: true }); }}>Cancel</Button>
                 </>
               ) : (
-                <Button variant="primary" disabled={!ruleForm.name} onClick={() => createRuleMut.mutate()}>Create</Button>
+                <Button variant="primary" disabled={!ruleForm.name} onClick={() => { if (validateRuleForm()) createRuleMut.mutate(); }}>Create</Button>
               )}
             </div>
           </Card>
@@ -311,14 +417,14 @@ export default function Alerts() {
         <div className="dashboard-row-2">
           <Card title={editingChannelId ? 'Edit channel' : 'Add channel'}>
             <div className="form-stack">
-              <input placeholder="Name" value={channelForm.name} onChange={(e) => setChannelForm({ ...channelForm, name: e.target.value })} />
+              <Input label="Name" placeholder="Slack #alerts" value={channelForm.name} onChange={(e) => setChannelForm({ ...channelForm, name: e.target.value })} />
               <Select value={channelForm.channelType} onChange={(e) => setChannelForm({ ...channelForm, channelType: e.target.value })}>
                 <option value="slack">Slack</option>
                 <option value="pagerduty">PagerDuty</option>
                 <option value="webhook">Webhook</option>
                 <option value="email">Email</option>
               </Select>
-              <input placeholder="Webhook URL" value={channelForm.webhookUrl} onChange={(e) => setChannelForm({ ...channelForm, webhookUrl: e.target.value })} />
+              <Input label="Webhook URL" placeholder="https://…" value={channelForm.webhookUrl} onChange={(e) => setChannelForm({ ...channelForm, webhookUrl: e.target.value })} />
               {editingChannelId ? (
                 <>
                   <Button variant="primary" disabled={!channelForm.name} onClick={() => updateChannelMut.mutate()}>Save</Button>
@@ -355,10 +461,10 @@ export default function Alerts() {
         <div className="dashboard-row-2">
           <Card title="Create escalation policy">
             <div className="form-stack">
-              <input placeholder="Name" value={escalationForm.name} onChange={(e) => setEscalationForm({ ...escalationForm, name: e.target.value })} />
-              <input placeholder="Service pattern" value={escalationForm.servicePattern} onChange={(e) => setEscalationForm({ ...escalationForm, servicePattern: e.target.value })} />
-              <input placeholder="Escalate after (e.g. 15m)" value={escalationForm.after} onChange={(e) => setEscalationForm({ ...escalationForm, after: e.target.value })} />
-              <input placeholder="Target" value={escalationForm.target} onChange={(e) => setEscalationForm({ ...escalationForm, target: e.target.value })} />
+              <Input label="Name" value={escalationForm.name} onChange={(e) => setEscalationForm({ ...escalationForm, name: e.target.value })} />
+              <Input label="Service pattern" value={escalationForm.servicePattern} onChange={(e) => setEscalationForm({ ...escalationForm, servicePattern: e.target.value })} />
+              <Input label="Escalate after" placeholder="15m" value={escalationForm.after} onChange={(e) => setEscalationForm({ ...escalationForm, after: e.target.value })} />
+              <Input label="Target" value={escalationForm.target} onChange={(e) => setEscalationForm({ ...escalationForm, target: e.target.value })} />
               <Button variant="primary" disabled={!escalationForm.name} onClick={() => createEscalationMut.mutate()}>Create</Button>
             </div>
           </Card>
@@ -378,8 +484,11 @@ export default function Alerts() {
         <div className="dashboard-row-2">
           <Card title="Maintenance window">
             <div className="form-stack">
-              <input placeholder="Service pattern" value={silenceForm.servicePattern} onChange={(e) => setSilenceForm({ ...silenceForm, servicePattern: e.target.value })} />
-              <input placeholder="Reason" value={silenceForm.reason} onChange={(e) => setSilenceForm({ ...silenceForm, reason: e.target.value })} />
+              <Input label="Service pattern" placeholder="* or payment-*" value={silenceForm.servicePattern} onChange={(e) => setSilenceForm({ ...silenceForm, servicePattern: e.target.value })} />
+              <Input label="Reason" value={silenceForm.reason} onChange={(e) => setSilenceForm({ ...silenceForm, reason: e.target.value })} />
+              <p className="muted" style={{ margin: 0 }}>
+                Preview: would silence <strong>{silencePreviewCount}</strong> active alert{silencePreviewCount === 1 ? '' : 's'}
+              </p>
               <Select value={silenceForm.duration} onChange={(e) => setSilenceForm({ ...silenceForm, duration: e.target.value })}>
                 <option value="30m">30 minutes</option>
                 <option value="1h">1 hour</option>

@@ -6,7 +6,13 @@ import LogExplorer from './pages/LogExplorer';
 import LogSettings from './pages/LogSettings';
 import Incidents from './pages/Incidents';
 import IncidentDetail from './pages/IncidentDetail';
-import ServiceMap from './pages/ServiceMap';
+import { lazyPage } from './routes/lazyPage';
+
+const ServiceMap = lazyPage(() => import('./pages/ServiceMap'));
+const RUM = lazyPage(() => import('./pages/RUM'));
+const Kubernetes = lazyPage(() => import('./pages/Kubernetes'));
+const Infrastructure = lazyPage(() => import('./pages/Infrastructure'));
+const SessionReplay = lazyPage(() => import('./pages/SessionReplay'));
 import AIChat from './pages/AIChat';
 import TransactionJourney from './pages/TransactionJourney';
 import DesignSystem from './pages/DesignSystem';
@@ -27,11 +33,8 @@ import MetricsExplorer from './pages/MetricsExplorer';
 import Dashboards from './pages/Dashboards';
 import DashboardView from './pages/DashboardView';
 import SLOs from './pages/SLOs';
-import Infrastructure from './pages/Infrastructure';
-import Kubernetes from './pages/Kubernetes';
 import Databases from './pages/Databases';
 import Middleware from './pages/Middleware';
-import RUM from './pages/RUM';
 import Synthetic from './pages/Synthetic';
 import Workflows from './pages/Workflows';
 import Notebooks from './pages/Notebooks';
@@ -44,7 +47,6 @@ import WorkflowEditor from './pages/WorkflowEditor';
 import Integrations from './pages/Integrations';
 import TraceCompare from './pages/TraceCompare';
 import EntityPage from './pages/EntityPage';
-import SessionReplay from './pages/SessionReplay';
 import { HealthPage } from './pages/HealthPage';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
@@ -75,12 +77,23 @@ const logsRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/logs',
   component: LogExplorer,
-  validateSearch: (search: Record<string, unknown>) => ({
-    service: typeof search.service === 'string' ? search.service : undefined,
-    traceId: typeof search.traceId === 'string' ? search.traceId : undefined,
-    from: typeof search.from === 'string' ? search.from : undefined,
-    to: typeof search.to === 'string' ? search.to : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const result: {
+      service?: string;
+      traceId?: string;
+      from?: string;
+      to?: string;
+      q?: string;
+      mode?: string;
+    } = {};
+    if (typeof search.service === 'string') result.service = search.service;
+    if (typeof search.traceId === 'string') result.traceId = search.traceId;
+    if (typeof search.from === 'string') result.from = search.from;
+    if (typeof search.to === 'string') result.to = search.to;
+    if (typeof search.q === 'string') result.q = search.q;
+    if (typeof search.mode === 'string') result.mode = search.mode;
+    return result;
+  },
 });
 const logSettingsRoute = createRoute({ getParentRoute: () => authedRoute, path: '/logs/settings', component: LogSettings });
 const tracesRoute = createRoute({ getParentRoute: () => authedRoute, path: '/traces', component: TraceExplorer });

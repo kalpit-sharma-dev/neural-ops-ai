@@ -1,10 +1,15 @@
+import { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { fetchIncidents } from '../api/incidents';
+import type { Incident } from '../api/types';
 import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
+import { DomainEmptyState } from '../components/ui/DomainEmptyState';
+import { Input } from '../components/ui/Input';
 import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 
 function severityBadge(sev: string) {
   const map: Record<string, 'p1' | 'p2' | 'p3' | 'p4'> = {
@@ -17,20 +22,57 @@ function severityBadge(sev: string) {
 }
 
 export default function Incidents() {
+  const navigate = useNavigate();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState('');
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['incidents'],
     queryFn: () => fetchIncidents({ size: 100 }),
     refetchInterval: 30_000,
   });
 
+  const filtered = useMemo(() => {
+    const list = data ?? [];
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(
+      (inc) =>
+        inc.title.toLowerCase().includes(q) ||
+        inc.status.toLowerCase().includes(q) ||
+        inc.affectedServices?.some((s) => s.toLowerCase().includes(q)),
+    );
+  }, [data, query]);
+
+  const { activeIndex, setActiveIndex } = useListKeyboardNav(filtered, {
+    searchInputRef: searchRef,
+    onSelect: (inc: Incident) => {
+      void navigate({ to: '/incidents/$id', params: { id: inc.id } });
+    },
+  });
+
   return (
     <div>
       <PageHeader title="Incidents" subtitle="Active and recent operational incidents" />
 
+      <div style={{ marginBottom: 16, maxWidth: 400 }}>
+        <Input
+          ref={searchRef}
+          placeholder="Filter incidents…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          hint="Press / to focus · j/k navigate · Enter to open"
+        />
+      </div>
+
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
 
-      {data && (
+      {data && filtered.length === 0 && !isLoading && (
+        <DomainEmptyState domain="incidents" />
+      )}
+
+      {data && filtered.length > 0 && (
         <div className="ui-card">
           <table className="incident-table">
             <thead>
@@ -43,8 +85,12 @@ export default function Incidents() {
               </tr>
             </thead>
             <tbody>
-              {data.map((inc) => (
-                <tr key={inc.id}>
+              {filtered.map((inc, idx) => (
+                <tr
+                  key={inc.id}
+                  className={idx === activeIndex ? 'incident-table__row--active' : ''}
+                  onMouseEnter={() => setActiveIndex(idx)}
+                >
                   <td>
                     <Badge variant={severityBadge(inc.severity)}>{inc.severity}</Badge>
                   </td>
@@ -60,7 +106,6 @@ export default function Incidents() {
               ))}
             </tbody>
           </table>
-          {data.length === 0 && <p className="muted" style={{ padding: 16 }}>No incidents found</p>}
         </div>
       )}
     </div>

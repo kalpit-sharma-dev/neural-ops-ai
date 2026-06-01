@@ -101,6 +101,8 @@ Go module: `github.com/neuralops/platform`
 
 | Document | Description |
 |----------|-------------|
+| [docs/LOCAL_TEST_URLS.md](docs/LOCAL_TEST_URLS.md) | Local URLs to test UI, APIs, and observability after quickstart |
+| [docs/UI_IMPROVEMENT_ROADMAP.md](docs/UI_IMPROVEMENT_ROADMAP.md) | Phased, trackable UI/UX improvement backlog (checkboxes per task) |
 | [docs/PRODUCTION_AND_GTM.md](docs/PRODUCTION_AND_GTM.md) | Production ship plan, enterprise sales, pricing, and onboarding guidelines |
 | [docs/UI_DYNATRACE_GAP.md](docs/UI_DYNATRACE_GAP.md) | UI feature gap analysis vs Dynatrace (parity matrix and roadmap) |
 | [docs/UI_DYNATRACE_IMPLEMENTATION_PLAN.md](docs/UI_DYNATRACE_IMPLEMENTATION_PLAN.md) | Phase-wise plan to implement all Dynatrace UI gaps (12 phases) |

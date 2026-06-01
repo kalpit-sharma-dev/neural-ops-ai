@@ -6,7 +6,9 @@ import { DemoBanner } from './layout/DemoBanner';
 import { TooltipProvider } from './ui/Tooltip';
 import { CommandPalette } from './CommandPalette';
 import { RUMConsentBanner } from './rum/RUMConsentBanner';
+import { SkipLink } from './SkipLink';
 import { useRealtimeStore } from '../store/realtimeStore';
+import { useFilterUrlSync } from '../hooks/useFilterUrlSync';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,6 +19,7 @@ export function Layout({ children }: LayoutProps) {
   const connect = useRealtimeStore((s) => s.connect);
   const disconnect = useRealtimeStore((s) => s.disconnect);
   const focusMode = /^\/incidents\/[^/]+$/.test(location.pathname);
+  useFilterUrlSync();
 
   useEffect(() => {
     connect();
@@ -26,10 +29,13 @@ export function Layout({ children }: LayoutProps) {
   if (focusMode) {
     return (
       <TooltipProvider>
+        <SkipLink />
         <CommandPalette />
         <div className="app-shell app-shell--focus">
           <DemoBanner />
-          <main className="app-content app-content--full">{children}</main>
+          <main id="main-content" className="app-content app-content--full" tabIndex={-1}>
+            {children}
+          </main>
         </div>
       </TooltipProvider>
     );
@@ -37,14 +43,17 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <TooltipProvider>
+      <SkipLink />
       <CommandPalette />
+      <RUMConsentBanner />
       <div className="app-shell">
-        <DemoBanner />
-        <RUMConsentBanner />
         <Sidebar />
         <div className="app-main-column">
+          <DemoBanner />
           <TopBar />
-          <main className="app-content">{children}</main>
+          <main id="main-content" className="app-content" tabIndex={-1}>
+            {children}
+          </main>
         </div>
       </div>
     </TooltipProvider>

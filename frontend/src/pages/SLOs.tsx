@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
 export default function SLOs() {
@@ -46,17 +47,17 @@ export default function SLOs() {
       <div className="dashboard-row-2" style={{ marginBottom: 24 }}>
         <Card title="Create SLO">
           <div className="form-stack">
-            <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input placeholder="Service" value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} />
-            <input
-              placeholder="SLI query"
+            <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input label="Service" value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} />
+            <Input
+              label="SLI query"
               value={form.sliQuery}
               onChange={(e) => setForm({ ...form, sliQuery: e.target.value })}
             />
-            <input
+            <Input
+              label="Target %"
               type="number"
-              placeholder="Target %"
-              value={form.target}
+              value={String(form.target)}
               onChange={(e) => setForm({ ...form, target: Number(e.target.value) })}
             />
             <Button variant="primary" disabled={!form.name || !form.service} onClick={() => createMut.mutate()}>

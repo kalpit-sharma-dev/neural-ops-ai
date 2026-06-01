@@ -1,36 +1,40 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { Badge } from '../ui/Badge';
 
 export type EntityType = 'service' | 'host' | 'pod' | 'database' | 'container';
+export type EntityTab = 'overview' | 'metrics' | 'logs' | 'traces';
 
 interface EntityShellProps {
   entityType: EntityType;
   entityId: string;
   displayName?: string;
   health?: string;
+  activeTab?: EntityTab;
+  onTabChange?: (tab: EntityTab) => void;
   children: ReactNode;
 }
 
-function buildTabs(entityType: EntityType, entityId: string) {
-  if (entityType === 'service') {
-    return [
-      { label: 'Overview', to: '/entities/$type/$id', params: { type: entityType, id: entityId } },
-      { label: 'Traces', to: '/traces', search: { service: entityId } },
-      { label: 'Logs', to: '/logs', search: { service: entityId } },
-      { label: 'Metrics', to: '/metrics', search: { service: entityId } },
-      { label: 'Service map', to: '/service-map' },
-    ];
-  }
-  return [
-    { label: 'Overview', to: '/entities/$type/$id', params: { type: entityType, id: entityId } },
-  ];
-}
+const TABS: { id: EntityTab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'metrics', label: 'Metrics' },
+  { id: 'logs', label: 'Logs' },
+  { id: 'traces', label: 'Traces' },
+];
 
-export function EntityShell({ entityType, entityId, displayName, health, children }: EntityShellProps) {
-  const tabs = buildTabs(entityType, entityId);
+export function EntityShell({
+  entityType,
+  entityId,
+  displayName,
+  health,
+  activeTab = 'overview',
+  onTabChange,
+  children,
+}: EntityShellProps) {
+  const router = useRouterState();
   const name = displayName ?? entityId;
-  const healthVariant = health === 'critical' || health === 'down' ? 'critical' : health === 'degraded' ? 'warning' : 'healthy';
+  const healthVariant =
+    health === 'critical' || health === 'down' ? 'critical' : health === 'degraded' ? 'warning' : 'healthy';
 
   return (
     <div className="entity-shell">
@@ -41,18 +45,29 @@ export function EntityShell({ entityType, entityId, displayName, health, childre
           {health && <Badge variant={healthVariant}>{health}</Badge>}
         </div>
       </header>
-      <nav className="tab-bar entity-shell__tabs">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.label}
-            to={tab.to}
-            params={tab.params}
-            search={'search' in tab ? tab.search : undefined}
-            className="tab-bar__item"
-          >
-            {tab.label}
-          </Link>
-        ))}
+      <nav className="tab-bar entity-shell__tabs" aria-label="Entity sections">
+        {TABS.map((tab) =>
+          onTabChange ? (
+            <button
+              key={tab.id}
+              type="button"
+              className={`tab-bar__item ${activeTab === tab.id ? 'tab-bar__item--active' : ''}`}
+              onClick={() => onTabChange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ) : (
+            <Link
+              key={tab.id}
+              to="/entities/$type/$id"
+              params={{ type: entityType, id: entityId }}
+              search={{ tab: tab.id }}
+              className={`tab-bar__item ${(router.location.search as { tab?: string }).tab === tab.id ? 'tab-bar__item--active' : ''}`}
+            >
+              {tab.label}
+            </Link>
+          ),
+        )}
       </nav>
       <div className="entity-shell__body">{children}</div>
     </div>

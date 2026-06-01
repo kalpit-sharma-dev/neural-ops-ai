@@ -5,12 +5,16 @@ import { devLogin, fetchAuthConfig, startOIDCLogin } from '../api/auth';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
+import { Moon, Sun } from 'lucide-react';
+import { useThemeStore } from '../store/themeStore';
 
 export default function Login() {
   const navigate = useNavigate();
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
   const authConfig = useAuthStore((s) => s.authConfig);
+  const theme = useThemeStore((s) => s.theme);
+  const cyclePreference = useThemeStore((s) => s.cyclePreference);
   const [email, setEmail] = useState('demo@neuralops.ai');
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +55,14 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <button
+        type="button"
+        className="theme-toggle login-page__theme"
+        onClick={cyclePreference}
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
       <div className="login-card">
         <h1>NeuralOps</h1>
         <p className="muted">Sign in to your observability workspace</p>

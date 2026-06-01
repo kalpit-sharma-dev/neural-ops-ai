@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { fetchK8sClusters, fetchK8sDeployments, fetchK8sNamespaces, fetchK8sPods } from '../api/observability';
@@ -7,8 +7,48 @@ import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { LoadingState, PageHeader } from '../components/ui/PageStates';
 
+type SortKey = 'name' | 'namespace' | 'readyReplicas' | 'replicas' | 'status' | 'node';
+type SortDir = 'asc' | 'desc';
+
+function sortRows<T extends Record<string, unknown>>(rows: T[], key: SortKey, dir: SortDir): T[] {
+  return [...rows].sort((a, b) => {
+    const av = a[key];
+    const bv = b[key];
+    if (typeof av === 'number' && typeof bv === 'number') return dir === 'asc' ? av - bv : bv - av;
+    return dir === 'asc'
+      ? String(av).localeCompare(String(bv))
+      : String(bv).localeCompare(String(av));
+  });
+}
+
+function SortHeader({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  dir: SortDir;
+  onSort: (k: SortKey) => void;
+}) {
+  const active = activeKey === sortKey;
+  return (
+    <th>
+      <button type="button" className="table-sort-btn" onClick={() => onSort(sortKey)}>
+        {label} {active ? (dir === 'asc' ? '↑' : '↓') : ''}
+      </button>
+    </th>
+  );
+}
+
 export default function Kubernetes() {
   const [namespace, setNamespace] = useState('');
+  const [depSort, setDepSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'name', dir: 'asc' });
+  const [podSort, setPodSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'name', dir: 'asc' });
+
   const clustersQuery = useQuery({ queryKey: ['k8s-clusters'], queryFn: fetchK8sClusters });
   const nsQuery = useQuery({ queryKey: ['k8s-namespaces'], queryFn: fetchK8sNamespaces });
   const podsQuery = useQuery({ queryKey: ['k8s-pods', namespace], queryFn: () => fetchK8sPods(namespace || undefined) });
@@ -16,6 +56,22 @@ export default function Kubernetes() {
     queryKey: ['k8s-deployments', namespace],
     queryFn: () => fetchK8sDeployments(namespace || undefined),
   });
+
+  const toggleDepSort = (key: SortKey) => {
+    setDepSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
+  };
+  const togglePodSort = (key: SortKey) => {
+    setPodSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
+  };
+
+  const deployments = useMemo(
+    () => sortRows(depQuery.data ?? [], depSort.key, depSort.dir),
+    [depQuery.data, depSort],
+  );
+  const pods = useMemo(
+    () => sortRows(podsQuery.data ?? [], podSort.key, podSort.dir),
+    [podsQuery.data, podSort],
+  );
 
   return (
     <div>
@@ -42,9 +98,16 @@ export default function Kubernetes() {
       </Card>
       <Card title="Deployments" style={{ marginTop: 16 }}>
         <table className="data-table">
-          <thead><tr><th>Name</th><th>Namespace</th><th>Ready</th><th>Replicas</th></tr></thead>
+          <thead>
+            <tr>
+              <SortHeader label="Name" sortKey="name" activeKey={depSort.key} dir={depSort.dir} onSort={toggleDepSort} />
+              <SortHeader label="Namespace" sortKey="namespace" activeKey={depSort.key} dir={depSort.dir} onSort={toggleDepSort} />
+              <SortHeader label="Ready" sortKey="readyReplicas" activeKey={depSort.key} dir={depSort.dir} onSort={toggleDepSort} />
+              <SortHeader label="Replicas" sortKey="replicas" activeKey={depSort.key} dir={depSort.dir} onSort={toggleDepSort} />
+            </tr>
+          </thead>
           <tbody>
-            {(depQuery.data ?? []).map((d) => (
+            {deployments.map((d) => (
               <tr key={d.id}>
                 <td>{d.name}</td>
                 <td>{d.namespace}</td>
@@ -57,9 +120,17 @@ export default function Kubernetes() {
       </Card>
       <Card title="Pods" style={{ marginTop: 16 }}>
         <table className="data-table">
-          <thead><tr><th>Name</th><th>Namespace</th><th>Node</th><th>Status</th><th>Logs</th></tr></thead>
+          <thead>
+            <tr>
+              <SortHeader label="Name" sortKey="name" activeKey={podSort.key} dir={podSort.dir} onSort={togglePodSort} />
+              <SortHeader label="Namespace" sortKey="namespace" activeKey={podSort.key} dir={podSort.dir} onSort={togglePodSort} />
+              <th>Node</th>
+              <SortHeader label="Status" sortKey="status" activeKey={podSort.key} dir={podSort.dir} onSort={togglePodSort} />
+              <th>Logs</th>
+            </tr>
+          </thead>
           <tbody>
-            {(podsQuery.data ?? []).map((p) => (
+            {pods.map((p) => (
               <tr key={p.id}>
                 <td>{p.name}</td>
                 <td>{p.namespace}</td>

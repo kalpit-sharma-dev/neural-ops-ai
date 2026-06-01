@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
+# Full stack quickstart: tears down old compose images, rebuilds without cache (default),
+# recreates containers, and starts NeuralOps.
+#
+# Faster repeat runs (use Docker layer cache):
+#   QUICKSTART_USE_CACHE=1 bash scripts/quickstart.sh
+#
+# See docs/LOCAL_TEST_URLS.md for test URLs after startup.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="${ROOT_DIR}/infra/docker-compose.yml"
 BACKEND_DIR="${ROOT_DIR}/backend"
+BACKEND_BUILD_TAG="${BACKEND_BUILD_TAG:-neuralops-backend-build:local}"
 
 log() {
   printf '[quickstart] %s\n' "$*"
@@ -62,8 +70,46 @@ else
   exit 1
 fi
 
-log "Starting NeuralOps stack..."
-"${COMPOSE[@]}" up -d --build
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
+
+BUILD_EXTRA=()
+COMPOSE_BUILD_EXTRA=()
+if [[ "${QUICKSTART_USE_CACHE:-0}" != "1" ]]; then
+  BUILD_EXTRA=(--no-cache)
+  COMPOSE_BUILD_EXTRA=(--no-cache)
+  log "Fresh build mode (no Docker cache). Set QUICKSTART_USE_CACHE=1 to speed up repeat runs."
+else
+  log "Cache-enabled build (QUICKSTART_USE_CACHE=1)."
+fi
+
+log "Stopping stack and removing compose-built images..."
+"${COMPOSE[@]}" down --remove-orphans --rmi local 2>/dev/null || true
+
+log "Removing prior backend build artifact image (if present)..."
+docker rmi -f "${BACKEND_BUILD_TAG}" 2>/dev/null || true
+
+log "Pruning dangling images from previous builds..."
+docker image prune -f >/dev/null 2>&1 || true
+
+log "Building images (shared Go compile + compose services)..."
+log "  Step 1/2: compiling all Go services..."
+docker build \
+  "${BUILD_EXTRA[@]}" \
+  --file "${BACKEND_DIR}/Dockerfile" \
+  --target build-all \
+  --tag "${BACKEND_BUILD_TAG}" \
+  "${BACKEND_DIR}"
+
+log "  Step 2/2: building all compose images (max ${COMPOSE_PARALLEL_LIMIT} parallel)..."
+"${COMPOSE[@]}" build "${COMPOSE_BUILD_EXTRA[@]}"
+
+log "Pruning unused dangling layers after build..."
+docker image prune -f >/dev/null 2>&1 || true
+
+log "Starting NeuralOps stack (force-recreate containers from new images)..."
+"${COMPOSE[@]}" up -d --force-recreate --remove-orphans
 
 log "Waiting for core services..."
 wait_for_url "http://localhost:8080/health" "Gateway"
@@ -88,14 +134,15 @@ fi
 
 log ""
 log "NeuralOps is running."
-log "  UI:       http://localhost:3000"
+log "  Test URLs: docs/LOCAL_TEST_URLS.md"
+log "  UI:       http://localhost:3000  (hard-refresh: Ctrl+Shift+R if styles look stale)"
 log "  Gateway:  http://localhost:8080/health"
 log "  Info:     http://localhost:8080/api/v1/info"
 log "  Grafana:  http://localhost:3001 (admin/admin)"
 log "  Prometheus: http://localhost:9090"
-  log "  Jaeger:   http://localhost:16686"
-  log "  Pyroscope: http://localhost:4040 (continuous profiling)"
-  log "  Beyla eBPF + OneAgent + profiler agents run in compose"
+log "  Jaeger:   http://localhost:16686"
+log "  Pyroscope: http://localhost:4040 (continuous profiling)"
+log "  Beyla eBPF + OneAgent + profiler agents run in compose"
 log "  Collector: syncs K8s/synthetic monitors from Prometheus → Postgres (service: collector)"
 log "  Keycloak: http://localhost:8088 (admin/admin)"
 log "  Metrics:  http://localhost:8080/metrics"

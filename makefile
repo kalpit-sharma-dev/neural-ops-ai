@@ -54,8 +54,11 @@ frontend-dev:
 frontend-e2e:
 	cd frontend && npm run test:e2e
 
+compose-build:
+	bash scripts/docker-build-stack.sh
+
 compose-up:
-	docker compose -f infra/docker-compose.yml up -d --build
+	bash scripts/quickstart.sh
 
 compose-down:
 	docker compose -f infra/docker-compose.yml down
