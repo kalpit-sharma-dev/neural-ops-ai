@@ -3,12 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { fetchRUMSessions } from '../api/observability';
+import { getApiErrorMessage } from '../api/client';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { DomainEmptyState } from '../components/ui/DomainEmptyState';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, KpiRow } from '../components/stitch';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 
 export default function RUM() {
-  const { data, isLoading } = useQuery({ queryKey: ['rum-sessions'], queryFn: fetchRUMSessions });
+  const { data, isLoading, error, refetch, isFetched } = useQuery({ queryKey: ['rum-sessions'], queryFn: fetchRUMSessions });
   const chartDefaults = chartCartesianDefaults();
 
   const vitals = useMemo(() => {
@@ -35,65 +38,70 @@ export default function RUM() {
     };
   }, [data]);
 
+  const hasSessions = (data?.length ?? 0) > 0;
+
   return (
-    <div>
-      <PageHeader
-        title="Real User Monitoring"
-        subtitle="Browser sessions, Core Web Vitals, session replay"
-        actions={
-          <a href="/rum/neuralops-rum.js" download="neuralops-rum.js" className="muted">
-            Download RUM SDK
-          </a>
-        }
-      />
+    <StitchPageShell
+      title="Real User Monitoring"
+      subtitle="Browser sessions, Core Web Vitals, session replay"
+      actions={
+        <a href="/rum/neuralops-rum.js" download="neuralops-rum.js" className="muted">
+          Download RUM SDK
+        </a>
+      }
+    >
       {isLoading && <LoadingState />}
+      {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
+      {!isLoading && !error && !hasSessions && isFetched && <DomainEmptyState domain="rum" />}
 
-      {data && data.length > 0 && (
-        <div className="dashboard-row-3" style={{ marginBottom: 24 }}>
-          {[
-            { title: 'LCP', data: vitals.lcp, unit: 's' },
-            { title: 'FID (proxy)', data: vitals.fid, unit: '' },
-            { title: 'CLS (proxy)', data: vitals.cls, unit: '' },
-          ].map(({ title, data: series }) => (
-            <Card key={title} title={title}>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={series}>
-                  <XAxis dataKey="bucket" {...chartDefaults.axis} />
-                  <YAxis {...chartDefaults.axis} />
-                  <Tooltip contentStyle={chartDefaults.tooltipStyle} />
-                  <Bar dataKey="value" fill="var(--accent-primary)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <Card title="Sessions">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>User</th><th>Page</th><th>Device</th><th>Country</th><th>LCP</th><th>Errors</th><th>Duration</th><th />
-            </tr>
-          </thead>
-          <tbody>
-            {(data ?? []).map((s) => (
-              <tr key={s.id}>
-                <td>{s.userId}</td>
-                <td>{s.page}</td>
-                <td>{s.device}</td>
-                <td>{s.country}</td>
-                <td>{s.lcp}s</td>
-                <td>{s.errors}</td>
-                <td>{Math.round(s.durationMs / 1000)}s</td>
-                <td>
-                  <Link to="/rum/sessions/$sessionId/replay" params={{ sessionId: s.id }}>Replay</Link>
-                </td>
-              </tr>
+      {hasSessions && (
+        <>
+          <KpiRow columns={3}>
+            {[
+              { title: 'LCP', data: vitals.lcp },
+              { title: 'FID (proxy)', data: vitals.fid },
+              { title: 'CLS (proxy)', data: vitals.cls },
+            ].map(({ title, data: series }) => (
+              <Card key={title} title={title}>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={series}>
+                    <XAxis dataKey="bucket" {...chartDefaults.axis} />
+                    <YAxis {...chartDefaults.axis} />
+                    <Tooltip contentStyle={chartDefaults.tooltipStyle} />
+                    <Bar dataKey="value" fill="var(--accent-primary)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
             ))}
-          </tbody>
-        </table>
-      </Card>
-    </div>
+          </KpiRow>
+
+          <Card title="Sessions" style={{ marginTop: 24 }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>User</th><th>Page</th><th>Device</th><th>Country</th><th>LCP</th><th>Errors</th><th>Duration</th><th />
+                </tr>
+              </thead>
+              <tbody>
+                {(data ?? []).map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.userId}</td>
+                    <td>{s.page}</td>
+                    <td>{s.device}</td>
+                    <td>{s.country}</td>
+                    <td>{s.lcp}s</td>
+                    <td>{s.errors}</td>
+                    <td>{Math.round(s.durationMs / 1000)}s</td>
+                    <td>
+                      <Link to="/rum/sessions/$sessionId/replay" params={{ sessionId: s.id }}>Replay</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </>
+      )}
+    </StitchPageShell>
   );
 }

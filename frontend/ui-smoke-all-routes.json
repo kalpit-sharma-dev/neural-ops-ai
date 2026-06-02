@@ -1,0 +1,312 @@
+{
+  "seed": [
+    {
+      "step": "ids",
+      "status": "PASS",
+      "detail": {
+        "incidentId": "inc-1",
+        "traceId": "trace-demo-03",
+        "dashboardId": "e3202a47-5a18-4e15-a9aa-c127c42624f5",
+        "sessionId": "s1",
+        "attackId": "atk-1",
+        "workflowId": "wf-1"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "path": "/login",
+      "requiresAuth": false,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/auth/callback",
+      "requiresAuth": false,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/incidents",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/incidents/inc-1",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/logs",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/logs/settings",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/traces",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/traces/settings",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/traces/compare?a=trace-demo-03&b=trace-demo-04",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/traces/trace-demo-03",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/entities/service/payment-service",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/service-flow",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/transactions",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/anomalies",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/service-map",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/ai-chat",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/alerts",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/metrics",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/dashboards",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/dashboards/e3202a47-5a18-4e15-a9aa-c127c42624f5",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/slos",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/infrastructure",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/kubernetes",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/databases",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/middleware",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/rum",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/rum/sessions/s1/replay",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/synthetic",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/workflows",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/notebooks",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/security",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/security/attacks/atk-1",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/marketplace",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/cloud",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/workflows/editor",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/workflows/editor?id=wf-1",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/integrations",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/users",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/api-keys",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/audit",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/usage",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/sso",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/policies",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/settings/oncall",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/design-system",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "path": "/health",
+      "requiresAuth": true,
+      "status": "PASS",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "total": 48,
+    "pass": 48,
+    "warn": 0,
+    "fail": 0
+  }
+}

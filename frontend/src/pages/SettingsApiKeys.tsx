@@ -1,14 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link } from '@tanstack/react-router';
 import { createAPIKey, fetchAPIKeys } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function SettingsApiKeys() {
   const queryClient = useQueryClient();
@@ -28,20 +28,19 @@ export default function SettingsApiKeys() {
   });
 
   return (
-    <div>
-      <PageHeader
-        title="API Keys"
-        subtitle="Programmatic access tokens"
-        actions={
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Input placeholder="Key name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Key name" />
-            <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
-              Create key
-            </Button>
-            <Link to="/settings">← Settings</Link>
-          </div>
-        }
-      />
+    <StitchPageShell
+      title="API Keys"
+      subtitle="Programmatic access tokens"
+      breadcrumb={<SettingsBreadcrumb page="API Keys" />}
+      actions={
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Input placeholder="Key name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Key name" />
+          <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
+            Create key
+          </Button>
+        </div>
+      }
+    >
       {isLoading && <LoadingState />}
       <Card title="Keys">
         <table className="data-table">
@@ -63,6 +62,6 @@ export default function SettingsApiKeys() {
         <p className="muted">This secret is shown once. Store it securely.</p>
         <code style={{ display: 'block', padding: 12, wordBreak: 'break-all' }}>{secret}</code>
       </Modal>
-    </div>
+    </StitchPageShell>
   );
 }

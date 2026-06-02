@@ -6,9 +6,11 @@ import { getApiErrorMessage } from '../api/client';
 import { PromQLEditor } from '../components/metrics/PromQLEditor';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 import { Select } from '../components/ui/Select';
 import { chartCartesianDefaults } from '../lib/chartTheme';
+import { useTimeBounds } from '../hooks/useTimeBounds';
 
 type ChartType = 'line' | 'bar' | 'stat' | 'table';
 
@@ -19,17 +21,24 @@ export default function MetricsExplorer() {
   const [promql, setPromql] = useState('rate(http_requests_total[5m])');
   const [promqlError, setPromqlError] = useState('');
   const [usePromql, setUsePromql] = useState(false);
+  const { key: rangeKey, resolve: resolveRange } = useTimeBounds();
 
   const catalogQuery = useQuery({ queryKey: ['metric-catalog'], queryFn: fetchMetricCatalog });
   const seriesQuery = useQuery({
-    queryKey: ['metric-query', metric, service],
-    queryFn: () => queryMetric(metric, service),
+    queryKey: ['metric-query', metric, service, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return queryMetric(metric, service, { start: startIso, end: endIso });
+    },
     enabled: !!metric && !usePromql,
   });
 
   const promqlQuery = useQuery({
-    queryKey: ['metric-promql', promql],
-    queryFn: () => queryPromQL(promql),
+    queryKey: ['metric-promql', promql, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return queryPromQL(promql, { start: startIso, end: endIso });
+    },
     enabled: usePromql && promql.length > 2,
   });
 
@@ -57,8 +66,7 @@ export default function MetricsExplorer() {
   };
 
   return (
-    <div>
-      <PageHeader title="Metrics Explorer" subtitle="Browse catalog metrics or run PromQL" />
+    <StitchPageShell title="Metrics Explorer" subtitle="Browse catalog metrics or run PromQL">
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div className="pill-group">
           {(['line', 'bar', 'stat', 'table'] as ChartType[]).map((t) => (
@@ -144,6 +152,6 @@ export default function MetricsExplorer() {
           )}
         </Card>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

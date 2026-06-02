@@ -1,6 +1,6 @@
 import { getData } from './client';
 import type { DashboardOverview } from './types';
-import { queryMetric } from './observability';
+import { queryMetric, type TimeRangeParams } from './observability';
 
 export function fetchDashboardOverview(): Promise<DashboardOverview> {
   return getData<DashboardOverview>('/dashboard/overview');
@@ -9,14 +9,17 @@ export function fetchDashboardOverview(): Promise<DashboardOverview> {
 /** Build hourly error-rate series from Prometheus-backed metrics per service. */
 export type DashboardChartPoint = Record<string, string | number> & { hour: string };
 
-export async function fetchDashboardErrorSeries(services: string[]): Promise<DashboardChartPoint[]> {
+export async function fetchDashboardErrorSeries(
+  services: string[],
+  range?: TimeRangeParams,
+): Promise<DashboardChartPoint[]> {
   const top = services.slice(0, 4);
   if (top.length === 0) return [];
 
   const series = await Promise.all(
     top.map(async (service) => {
       try {
-        const data = await queryMetric('http_errors_total', service);
+        const data = await queryMetric('http_errors_total', service, range);
         return { service, points: data.points ?? [] };
       } catch {
         return { service, points: [] as { timestamp: string; value: number }[] };

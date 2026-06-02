@@ -1,15 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { fetchAuditLog } from '../api/observability';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function SettingsAudit() {
   const { data, isLoading } = useQuery({ queryKey: ['admin-audit'], queryFn: fetchAuditLog });
 
   return (
-    <div>
-      <PageHeader title="Audit Log" subtitle="Configuration and security events" actions={<Link to="/settings">← Settings</Link>} />
+    <StitchPageShell
+      title="Audit Log"
+      subtitle="Configuration and security events"
+      breadcrumb={<SettingsBreadcrumb page="Audit Log" />}
+    >
       {isLoading && <LoadingState />}
       <Card title="Recent events">
         <table className="data-table">
@@ -27,6 +30,6 @@ export default function SettingsAudit() {
           </tbody>
         </table>
       </Card>
-    </div>
+    </StitchPageShell>
   );
 }

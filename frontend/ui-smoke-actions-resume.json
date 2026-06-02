@@ -1,0 +1,78 @@
+{
+  "summary": {
+    "pass": 5,
+    "warn": 0,
+    "fail": 6,
+    "total": 11
+  },
+  "report": [
+    {
+      "name": "Users invite",
+      "status": "FAIL",
+      "issues": [
+        "Error: locator.fill: SyntaxError: Failed to execute 'querySelectorAll' on 'Document': 'input[placeholder*=@]' is not a valid selector.\n    at query (<anonymous>:5334:41)\n    at <anonymous>:5344:7\n    at SelectorEvaluatorImpl._cached (<anonymous>:5121:20)\n    at SelectorEvaluatorImpl._queryCSS (<anonymous>:5331:17)\n    at SelectorEvaluatorImpl._querySimple (<anonymous>:5211:19)\n    at <anonymous>:5"
+      ]
+    },
+    {
+      "name": "Users role change",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Workflow create",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Workflow toggle/delete availability",
+      "status": "FAIL",
+      "issues": [
+        "Error: edit action not present on workflows list"
+      ]
+    },
+    {
+      "name": "Marketplace install endpoint",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Marketplace page shows card actions",
+      "status": "FAIL",
+      "issues": [
+        "Error: no install/configure actions visible"
+      ]
+    },
+    {
+      "name": "Integrations connect endpoint",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Integrations page has connect/edit actions",
+      "status": "FAIL",
+      "issues": [
+        "Error: no integration action buttons visible"
+      ]
+    },
+    {
+      "name": "Security list + detail route",
+      "status": "FAIL",
+      "issues": [
+        "Error: locator.count: SyntaxError: Failed to execute 'querySelectorAll' on 'Document': 'a[href*=/security/attacks/]' is not a valid selector.\n    at query (<anonymous>:5334:41)\n    at <anonymous>:5344:7\n    at SelectorEvaluatorImpl._cached (<anonymous>:5121:20)\n    at SelectorEvaluatorImpl._queryCSS (<anonymous>:5331:17)\n    at SelectorEvaluatorImpl._querySimple (<anonymous>:5211:19)\n    at <anony"
+      ]
+    },
+    {
+      "name": "Settings API key create",
+      "status": "FAIL",
+      "issues": [
+        "TimeoutError: locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input').first()\n    - locator resolved to <input readonly type=\"search\" class=\"ui-search__input\" placeholder=\"Search… (⌘K)\" aria-label=\"Open command palette\"/>\n    - fill(\"Resume Key 1780401875246\")\n  - attempting fill action\n    2 × waiting for element to be visible, enabled and editable\n      - element is no",
+        "console: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+      ]
+    },
+    {
+      "name": "Settings usage loads",
+      "status": "PASS",
+      "issues": []
+    }
+  ]
+}

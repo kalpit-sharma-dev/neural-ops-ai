@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { Cpu, Send, Square } from 'lucide-react';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { useRouterState } from '@tanstack/react-router';
 import { streamChatQuery, type ChatSource } from '../api/chat';
 import { MarkdownMessage } from '../components/chat/MarkdownMessage';
 import { Button } from '../components/ui/Button';
 import { Textarea } from '../components/ui/Textarea';
 import { PageHeader } from '../components/ui/PageStates';
+import { CitationChips } from '../components/stitch';
 import { buildPageContext, suggestedPromptsForPath } from '../lib/pageContext';
 
 interface Message {
@@ -13,16 +14,6 @@ interface Message {
   content: string;
   streaming?: boolean;
   sources?: ChatSource[];
-}
-
-function sourceLink(source: ChatSource): { to: string; params?: Record<string, string>; search?: Record<string, string> } | null {
-  const msg = source.message ?? '';
-  const traceMatch = msg.match(/\b(trace-[a-z0-9-]+)\b/i);
-  if (traceMatch) return { to: '/traces/$traceId', params: { traceId: traceMatch[1] } };
-  const incMatch = msg.match(/\b(inc-[a-z0-9-]+)\b/i);
-  if (incMatch) return { to: '/incidents/$id', params: { id: incMatch[1] } };
-  if (source.service) return { to: '/logs', search: { service: source.service } };
-  return null;
 }
 
 export default function AIChat() {
@@ -142,29 +133,7 @@ export default function AIChat() {
                 {msg.role === 'assistant' ? (
                   <>
                     <MarkdownMessage content={msg.content || (msg.streaming ? '…' : '')} />
-                    {(msg.sources?.length ?? 0) > 0 && (
-                      <details className="chat-sources" open>
-                        <summary>Citations ({msg.sources!.length})</summary>
-                        <ul>
-                          {msg.sources!.map((source, idx) => {
-                            const link = sourceLink(source);
-                            return (
-                              <li key={`${source.service}-${idx}`}>
-                                {link ? (
-                                  <Link to={link.to} params={link.params} search={link.search}>
-                                    <strong>{source.service}</strong> · {source.severity}
-                                  </Link>
-                                ) : (
-                                  <strong>{source.service}</strong>
-                                )}
-                                {!link && <> · {source.severity}</>}
-                                <p className="muted">{source.message}</p>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </details>
-                    )}
+                    {(msg.sources?.length ?? 0) > 0 && <CitationChips sources={msg.sources!} />}
                   </>
                 ) : (
                   msg.content

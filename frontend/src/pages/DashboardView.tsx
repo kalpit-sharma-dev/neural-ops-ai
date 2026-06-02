@@ -11,6 +11,7 @@ import { MetricCard } from '../components/ui/MetricCard';
 import { Button } from '../components/ui/Button';
 import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
 import { chartCartesianDefaults } from '../lib/chartTheme';
+import { useTimeBounds } from '../hooks/useTimeBounds';
 
 type Tile = NonNullable<Awaited<ReturnType<typeof fetchDashboard>>['tiles']>[number];
 
@@ -25,6 +26,7 @@ export default function DashboardView() {
   const queryClient = useQueryClient();
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [tileOrder, setTileOrder] = useState<string[] | null>(null);
+  const { key: rangeKey, resolve: resolveRange } = useTimeBounds();
 
   const dashQuery = useQuery({ queryKey: ['dashboard', id], queryFn: () => fetchDashboard(id), enabled: !!id });
 
@@ -67,8 +69,11 @@ export default function DashboardView() {
   const firstMetric = metricTiles[0];
 
   const metricQuery = useQuery({
-    queryKey: ['dash-metric', firstMetric?.metric],
-    queryFn: () => queryMetric(firstMetric!.metric!, 'payment-service'),
+    queryKey: ['dash-metric', firstMetric?.metric, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return queryMetric(firstMetric!.metric!, 'payment-service', { start: startIso, end: endIso });
+    },
     enabled: !!firstMetric?.metric && !editMode,
   });
 

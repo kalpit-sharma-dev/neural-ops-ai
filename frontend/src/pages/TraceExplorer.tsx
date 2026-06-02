@@ -8,13 +8,16 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { SearchInput } from '../components/ui/SearchInput';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 import { getChartColors } from '../lib/chartColors';
+import { useTimeBounds } from '../hooks/useTimeBounds';
 
 export default function TraceExplorer() {
   const [service, setService] = useState('');
   const [status, setStatus] = useState('');
+  const { key: rangeKey, resolve: resolveRange } = useTimeBounds();
 
   const opsQuery = useQuery({
     queryKey: ['service-operations', service],
@@ -23,8 +26,17 @@ export default function TraceExplorer() {
   });
 
   const { data, isLoading, error, refetch, isFetched } = useQuery({
-    queryKey: ['trace-search', service, status],
-    queryFn: () => searchTraces({ service: service || undefined, status: status || undefined, limit: 50 }),
+    queryKey: ['trace-search', service, status, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return searchTraces({
+        service: service || undefined,
+        status: status || undefined,
+        start: startIso,
+        end: endIso,
+        limit: 50,
+      });
+    },
   });
 
   const heatmapData = useMemo(() => {
@@ -42,12 +54,11 @@ export default function TraceExplorer() {
   const colors = getChartColors();
 
   return (
-    <div>
-      <PageHeader
-        title="Trace Explorer"
-        subtitle="Search distributed traces and open waterfall views"
-        actions={<Link to="/traces/compare" search={{ a: undefined, b: undefined }}>Compare traces</Link>}
-      />
+    <StitchPageShell
+      title="Trace Explorer"
+      subtitle="Search distributed traces and open waterfall views"
+      actions={<Link to="/traces/compare" search={{ a: undefined, b: undefined }}>Compare traces</Link>}
+    >
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <SearchInput placeholder="Service filter…" value={service} onChange={(e) => setService(e.target.value)} shortcut="" />
@@ -111,6 +122,6 @@ export default function TraceExplorer() {
           ))}
         </div>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

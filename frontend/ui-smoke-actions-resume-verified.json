@@ -1,0 +1,49 @@
+{
+  "summary": {
+    "pass": 1,
+    "fail": 5,
+    "total": 6
+  },
+  "report": [
+    {
+      "name": "Users invite control + row append",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Workflows action controls present",
+      "status": "FAIL",
+      "issues": [
+        "Error: delete=0 testrun=0"
+      ]
+    },
+    {
+      "name": "Marketplace install/configure controls present",
+      "status": "FAIL",
+      "issues": [
+        "Error: no marketplace controls"
+      ]
+    },
+    {
+      "name": "Integrations connect/edit/disconnect controls present",
+      "status": "FAIL",
+      "issues": [
+        "Error: no integration controls"
+      ]
+    },
+    {
+      "name": "Security attack deep link present + open",
+      "status": "FAIL",
+      "issues": [
+        "Error: no attack link"
+      ]
+    },
+    {
+      "name": "Settings usage counters present",
+      "status": "FAIL",
+      "issues": [
+        "Error: usage counters missing"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
@@ -13,7 +12,8 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function SettingsOncall() {
   const queryClient = useQueryClient();
@@ -58,8 +58,11 @@ export default function SettingsOncall() {
   });
 
   return (
-    <div>
-      <PageHeader title="On-call schedules" subtitle="Escalation rotation and PagerDuty sync" actions={<Link to="/settings">← Settings</Link>} />
+    <StitchPageShell
+      title="On-call schedules"
+      subtitle="Escalation rotation and PagerDuty sync"
+      breadcrumb={<SettingsBreadcrumb page="On-call schedules" />}
+    >
       <Card title="New schedule" style={{ marginBottom: 24 }}>
         <div className="form-stack">
           <input placeholder="Team name" value={team} onChange={(e) => setTeam(e.target.value)} />
@@ -103,6 +106,6 @@ export default function SettingsOncall() {
           </table>
         </Card>
       ))}
-    </div>
+    </StitchPageShell>
   );
 }

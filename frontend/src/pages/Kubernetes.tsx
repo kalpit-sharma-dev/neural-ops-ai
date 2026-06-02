@@ -2,10 +2,13 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { fetchK8sClusters, fetchK8sDeployments, fetchK8sNamespaces, fetchK8sPods } from '../api/observability';
+import { getApiErrorMessage } from '../api/client';
 import { logsSearch } from '../utils/logsSearch';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { DomainEmptyState } from '../components/ui/DomainEmptyState';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 type SortKey = 'name' | 'namespace' | 'readyReplicas' | 'replicas' | 'status' | 'node';
 type SortDir = 'asc' | 'desc';
@@ -74,13 +77,16 @@ export default function Kubernetes() {
   );
 
   return (
-    <div>
-      <PageHeader
-        title="Kubernetes"
-        subtitle="Live cluster inventory via Kubernetes API (in-cluster) or Prometheus fallback"
-        actions={<Link to="/infrastructure">← Infrastructure</Link>}
-      />
+    <StitchPageShell
+      title="Kubernetes"
+      subtitle="Live cluster inventory via Kubernetes API (in-cluster) or Prometheus fallback"
+      actions={<Link to="/infrastructure">← Infrastructure</Link>}
+    >
       {clustersQuery.isLoading && <LoadingState />}
+      {clustersQuery.error && <ErrorState message={getApiErrorMessage(clustersQuery.error)} onRetry={() => clustersQuery.refetch()} />}
+      {!clustersQuery.error && clustersQuery.isFetched && (clustersQuery.data?.length ?? 0) === 0 && (
+        <DomainEmptyState domain="kubernetes" />
+      )}
       {(clustersQuery.data ?? []).map((c) => (
         <Card key={c.id} title={c.name}>
           <p>{c.nodes} nodes · {c.pods} pods · <Badge variant="healthy">{c.health}</Badge></p>
@@ -144,6 +150,6 @@ export default function Kubernetes() {
           </tbody>
         </table>
       </Card>
-    </div>
+    </StitchPageShell>
   );
 }

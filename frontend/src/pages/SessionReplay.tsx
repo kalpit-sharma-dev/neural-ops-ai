@@ -1,10 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
+import { Clock, ListOrdered, MonitorPlay } from 'lucide-react';
 import rrwebPlayer from 'rrweb-player';
 import 'rrweb-player/dist/style.css';
 import { fetchSessionReplay } from '../api/observability';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 export default function SessionReplay() {
   const { sessionId = '' } = useParams({ strict: false });
@@ -45,33 +48,70 @@ export default function SessionReplay() {
     };
   }, [data]);
 
-  const hasRrweb = (data ?? []).some((ev) => ev.type === 'rrweb');
+  const events = data ?? [];
+  const hasRrweb = events.some((ev) => ev.type === 'rrweb');
+  const hasEvents = events.length > 0;
+
+  const range = useMemo(() => {
+    if (events.length === 0) return null;
+    const times = events.map((ev) => new Date(ev.recordedAt).getTime()).filter((t) => !Number.isNaN(t));
+    if (times.length === 0) return null;
+    const start = Math.min(...times);
+    const end = Math.max(...times);
+    return { start, durationSec: Math.round((end - start) / 1000) };
+  }, [events]);
 
   return (
-    <div>
-      <PageHeader
-        title={`Session replay ${sessionId}`}
-        subtitle={hasRrweb ? 'rrweb player' : 'Legacy snapshot events'}
-        actions={<Link to="/rum">← RUM sessions</Link>}
-      />
+    <StitchPageShell
+      title={`Session replay ${sessionId}`}
+      subtitle={hasRrweb ? 'rrweb player' : 'Snapshot event timeline'}
+      actions={<Link to="/rum">← RUM sessions</Link>}
+    >
       {isLoading && <LoadingState />}
       {error && <ErrorState message="Replay not found" />}
+
+      {!isLoading && !error && hasEvents && (
+        <div className="replay-meta">
+          <span className="replay-meta__item">
+            <MonitorPlay size={14} aria-hidden /> {hasRrweb ? 'rrweb capture' : 'Snapshot capture'}
+          </span>
+          <span className="replay-meta__item">
+            <ListOrdered size={14} aria-hidden /> {events.length} events
+          </span>
+          {range && (
+            <span className="replay-meta__item">
+              <Clock size={14} aria-hidden /> {range.durationSec}s · started {new Date(range.start).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+      )}
+
       {hasRrweb && <div ref={containerRef} className="replay-player" />}
-      {!hasRrweb && !isLoading && (
+
+      {!hasRrweb && !isLoading && hasEvents && (
         <div className="replay-timeline">
-          {(data ?? []).map((ev) => (
+          {events.map((ev) => (
             <div key={ev.seq} className="replay-event">
-              <span className="muted">#{ev.seq}</span>
-              <strong>{ev.type}</strong>
+              <span className="replay-event__type">
+                <span className="muted">#{ev.seq}</span>
+                <strong>{ev.type}</strong>
+              </span>
               <span className="muted">{new Date(ev.recordedAt).toLocaleTimeString()}</span>
               {ev.type === 'snapshot' && typeof ev.payload?.html === 'string' && (
                 <iframe title={`snapshot-${ev.seq}`} sandbox="" srcDoc={ev.payload.html} className="replay-snapshot" />
               )}
             </div>
           ))}
-          {(data ?? []).length === 0 && <p className="muted">No replay events — enable RUM SDK with rrweb.</p>}
         </div>
       )}
-    </div>
+
+      {!isLoading && !error && !hasEvents && (
+        <EmptyState
+          title="No replay events"
+          description="This session has no recorded events. Enable the RUM SDK with rrweb capture to record replays."
+          icon={<MonitorPlay size={32} />}
+        />
+      )}
+    </StitchPageShell>
   );
 }

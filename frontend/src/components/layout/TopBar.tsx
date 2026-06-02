@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useFilterStore, type Environment, type TimeRangePreset } from '../../store/filterStore';
 import { useAuthStore } from '../../store/authStore';
 import { useRealtimeStore } from '../../store/realtimeStore';
 import { logoutSession } from '../../api/auth';
 import { SearchInput } from '../ui/SearchInput';
-import { Select } from '../ui/Select';
 import { Bell, LogOut, Menu, Monitor, Moon, Network, Sun } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import toast from 'react-hot-toast';
@@ -12,6 +10,8 @@ import { useThemeStore, type ThemePreference } from '../../store/themeStore';
 import { useCommandPaletteStore } from '../../store/commandPaletteStore';
 import { useSidebarStore } from './Sidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';
+import { EnvPillBar } from './EnvPillBar';
+import { TimeRangePicker } from './TimeRangePicker';
 
 const THEME_LABEL: Record<ThemePreference, string> = {
   light: 'Light',
@@ -21,10 +21,6 @@ const THEME_LABEL: Record<ThemePreference, string> = {
 
 export function TopBar() {
   const navigate = useNavigate();
-  const environment = useFilterStore((s) => s.environment);
-  const timeRange = useFilterStore((s) => s.timeRange);
-  const setEnvironment = useFilterStore((s) => s.setEnvironment);
-  const setTimeRange = useFilterStore((s) => s.setTimeRange);
   const user = useAuthStore((s) => s.user);
   const tenantName = useAuthStore((s) => s.tenantName);
   const authEnabled = useAuthStore((s) => s.authEnabled);
@@ -73,18 +69,8 @@ export function TopBar() {
         </div>
 
         <div className="topbar__controls topbar__controls--desktop">
-          <Select label="Env" value={environment} onChange={(e) => setEnvironment(e.target.value as Environment)}>
-            <option value="ALL">ALL</option>
-            <option value="PROD">PROD</option>
-            <option value="STAGING">STAGING</option>
-            <option value="DEV">DEV</option>
-          </Select>
-          <Select label="Range" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRangePreset)}>
-            <option value="1h">Last 1h</option>
-            <option value="6h">Last 6h</option>
-            <option value="24h">Last 24h</option>
-            <option value="7d">Last 7d</option>
-          </Select>
+          <EnvPillBar />
+          <TimeRangePicker />
           <SearchInput
             placeholder="Search… (⌘K)"
             className="topbar__search"

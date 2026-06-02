@@ -1,6 +1,4 @@
-import { Link } from '@tanstack/react-router';
-import { Card } from '../components/ui/Card';
-import { PageHeader } from '../components/ui/PageStates';
+import { StitchPageShell, HubCardGrid, HubCard } from '../components/stitch';
 
 const sections = [
   { title: 'Users & Teams', desc: 'Manage tenant users and RBAC roles', to: '/settings/users' },
@@ -18,16 +16,12 @@ const sections = [
 
 export default function Settings() {
   return (
-    <div>
-      <PageHeader title="Settings" subtitle="Platform configuration and administration" />
-      <div className="settings-grid">
+    <StitchPageShell title="Settings" subtitle="Platform configuration and administration">
+      <HubCardGrid>
         {sections.map((s) => (
-          <Card key={s.to} title={s.title}>
-            <p className="muted">{s.desc}</p>
-            <Link to={s.to}>Open →</Link>
-          </Card>
+          <HubCard key={s.to} title={s.title} description={s.desc} to={s.to} />
         ))}
-      </div>
-    </div>
+      </HubCardGrid>
+    </StitchPageShell>
   );
 }

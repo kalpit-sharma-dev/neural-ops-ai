@@ -103,6 +103,10 @@
   --glow-danger: 0 0 24px rgba(251, 113, 133, 0.35);
   --glass-bg: rgba(17, 17, 24, 0.85);
   --glass-blur: blur(16px) saturate(1.2);
+  /* Phase 1 shell parity (DESIGN.md: glassmorphism nav + chrome) */
+  --nav-glass-bg: rgba(17, 17, 24, 0.78);
+  --nav-glass-blur: blur(12px) saturate(1.2);
+  --nav-rail-active: var(--accent-primary);
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
   --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.5);
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -111,6 +115,8 @@
   --chart-2: #a78bfa;
   --chart-3: #fbbf24;
   --chart-4: #fb7185;
+  /* DESIGN.md: chart grid lines should be extremely subtle */
+  --chart-grid: rgba(255, 255, 255, 0.03);
 
   --btn-primary-fg: #09090f;
   --overlay-scrim: rgba(0, 0, 0, 0.65);
@@ -173,6 +179,10 @@
   --glow-danger: 0 4px 20px rgba(225, 29, 72, 0.2);
   --glass-bg: rgba(255, 255, 255, 0.92);
   --glass-blur: blur(16px) saturate(1.1);
+  /* Phase 1 shell parity (Lumen) */
+  --nav-glass-bg: rgba(255, 255, 255, 0.86);
+  --nav-glass-blur: blur(12px) saturate(1.1);
+  --nav-rail-active: var(--accent-primary);
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
   --shadow-elevated: 0 16px 48px rgba(15, 23, 42, 0.1);
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -181,6 +191,7 @@
   --chart-2: #7c3aed;
   --chart-3: #d97706;
   --chart-4: #e11d48;
+  --chart-grid: rgba(15, 23, 42, 0.06);
 
   --btn-primary-fg: #ffffff;
   --overlay-scrim: rgba(15, 23, 42, 0.4);

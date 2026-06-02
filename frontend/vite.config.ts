@@ -19,4 +19,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split heavy third-party libraries into cacheable vendor chunks so the
+        // main app bundle stays small and visualization/replay code only loads
+        // for the routes that need it.
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['@tanstack/react-router', '@tanstack/react-query', '@tanstack/react-virtual'],
+          'vendor-charts': ['recharts'],
+          'vendor-flow': ['@xyflow/react'],
+          'vendor-replay': ['rrweb', 'rrweb-player'],
+          'vendor-motion': ['framer-motion'],
+        },
+      },
+    },
+  },
 });

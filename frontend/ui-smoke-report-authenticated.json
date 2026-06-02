@@ -1,0 +1,306 @@
+{
+  "summary": {
+    "routePass": 0,
+    "routeWarn": 0,
+    "routeFail": 36,
+    "actionPass": 0,
+    "actionWarn": 0,
+    "actionFail": 5
+  },
+  "report": {
+    "routes": [
+      {
+        "path": "/",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)",
+          "console/page errors: Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        ]
+      },
+      {
+        "path": "/incidents",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/logs",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/traces",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/traces/compare",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/service-flow",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/transactions",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/anomalies",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/service-map",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/alerts",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/metrics",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/dashboards",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/slos",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/infrastructure",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/kubernetes",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/databases",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/middleware",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/rum",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/synthetic",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/workflows",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/notebooks",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/security",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/marketplace",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/cloud",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/integrations",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/users",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/api-keys",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/audit",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/usage",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/sso",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/policies",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/settings/oncall",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/design-system",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/health",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      },
+      {
+        "path": "/workflows/editor",
+        "status": "FAIL",
+        "issues": [
+          "redirected to /login (not authenticated)"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "name": "Users invite user",
+        "status": "FAIL",
+        "issues": [
+          "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /invite user/i }).first()\n",
+          "console/page errors: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+        ]
+      },
+      {
+        "name": "Workflow create",
+        "status": "FAIL",
+        "issues": [
+          "TimeoutError: locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByLabel(/name/i)\n",
+          "console/page errors: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+        ]
+      },
+      {
+        "name": "Marketplace install modal open",
+        "status": "FAIL",
+        "issues": [
+          "Error: No Install button available"
+        ]
+      },
+      {
+        "name": "Integrations connect modal open",
+        "status": "FAIL",
+        "issues": [
+          "Error: No Connect button available"
+        ]
+      },
+      {
+        "name": "Security attack detail open",
+        "status": "FAIL",
+        "issues": [
+          "Error: No attack detail link available"
+        ]
+      }
+    ]
+  }
+}

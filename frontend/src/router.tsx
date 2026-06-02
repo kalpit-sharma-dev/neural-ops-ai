@@ -1,56 +1,60 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import Dashboard from './pages/Dashboard';
-import LogExplorer from './pages/LogExplorer';
-import LogSettings from './pages/LogSettings';
-import Incidents from './pages/Incidents';
-import IncidentDetail from './pages/IncidentDetail';
 import { lazyPage } from './routes/lazyPage';
+import { useAuthStore } from './store/authStore';
 
+// Auth entry points stay eager so unauthenticated load is fast and flicker-free.
+import Login from './pages/Login';
+import AuthCallback from './pages/AuthCallback';
+
+// All authenticated route pages are code-split so the initial bundle stays small
+// and heavy dependencies (recharts, xyflow, rrweb) only load when their page does.
+const Dashboard = lazyPage(() => import('./pages/Dashboard'));
+const LogExplorer = lazyPage(() => import('./pages/LogExplorer'));
+const LogSettings = lazyPage(() => import('./pages/LogSettings'));
+const Incidents = lazyPage(() => import('./pages/Incidents'));
+const IncidentDetail = lazyPage(() => import('./pages/IncidentDetail'));
 const ServiceMap = lazyPage(() => import('./pages/ServiceMap'));
 const RUM = lazyPage(() => import('./pages/RUM'));
 const Kubernetes = lazyPage(() => import('./pages/Kubernetes'));
 const Infrastructure = lazyPage(() => import('./pages/Infrastructure'));
 const SessionReplay = lazyPage(() => import('./pages/SessionReplay'));
-import AIChat from './pages/AIChat';
-import TransactionJourney from './pages/TransactionJourney';
-import DesignSystem from './pages/DesignSystem';
-import AnomalyDetection from './pages/AnomalyDetection';
-import TraceExplorer from './pages/TraceExplorer';
-import TraceDetail from './pages/TraceDetail';
-import ServiceFlow from './pages/ServiceFlow';
-import Alerts from './pages/Alerts';
-import Settings from './pages/Settings';
-import SettingsUsers from './pages/SettingsUsers';
-import SettingsApiKeys from './pages/SettingsApiKeys';
-import SettingsAudit from './pages/SettingsAudit';
-import SettingsUsage from './pages/SettingsUsage';
-import SettingsSSO from './pages/SettingsSSO';
-import SettingsPolicies from './pages/SettingsPolicies';
-import SettingsOncall from './pages/SettingsOncall';
-import MetricsExplorer from './pages/MetricsExplorer';
-import Dashboards from './pages/Dashboards';
-import DashboardView from './pages/DashboardView';
-import SLOs from './pages/SLOs';
-import Databases from './pages/Databases';
-import Middleware from './pages/Middleware';
-import Synthetic from './pages/Synthetic';
-import Workflows from './pages/Workflows';
-import Notebooks from './pages/Notebooks';
-import Security from './pages/Security';
-import SecurityAttackDetail from './pages/SecurityAttackDetail';
-import Marketplace from './pages/Marketplace';
-import TraceSettings from './pages/TraceSettings';
-import CloudMonitoring from './pages/CloudMonitoring';
-import WorkflowEditor from './pages/WorkflowEditor';
-import Integrations from './pages/Integrations';
-import TraceCompare from './pages/TraceCompare';
-import EntityPage from './pages/EntityPage';
-import { HealthPage } from './pages/HealthPage';
-import Login from './pages/Login';
-import AuthCallback from './pages/AuthCallback';
-import { useAuthStore } from './store/authStore';
+const AIChat = lazyPage(() => import('./pages/AIChat'));
+const TransactionJourney = lazyPage(() => import('./pages/TransactionJourney'));
+const DesignSystem = lazyPage(() => import('./pages/DesignSystem'));
+const AnomalyDetection = lazyPage(() => import('./pages/AnomalyDetection'));
+const TraceExplorer = lazyPage(() => import('./pages/TraceExplorer'));
+const TraceDetail = lazyPage(() => import('./pages/TraceDetail'));
+const ServiceFlow = lazyPage(() => import('./pages/ServiceFlow'));
+const Alerts = lazyPage(() => import('./pages/Alerts'));
+const Settings = lazyPage(() => import('./pages/Settings'));
+const SettingsUsers = lazyPage(() => import('./pages/SettingsUsers'));
+const SettingsApiKeys = lazyPage(() => import('./pages/SettingsApiKeys'));
+const SettingsAudit = lazyPage(() => import('./pages/SettingsAudit'));
+const SettingsUsage = lazyPage(() => import('./pages/SettingsUsage'));
+const SettingsSSO = lazyPage(() => import('./pages/SettingsSSO'));
+const SettingsPolicies = lazyPage(() => import('./pages/SettingsPolicies'));
+const SettingsOncall = lazyPage(() => import('./pages/SettingsOncall'));
+const MetricsExplorer = lazyPage(() => import('./pages/MetricsExplorer'));
+const Dashboards = lazyPage(() => import('./pages/Dashboards'));
+const DashboardView = lazyPage(() => import('./pages/DashboardView'));
+const SLOs = lazyPage(() => import('./pages/SLOs'));
+const Databases = lazyPage(() => import('./pages/Databases'));
+const Middleware = lazyPage(() => import('./pages/Middleware'));
+const Synthetic = lazyPage(() => import('./pages/Synthetic'));
+const Workflows = lazyPage(() => import('./pages/Workflows'));
+const Notebooks = lazyPage(() => import('./pages/Notebooks'));
+const Security = lazyPage(() => import('./pages/Security'));
+const SecurityAttackDetail = lazyPage(() => import('./pages/SecurityAttackDetail'));
+const Marketplace = lazyPage(() => import('./pages/Marketplace'));
+const TraceSettings = lazyPage(() => import('./pages/TraceSettings'));
+const CloudMonitoring = lazyPage(() => import('./pages/CloudMonitoring'));
+const WorkflowEditor = lazyPage(() => import('./pages/WorkflowEditor'));
+const Integrations = lazyPage(() => import('./pages/Integrations'));
+const TraceCompare = lazyPage(() => import('./pages/TraceCompare'));
+const EntityPage = lazyPage(() => import('./pages/EntityPage'));
+const HealthPage = lazyPage(() => import('./pages/HealthPage').then((m) => ({ default: m.HealthPage })));
 
 function AuthedShell() {
   const authEnabled = useAuthStore((s) => s.authEnabled);
@@ -158,7 +162,14 @@ const securityAttackRoute = createRoute({
 });
 const marketplaceRoute = createRoute({ getParentRoute: () => authedRoute, path: '/marketplace', component: Marketplace });
 const cloudRoute = createRoute({ getParentRoute: () => authedRoute, path: '/cloud', component: CloudMonitoring });
-const workflowEditorRoute = createRoute({ getParentRoute: () => authedRoute, path: '/workflows/editor', component: WorkflowEditor });
+const workflowEditorRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/workflows/editor',
+  component: WorkflowEditor,
+  validateSearch: (search: Record<string, unknown>) => ({
+    id: typeof search.id === 'string' ? search.id : undefined,
+  }),
+});
 const integrationsRoute = createRoute({ getParentRoute: () => authedRoute, path: '/integrations', component: Integrations });
 const settingsRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings', component: Settings });
 const settingsUsersRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/users', component: SettingsUsers });

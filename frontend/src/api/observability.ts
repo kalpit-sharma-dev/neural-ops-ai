@@ -1,4 +1,4 @@
-import { getData, postData, putData, deleteData } from './client';
+import { getData, postData, putData, patchData, deleteData } from './client';
 
 export interface Span {
   traceId: string;
@@ -78,8 +78,18 @@ export async function fetchMetricCatalog() {
   return getData<{ name: string; description: string; unit: string; labels: string[] }[]>('/metrics/catalog');
 }
 
-export async function queryMetric(name: string, service?: string) {
-  return getData<MetricSeries>('/metrics/query', { name, service });
+export interface TimeRangeParams {
+  start?: string;
+  end?: string;
+}
+
+export async function queryMetric(name: string, service?: string, range?: TimeRangeParams) {
+  return getData<MetricSeries>('/metrics/query', {
+    name,
+    service,
+    ...(range?.start ? { start: range.start } : {}),
+    ...(range?.end ? { end: range.end } : {}),
+  });
 }
 
 export async function fetchDashboards() {
@@ -98,8 +108,12 @@ export async function updateDashboard(id: string, body: Partial<Dashboard>) {
   return putData<Dashboard>(`/dashboards/${encodeURIComponent(id)}`, body);
 }
 
-export async function queryPromQL(query: string) {
-  return getData<MetricSeries>('/metrics/promql', { query });
+export async function queryPromQL(query: string, range?: TimeRangeParams) {
+  return getData<MetricSeries>('/metrics/promql', {
+    query,
+    ...(range?.start ? { start: range.start } : {}),
+    ...(range?.end ? { end: range.end } : {}),
+  });
 }
 
 export async function fetchSessionReplay(sessionId: string) {
@@ -122,8 +136,56 @@ export async function fetchAttack(id: string) {
   );
 }
 
-export async function createWorkflow(body: { name: string; trigger: string; enabled: boolean; steps: string[] }) {
-  return postData('/workflows', body);
+export interface WorkflowGraphNode {
+  id: string;
+  type: string;
+  label: string;
+  x: number;
+  y: number;
+}
+
+export type WorkflowEdgeCondition = 'success' | 'failure' | 'always';
+
+export interface WorkflowGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  /** Gates runtime traversal. Omitted/"success" follows on predecessor success. */
+  condition?: WorkflowEdgeCondition | string;
+}
+
+export interface WorkflowGraph {
+  nodes: WorkflowGraphNode[];
+  edges: WorkflowGraphEdge[];
+}
+
+export interface Workflow {
+  id: string;
+  name: string;
+  trigger: string;
+  enabled: boolean;
+  steps: string[];
+  graph?: WorkflowGraph;
+}
+
+export interface WorkflowInput {
+  name: string;
+  trigger: string;
+  enabled: boolean;
+  steps: string[];
+  graph?: WorkflowGraph;
+}
+
+export async function createWorkflow(body: WorkflowInput) {
+  return postData<Workflow>('/workflows', body);
+}
+
+export async function updateWorkflow(id: string, body: WorkflowInput) {
+  return putData<Workflow>(`/workflows/${encodeURIComponent(id)}`, body);
+}
+
+export async function deleteWorkflow(id: string) {
+  return deleteData<{ deleted: boolean }>(`/workflows/${encodeURIComponent(id)}`);
 }
 
 export async function createNotebook(body: { name: string; cells: { id: string; type: string; content: string }[] }) {
@@ -183,7 +245,7 @@ export async function fetchSyntheticRuns(id: string) {
 }
 
 export async function fetchWorkflows() {
-  return getData<{ id: string; name: string; trigger: string; enabled: boolean; steps: string[] }[]>('/workflows');
+  return getData<Workflow[]>('/workflows');
 }
 
 export async function fetchNotebooks() {
@@ -212,6 +274,41 @@ export async function fetchIntegrations() {
   >('/integrations');
 }
 
+export interface MarketplaceConfigField {
+  key: string;
+  label: string;
+  secret?: boolean;
+}
+
+export interface MarketplaceExtension {
+  key: string;
+  name: string;
+  category: string;
+  description: string;
+  publisher: string;
+  version: string;
+  installed: boolean;
+  configFields?: MarketplaceConfigField[];
+  configPublic?: Record<string, string>;
+}
+
+export async function fetchMarketplace() {
+  return getData<MarketplaceExtension[]>('/marketplace');
+}
+
+export async function installExtension(key: string, config?: Record<string, string>) {
+  return postData<MarketplaceExtension>(
+    `/marketplace/${encodeURIComponent(key)}/install`,
+    config ? { config } : { config: {} },
+  );
+}
+
+export async function uninstallExtension(key: string) {
+  return postData<{ uninstalled: boolean; key: string }>(
+    `/marketplace/${encodeURIComponent(key)}/uninstall`,
+  );
+}
+
 export async function connectIntegration(id: string, config?: Record<string, string>) {
   return postData<{ id: string; name: string; connected: boolean; status: string }>(
     `/integrations/${encodeURIComponent(id)}/connect`,
@@ -219,9 +316,27 @@ export async function connectIntegration(id: string, config?: Record<string, str
   );
 }
 
-export async function fetchAdminUsers() {
-  return getData<{ id: string; email: string; role: string; active: boolean }[]>('/admin/users');
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: string;
+  active: boolean;
+  tenantId?: string;
 }
+
+export async function fetchAdminUsers() {
+  return getData<AdminUser[]>('/admin/users');
+}
+
+export async function createAdminUser(body: { email: string; role: string }) {
+  return postData<AdminUser>('/admin/users', body);
+}
+
+export async function updateAdminUser(id: string, body: { role?: string; active?: boolean }) {
+  return patchData<{ updated: boolean }>(`/admin/users/${encodeURIComponent(id)}`, body);
+}
+
+export const USER_ROLES = ['ADMIN', 'SRE', 'DEVELOPER', 'ALERT_MANAGER', 'READONLY'] as const;
 
 export async function fetchAPIKeys() {
   return getData<{ id: string; name: string; prefix: string; scopes: string[]; createdAt: string }[]>('/admin/api-keys');

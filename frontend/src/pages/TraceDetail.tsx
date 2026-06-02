@@ -8,7 +8,8 @@ import { TraceFlameGraph } from '../features/traces/TraceFlameGraph';
 import { ProfilePanel } from '../features/traces/ProfilePanel';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 type ViewMode = 'waterfall' | 'flame';
 
@@ -23,18 +24,17 @@ export default function TraceDetail() {
   });
 
   return (
-    <div>
-      <PageHeader
-        title={`Trace ${traceId}`}
-        subtitle="PurePath-style trace analysis"
-        actions={
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link to="/traces/settings">Sampling</Link>
-            <Link to="/traces/compare" search={{ a: traceId, b: undefined }}>Compare</Link>
-            <Link to="/traces">← Back</Link>
-          </div>
-        }
-      />
+    <StitchPageShell
+      title={`Trace ${traceId}`}
+      subtitle="PurePath-style trace analysis"
+      actions={
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link to="/traces/settings">Sampling</Link>
+          <Link to="/traces/compare" search={{ a: traceId, b: undefined }}>Compare</Link>
+          <Link to="/traces">← Back</Link>
+        </div>
+      }
+    >
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
       {data && (
@@ -61,6 +61,6 @@ export default function TraceDetail() {
           </div>
         </>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

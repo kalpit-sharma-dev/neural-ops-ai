@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -200,6 +201,248 @@ GROUP BY bucket ORDER BY bucket`, tenantID, metricType, service, start.UTC(), en
 	return MetricSeries{Name: metricType, Labels: map[string]string{"service": service}, Points: points}, nil
 }
 
+// QueryUsageFromClickHouse derives ingestion/usage counters from analytics tables.
+// It returns an error when there is no meaningful live data so handlers can
+// fall back to seeded demo stats.
+func QueryUsageFromClickHouse(ctx context.Context, conn driver.Conn, tenantID string, since time.Time) (UsageStats, error) {
+	if conn == nil {
+		return UsageStats{}, fmt.Errorf("clickhouse unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	if since.IsZero() {
+		since = time.Now().UTC().Add(-24 * time.Hour)
+	}
+	var logsCount uint64
+	var logsBytes uint64
+	if err := conn.QueryRow(ctx, `
+SELECT count(), coalesce(sum(length(message)), 0)
+FROM logs
+WHERE tenant_id = ? AND timestamp >= ?`, tenantID, since.UTC()).Scan(&logsCount, &logsBytes); err != nil {
+		return UsageStats{}, err
+	}
+	var tracesCount uint64
+	if err := conn.QueryRow(ctx, `
+SELECT uniqExact(trace_id)
+FROM trace_spans
+WHERE tenant_id = ? AND start_time >= ?`, tenantID, since.UTC()).Scan(&tracesCount); err != nil {
+		return UsageStats{}, err
+	}
+	var metricsCount uint64
+	if err := conn.QueryRow(ctx, `
+SELECT count()
+FROM metrics
+WHERE tenant_id = ? AND timestamp >= ?`, tenantID, since.UTC()).Scan(&metricsCount); err != nil {
+		return UsageStats{}, err
+	}
+	if logsCount == 0 && tracesCount == 0 && metricsCount == 0 {
+		return UsageStats{}, fmt.Errorf("no usage data")
+	}
+	return UsageStats{
+		LogsIngestedGB:  float64(logsBytes) / 1_000_000_000.0,
+		TracesIngested:  int64(tracesCount),
+		MetricsIngested: int64(metricsCount),
+		// No first-class sources yet for these counters.
+		AITokensUsed: 0,
+		ActiveUsers:  0,
+	}, nil
+}
+
+// QuerySecurityVulnerabilities derives likely vuln findings from recent logs.
+func QuerySecurityVulnerabilities(ctx context.Context, conn driver.Conn, tenantID string) ([]SecurityVulnerability, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("clickhouse unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	rows, err := conn.Query(ctx, `
+SELECT service,
+       any(message) AS sample_message,
+       max(timestamp) AS detected_at
+FROM logs
+WHERE tenant_id = ?
+  AND timestamp >= now() - INTERVAL 7 DAY
+  AND (
+    positionCaseInsensitive(message, 'cve-') > 0
+    OR positionCaseInsensitive(classification, 'vulnerab') > 0
+    OR positionCaseInsensitive(message, 'critical patch') > 0
+    OR positionCaseInsensitive(message, 'dependency') > 0
+  )
+GROUP BY service
+ORDER BY detected_at DESC
+LIMIT 50`, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]SecurityVulnerability, 0)
+	i := 0
+	for rows.Next() {
+		var service, msg string
+		var at time.Time
+		if err := rows.Scan(&service, &msg, &at); err != nil {
+			return nil, err
+		}
+		i++
+		sev := "medium"
+		lmsg := strings.ToLower(msg)
+		if strings.Contains(lmsg, "critical") {
+			sev = "critical"
+		} else if strings.Contains(lmsg, "high") {
+			sev = "high"
+		}
+		cve := extractCVE(msg)
+		if cve == "" {
+			cve = fmt.Sprintf("CVE-LIVE-%04d", i)
+		}
+		out = append(out, SecurityVulnerability{
+			ID:          fmt.Sprintf("vuln-%d", i),
+			CVE:         cve,
+			Severity:    sev,
+			Service:     service,
+			Description: truncateForUI(msg, 180),
+			DetectedAt:  at,
+		})
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("no vulnerabilities")
+	}
+	return out, nil
+}
+
+// QuerySecurityAttacks derives attack events from runtime logs.
+func QuerySecurityAttacks(ctx context.Context, conn driver.Conn, tenantID string) ([]SecurityAttack, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("clickhouse unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	rows, err := conn.Query(ctx, `
+SELECT service,
+       any(message) AS sample_message,
+       max(timestamp) AS detected_at,
+       any(classification) AS classn
+FROM logs
+WHERE tenant_id = ?
+  AND timestamp >= now() - INTERVAL 24 HOUR
+  AND (
+    positionCaseInsensitive(message, 'sql injection') > 0
+    OR positionCaseInsensitive(message, 'xss') > 0
+    OR positionCaseInsensitive(message, 'path traversal') > 0
+    OR positionCaseInsensitive(message, 'ssrf') > 0
+    OR positionCaseInsensitive(message, 'rce') > 0
+    OR positionCaseInsensitive(classification, 'attack') > 0
+    OR positionCaseInsensitive(classification, 'threat') > 0
+  )
+GROUP BY service
+ORDER BY detected_at DESC
+LIMIT 100`, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]SecurityAttack, 0)
+	i := 0
+	for rows.Next() {
+		var service, msg, classn string
+		var at time.Time
+		if err := rows.Scan(&service, &msg, &at, &classn); err != nil {
+			return nil, err
+		}
+		i++
+		attackType := inferAttackType(msg, classn)
+		sourceIP := extractIP(msg)
+		if sourceIP == "" {
+			sourceIP = "unknown"
+		}
+		blocked := strings.Contains(strings.ToLower(msg), "blocked") || strings.Contains(strings.ToLower(classn), "blocked")
+		out = append(out, SecurityAttack{
+			ID:         fmt.Sprintf("atk-%d", i),
+			Type:       attackType,
+			SourceIP:   sourceIP,
+			Service:    service,
+			Blocked:    blocked,
+			DetectedAt: at,
+		})
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("no attacks")
+	}
+	return out, nil
+}
+
+func inferAttackType(msg, classn string) string {
+	l := strings.ToLower(msg + " " + classn)
+	switch {
+	case strings.Contains(l, "sql injection"):
+		return "SQL injection"
+	case strings.Contains(l, "xss"):
+		return "Cross-site scripting"
+	case strings.Contains(l, "path traversal"):
+		return "Path traversal"
+	case strings.Contains(l, "ssrf"):
+		return "SSRF attempt"
+	case strings.Contains(l, "rce"):
+		return "Remote code execution attempt"
+	default:
+		return "Suspicious request"
+	}
+}
+
+func extractCVE(s string) string {
+	u := strings.ToUpper(s)
+	i := strings.Index(u, "CVE-")
+	if i < 0 {
+		return ""
+	}
+	j := i
+	for j < len(u) {
+		ch := u[j]
+		if (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '-' {
+			j++
+			continue
+		}
+		break
+	}
+	return u[i:j]
+}
+
+func extractIP(s string) string {
+	parts := strings.FieldsFunc(s, func(r rune) bool {
+		return !(r == '.' || (r >= '0' && r <= '9'))
+	})
+	for _, p := range parts {
+		if p == "" {
+			continue
+		}
+		octets := strings.Split(p, ".")
+		if len(octets) != 4 {
+			continue
+		}
+		ok := true
+		for _, o := range octets {
+			if o == "" || len(o) > 3 {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return p
+		}
+	}
+	return ""
+}
+
+func truncateForUI(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "…"
+}
+
 // LoadTopologyFromPostgres builds topology from service graph tables.
 func LoadTopologyFromPostgres(ctx context.Context, pool *pgxpool.Pool, tenantID string) (TopologyGraph, error) {
 	if pool == nil {
@@ -383,7 +626,7 @@ func (r *PostgresRepo) ListWorkflows(ctx context.Context, tenantID string) ([]Wo
 		return nil, nil
 	}
 	rows, err := r.pool.Query(ctx, `
-SELECT id::text, name, trigger_name, enabled, steps
+SELECT id::text, name, trigger_name, enabled, steps, graph
 FROM observability_workflows WHERE tenant_id = $1 ORDER BY created_at DESC`, tenantID)
 	if err != nil {
 		return nil, err
@@ -393,10 +636,14 @@ FROM observability_workflows WHERE tenant_id = $1 ORDER BY created_at DESC`, ten
 	for rows.Next() {
 		var w Workflow
 		var stepsJSON []byte
-		if err := rows.Scan(&w.ID, &w.Name, &w.Trigger, &w.Enabled, &stepsJSON); err != nil {
+		var graphJSON []byte
+		if err := rows.Scan(&w.ID, &w.Name, &w.Trigger, &w.Enabled, &stepsJSON, &graphJSON); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal(stepsJSON, &w.Steps)
+		if g := unmarshalGraph(graphJSON); g != nil {
+			w.Graph = g
+		}
 		out = append(out, w)
 	}
 	return out, rows.Err()
@@ -436,12 +683,78 @@ func (r *PostgresRepo) SaveWorkflow(ctx context.Context, tenantID string, w Work
 		w.ID = uuid.New().String()
 	}
 	stepsJSON, _ := json.Marshal(w.Steps)
+	graphJSON := marshalGraph(w.Graph)
 	err := r.pool.QueryRow(ctx, `
-INSERT INTO observability_workflows (id, tenant_id, name, trigger_name, enabled, steps)
-VALUES ($1,$2,$3,$4,$5,$6)
-RETURNING id::text`, w.ID, tenantID, w.Name, w.Trigger, w.Enabled, stepsJSON,
+INSERT INTO observability_workflows (id, tenant_id, name, trigger_name, enabled, steps, graph)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
+RETURNING id::text`, w.ID, tenantID, w.Name, w.Trigger, w.Enabled, stepsJSON, graphJSON,
 	).Scan(&w.ID)
 	return w, err
+}
+
+// UpdateWorkflow updates an existing workflow scoped to a tenant.
+func (r *PostgresRepo) UpdateWorkflow(ctx context.Context, tenantID string, w Workflow) (Workflow, error) {
+	if !r.available() {
+		return w, fmt.Errorf("postgres unavailable")
+	}
+	stepsJSON, _ := json.Marshal(w.Steps)
+	graphJSON := marshalGraph(w.Graph)
+	tag, err := r.pool.Exec(ctx, `
+UPDATE observability_workflows
+SET name = $3, trigger_name = $4, enabled = $5, steps = $6, graph = $7
+WHERE id = $1 AND tenant_id = $2`,
+		w.ID, tenantID, w.Name, w.Trigger, w.Enabled, stepsJSON, graphJSON,
+	)
+	if err != nil {
+		return w, err
+	}
+	if tag.RowsAffected() == 0 {
+		return w, fmt.Errorf("workflow not found")
+	}
+	return w, nil
+}
+
+// marshalGraph serializes a workflow graph to JSONB, normalizing nil to '{}'.
+func marshalGraph(g *WorkflowGraph) []byte {
+	if g == nil {
+		return []byte("{}")
+	}
+	b, err := json.Marshal(g)
+	if err != nil {
+		return []byte("{}")
+	}
+	return b
+}
+
+// unmarshalGraph parses a JSONB graph column, returning nil when empty.
+func unmarshalGraph(raw []byte) *WorkflowGraph {
+	if len(raw) == 0 {
+		return nil
+	}
+	var g WorkflowGraph
+	if err := json.Unmarshal(raw, &g); err != nil {
+		return nil
+	}
+	if len(g.Nodes) == 0 {
+		return nil
+	}
+	return &g
+}
+
+// DeleteWorkflow removes a workflow (and cascades its runs) for a tenant.
+func (r *PostgresRepo) DeleteWorkflow(ctx context.Context, tenantID, id string) error {
+	if !r.available() {
+		return fmt.Errorf("postgres unavailable")
+	}
+	tag, err := r.pool.Exec(ctx, `
+DELETE FROM observability_workflows WHERE id = $1 AND tenant_id = $2`, id, tenantID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("workflow not found")
+	}
+	return nil
 }
 
 // SaveNotebook inserts a notebook.

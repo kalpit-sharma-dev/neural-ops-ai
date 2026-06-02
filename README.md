@@ -58,6 +58,7 @@ npm run dev
 ```
 
 The Vite dev server proxies `/api` to `http://localhost:8080`.
+For local smoke-test commands and dev-port fallback details (`5173`/`5174`), see [`docs/LOCAL_TEST_URLS.md`](docs/LOCAL_TEST_URLS.md).
 
 ## Services & Ports
 
@@ -101,13 +102,32 @@ Go module: `github.com/neuralops/platform`
 
 | Document | Description |
 |----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture and service boundaries |
+| [API.md](API.md) | Top-level API reference and conventions |
+| [RUNBOOK.md](RUNBOOK.md) | Operational procedures (startup, health checks, recovery) |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common local/dev failure modes and fixes |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution standards and development workflow |
+| [CHANGELOG.md](CHANGELOG.md) | Notable product and platform changes |
 | [docs/LOCAL_TEST_URLS.md](docs/LOCAL_TEST_URLS.md) | Local URLs to test UI, APIs, and observability after quickstart |
+| [docs/openapi/gateway-v1.yaml](docs/openapi/gateway-v1.yaml) | Gateway API v1 OpenAPI contract (full gateway surface) |
+| [docs/openapi/observability-v1.yaml](docs/openapi/observability-v1.yaml) | Observability-focused OpenAPI surface |
+| [backend/openapi/swagger.yaml](backend/openapi/swagger.yaml) | Backend Swagger/OpenAPI YAML for gateway consumers |
 | [docs/UI_IMPROVEMENT_ROADMAP.md](docs/UI_IMPROVEMENT_ROADMAP.md) | Phased, trackable UI/UX improvement backlog (checkboxes per task) |
 | [docs/PRODUCTION_AND_GTM.md](docs/PRODUCTION_AND_GTM.md) | Production ship plan, enterprise sales, pricing, and onboarding guidelines |
 | [docs/UI_DYNATRACE_GAP.md](docs/UI_DYNATRACE_GAP.md) | UI feature gap analysis vs Dynatrace (parity matrix and roadmap) |
 | [docs/UI_DYNATRACE_IMPLEMENTATION_PLAN.md](docs/UI_DYNATRACE_IMPLEMENTATION_PLAN.md) | Phase-wise plan to implement all Dynatrace UI gaps (12 phases) |
 | [docs/AUDIT_COMPLIANCE.md](docs/AUDIT_COMPLIANCE.md) | CI quality gates and auth/mTLS audit traceability |
 | [docs/FRONTEND_STACK.md](docs/FRONTEND_STACK.md) | Frontend architecture (TanStack Router, Tailwind v4) |
+
+### OpenAPI Sync
+
+- Canonical source: `docs/openapi/gateway-v1.yaml`
+- Backend copy: `backend/openapi/swagger.yaml`
+- Sync command:
+
+```bash
+./scripts/sync-openapi.sh
+```
 
 ## Phase Roadmap
 

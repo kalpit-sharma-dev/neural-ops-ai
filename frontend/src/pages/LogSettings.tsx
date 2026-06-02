@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link } from '@tanstack/react-router';
 import { createLogMetricRule, createLogParsingRule, fetchLogMetricRules, fetchLogParsingRules } from '../api/observability';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function LogSettings() {
   const qc = useQueryClient();
@@ -25,8 +25,11 @@ export default function LogSettings() {
   });
 
   return (
-    <div>
-      <PageHeader title="Log Settings" subtitle="Parsing rules and log-based metrics" actions={<Link to="/settings">← Settings</Link>} />
+    <StitchPageShell
+      title="Log Settings"
+      subtitle="Parsing rules and log-based metrics"
+      breadcrumb={<SettingsBreadcrumb page="Log Settings" />}
+    >
       <div className="dashboard-row-2">
         <Card title="Log metric rules">
           <div className="form-stack">
@@ -46,6 +49,6 @@ export default function LogSettings() {
           {(parsingQuery.data ?? []).map((r) => <div key={r.id} className="list-row">{r.name} → {r.field}</div>)}
         </Card>
       </div>
-    </div>
+    </StitchPageShell>
   );
 }

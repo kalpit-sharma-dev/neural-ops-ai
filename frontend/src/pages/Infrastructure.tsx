@@ -3,17 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Line, LineChart, ResponsiveContainer } from 'recharts';
 import { fetchHosts } from '../api/observability';
+import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { DomainEmptyState } from '../components/ui/DomainEmptyState';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 function sparkline(points: number[]) {
   return points.map((value, i) => ({ i, value }));
 }
 
 export default function Infrastructure() {
-  const { data, isLoading } = useQuery({ queryKey: ['infra-hosts'], queryFn: fetchHosts });
+  const { data, isLoading, error, refetch, isFetched } = useQuery({ queryKey: ['infra-hosts'], queryFn: fetchHosts });
   const [drawerHostId, setDrawerHostId] = useState<string | null>(null);
 
   const selected = useMemo(
@@ -22,9 +25,15 @@ export default function Infrastructure() {
   );
 
   return (
-    <div>
-      <PageHeader title="Infrastructure" subtitle="Host monitoring" actions={<Link to="/kubernetes">Kubernetes →</Link>} />
+    <StitchPageShell
+      title="Infrastructure"
+      subtitle="Host monitoring"
+      actions={<Link to="/kubernetes">Kubernetes →</Link>}
+    >
       {isLoading && <LoadingState />}
+      {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
+      {!error && isFetched && (data?.length ?? 0) === 0 && <DomainEmptyState domain="infrastructure" />}
+      {!error && (data?.length ?? 0) > 0 && (
       <Card title="Hosts">
         <table className="data-table">
           <thead><tr><th>Host</th><th>Zone</th><th>Status</th><th>CPU</th><th>Memory</th><th>Disk</th><th /></tr></thead>
@@ -45,6 +54,7 @@ export default function Infrastructure() {
           </tbody>
         </table>
       </Card>
+      )}
 
       {selected && (
         <aside className="infra-host-drawer" aria-label={`Host ${selected.name}`}>
@@ -78,6 +88,6 @@ export default function Infrastructure() {
           <Link to="/entities/$type/$id" params={{ type: 'host', id: selected.id }}>Open entity →</Link>
         </aside>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

@@ -1,0 +1,54 @@
+{
+  "setup": [
+    {
+      "step": "dev-login",
+      "status": "PASS"
+    },
+    {
+      "step": "seed-user",
+      "status": "PASS",
+      "detail": 200
+    },
+    {
+      "step": "seed-workflow",
+      "status": "PASS",
+      "detail": 200
+    },
+    {
+      "step": "normalize-marketplace/integrations",
+      "status": "PASS"
+    }
+  ],
+  "actions": [
+    {
+      "name": "Users: seeded user row visible",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Workflows: seeded workflow visible",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Marketplace: install action available",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Integrations: connect/edit action available",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Security: attack detail deep-link works",
+      "status": "PASS",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "pass": 5,
+    "warn": 0,
+    "fail": 0
+  }
+}

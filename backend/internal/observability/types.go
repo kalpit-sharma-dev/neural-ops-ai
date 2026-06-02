@@ -229,14 +229,97 @@ type SyntheticRun struct {
 	RanAt     time.Time `json:"ranAt"`
 }
 
+// WorkflowNode is a single step node in the workflow graph.
+type WorkflowNode struct {
+	ID    string  `json:"id"`
+	Type  string  `json:"type"`
+	Label string  `json:"label"`
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+}
+
+// WorkflowEdge connects two workflow nodes (source -> target). Condition gates
+// traversal at runtime: "" / "success" (default) follow on predecessor success,
+// "failure" on predecessor failure, "always" regardless, or "key=value" to match
+// the trigger context.
+type WorkflowEdge struct {
+	ID        string `json:"id"`
+	Source    string `json:"source"`
+	Target    string `json:"target"`
+	Condition string `json:"condition,omitempty"`
+}
+
+// WorkflowGraph is the full branching topology authored in the visual editor.
+type WorkflowGraph struct {
+	Nodes []WorkflowNode `json:"nodes"`
+	Edges []WorkflowEdge `json:"edges"`
+}
+
 // Workflow defines an automation workflow.
 type Workflow struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Trigger     string    `json:"trigger"`
-	Enabled     bool      `json:"enabled"`
-	Steps       []string  `json:"steps"`
-	LastRunAt   *time.Time `json:"lastRunAt,omitempty"`
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Trigger   string         `json:"trigger"`
+	Enabled   bool           `json:"enabled"`
+	Steps     []string       `json:"steps"`
+	Graph     *WorkflowGraph `json:"graph,omitempty"`
+	LastRunAt *time.Time     `json:"lastRunAt,omitempty"`
+}
+
+// LinearizeGraph returns step labels in execution order via a topological sort
+// (Kahn's algorithm) of the graph edges. Disconnected or cyclic nodes are
+// appended in their declared order so no step is silently dropped. This keeps
+// the executor's linear `steps` consistent with the authored branching graph.
+func LinearizeGraph(g *WorkflowGraph) []string {
+	if g == nil || len(g.Nodes) == 0 {
+		return nil
+	}
+	byID := make(map[string]WorkflowNode, len(g.Nodes))
+	indegree := make(map[string]int, len(g.Nodes))
+	for _, n := range g.Nodes {
+		byID[n.ID] = n
+		indegree[n.ID] = 0
+	}
+	adjacency := make(map[string][]string)
+	for _, e := range g.Edges {
+		if _, ok := byID[e.Source]; !ok {
+			continue
+		}
+		if _, ok := byID[e.Target]; !ok {
+			continue
+		}
+		adjacency[e.Source] = append(adjacency[e.Source], e.Target)
+		indegree[e.Target]++
+	}
+	queue := make([]string, 0)
+	for _, n := range g.Nodes {
+		if indegree[n.ID] == 0 {
+			queue = append(queue, n.ID)
+		}
+	}
+	visited := make(map[string]bool, len(g.Nodes))
+	labels := make([]string, 0, len(g.Nodes))
+	for len(queue) > 0 {
+		id := queue[0]
+		queue = queue[1:]
+		if visited[id] {
+			continue
+		}
+		visited[id] = true
+		labels = append(labels, byID[id].Label)
+		for _, target := range adjacency[id] {
+			indegree[target]--
+			if indegree[target] <= 0 && !visited[target] {
+				queue = append(queue, target)
+			}
+		}
+	}
+	for _, n := range g.Nodes {
+		if !visited[n.ID] {
+			labels = append(labels, n.Label)
+		}
+	}
+	return labels
 }
 
 // Notebook is a saved analysis notebook.

@@ -2,9 +2,12 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { fetchDBStatements, fetchDatabases } from '../api/observability';
+import { getApiErrorMessage } from '../api/client';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 type StmtSort = 'avgMs' | 'calls' | 'totalMs';
 
@@ -41,9 +44,12 @@ export default function Databases() {
   };
 
   return (
-    <div>
-      <PageHeader title="Databases" subtitle="Query performance and connection pools" />
+    <StitchPageShell title="Databases" subtitle="Query performance and connection pools">
       {dbQuery.isLoading && <LoadingState />}
+      {dbQuery.error && <ErrorState message={getApiErrorMessage(dbQuery.error)} onRetry={() => dbQuery.refetch()} />}
+      {!dbQuery.error && dbQuery.isFetched && (dbQuery.data?.length ?? 0) === 0 && (
+        <EmptyState title="No databases" description="Connect a database integration to monitor query performance and pools." />
+      )}
       <div className="dashboard-row-2">
         {(dbQuery.data ?? []).map((db) => (
           <Card key={db.id} title={db.name}>
@@ -92,6 +98,6 @@ export default function Databases() {
           </table>
         </Card>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import './design-tokens.css';
+@import './stitch-pages.css';
 
 :root {
   font-family: var(--font-body);
@@ -73,7 +74,9 @@ a:hover {
 .sidebar {
   width: var(--sidebar-current-width);
   flex-shrink: 0;
-  background: var(--bg-surface);
+  background: var(--nav-glass-bg);
+  backdrop-filter: var(--nav-glass-blur);
+  -webkit-backdrop-filter: var(--nav-glass-blur);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
@@ -188,6 +191,7 @@ a:hover {
 }
 
 .sidebar__link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -211,6 +215,24 @@ a:hover {
   color: var(--accent-primary);
   border-color: var(--border-subtle);
   box-shadow: var(--shadow-inset);
+}
+
+/* Left accent rail on the active nav item (Stitch Command Center) */
+.sidebar__link--active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--nav-rail-active);
+  box-shadow: var(--glow-accent);
+}
+
+.sidebar--collapsed .sidebar__link--active::before {
+  height: 22px;
 }
 
 .sidebar__link--active svg {
@@ -272,6 +294,47 @@ a:hover {
 .topbar__search {
   flex: 1;
   max-width: 360px;
+}
+
+/* Environment segmented pills (ALL / PROD / STAGING / DEV) */
+.env-pill-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.env-pill {
+  padding: 5px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.env-pill:hover {
+  color: var(--text-primary);
+  background: var(--bg-highlight);
+}
+
+.env-pill--active {
+  color: var(--btn-primary-fg);
+  background: var(--accent-primary);
+  box-shadow: var(--glow-accent);
+}
+
+.env-pill--active:hover {
+  color: var(--btn-primary-fg);
+  background: var(--accent-primary);
 }
 
 .topbar__actions {
@@ -1482,7 +1545,7 @@ a:hover {
 }
 
 .markdown-message code {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-highlight);
   padding: 1px 4px;
   border-radius: 4px;
   font-size: 0.92em;
@@ -1668,7 +1731,7 @@ a:hover {
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   overflow: hidden;
-  background: #111;
+  background: var(--bg-highlight);
 }
 
 .incident-table__row--active {

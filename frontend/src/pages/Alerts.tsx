@@ -28,7 +28,8 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 
@@ -235,8 +236,7 @@ export default function Alerts() {
   });
 
   return (
-    <div>
-      <PageHeader title="Alerts" subtitle="Rules, channels, silences, and firing alerts" />
+    <StitchPageShell title="Alerts" subtitle="Rules, channels, silences, and firing alerts">
       <div className="tab-bar" style={{ marginBottom: 24 }}>
         {TABS.map((t) => (
           <button
@@ -508,6 +508,6 @@ export default function Alerts() {
           </Card>
         </div>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

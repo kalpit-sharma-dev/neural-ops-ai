@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { fetchSyntheticMonitors, fetchSyntheticRuns } from '../api/observability';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 export default function Synthetic() {
   const [selected, setSelected] = useState('');
@@ -31,8 +32,7 @@ export default function Synthetic() {
   const maxLatency = Math.max(...locationBars.map((l) => l.avgMs), 1);
 
   return (
-    <div>
-      <PageHeader title="Synthetic Monitoring" subtitle="HTTP and browser checks with geo latency view" />
+    <StitchPageShell title="Synthetic Monitoring" subtitle="HTTP and browser checks with geo latency view">
       {monitorsQuery.isLoading && <LoadingState />}
       {(monitorsQuery.data ?? []).map((m) => (
         <Card key={m.id} title={m.name}>
@@ -80,6 +80,6 @@ export default function Synthetic() {
           </table>
         </Card>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

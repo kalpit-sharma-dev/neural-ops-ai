@@ -7,7 +7,8 @@ import { TraceWaterfall } from '../features/traces/TraceWaterfall';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 export default function TraceCompare() {
   const navigate = useNavigate();
@@ -42,13 +43,11 @@ export default function TraceCompare() {
   };
 
   return (
-    <div>
-      <PageHeader
-        title="Compare traces"
-        subtitle="Side-by-side waterfall comparison"
-        actions={<Link to="/traces">← Trace explorer</Link>}
-      />
-
+    <StitchPageShell
+      title="Compare traces"
+      subtitle="Side-by-side waterfall comparison"
+      actions={<Link to="/traces">← Trace explorer</Link>}
+    >
       <div className="ui-card trace-compare-picker" style={{ marginBottom: 24 }}>
         <div className="form-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
           <Input label="Trace A" placeholder="trace id" value={pickerA} onChange={(e) => setPickerA(e.target.value)} />
@@ -106,6 +105,6 @@ export default function TraceCompare() {
           </section>
         </div>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

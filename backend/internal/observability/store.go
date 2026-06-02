@@ -15,16 +15,19 @@ import (
 type Store struct {
 	mu sync.RWMutex
 
-	traces     map[string]TraceDetail
-	dashboards map[string]Dashboard
-	logMetrics map[string]LogMetricRule
-	logParsing map[string]LogParsingRule
-	slos       map[string]SLO
-	workflows  map[string]Workflow
-	notebooks  map[string]Notebook
-	synthetic  map[string]SyntheticMonitor
+	traces        map[string]TraceDetail
+	dashboards    map[string]Dashboard
+	logMetrics    map[string]LogMetricRule
+	logParsing    map[string]LogParsingRule
+	slos          map[string]SLO
+	workflows     map[string]Workflow
+	notebooks     map[string]Notebook
+	synthetic     map[string]SyntheticMonitor
 	syntheticRuns map[string][]SyntheticRun
-	zones      map[string]ManagementZone
+	zones         map[string]ManagementZone
+	adminUsers    []AdminUser
+	// extensionInstalls maps extension key -> stored config (marketplace demo state).
+	extensionInstalls map[string]map[string]string
 }
 
 // NewStore creates a store seeded with demo observability data.
@@ -40,6 +43,13 @@ func NewStore() *Store {
 		synthetic:     make(map[string]SyntheticMonitor),
 		syntheticRuns: make(map[string][]SyntheticRun),
 		zones:         make(map[string]ManagementZone),
+		adminUsers: []AdminUser{
+			{ID: "u1", Email: "demo@neuralops.ai", Role: "ADMIN", Active: true, TenantID: "default"},
+			{ID: "u2", Email: "sre@neuralops.ai", Role: "SRE", Active: true, TenantID: "default"},
+		},
+		extensionInstalls: map[string]map[string]string{
+			"otel-collector": {},
+		},
 	}
 	s.seed()
 	return s
@@ -103,6 +113,17 @@ func (s *Store) seed() {
 	s.workflows["wf-1"] = Workflow{
 		ID: "wf-1", Name: "P1 Incident Escalation", Trigger: "incident.p1", Enabled: true,
 		Steps: []string{"notify-slack", "page-oncall", "create-jira"},
+		Graph: &WorkflowGraph{
+			Nodes: []WorkflowNode{
+				{ID: "n1", Type: "slack", Label: "notify-slack", X: 80, Y: 120},
+				{ID: "n2", Type: "pagerduty", Label: "page-oncall", X: 360, Y: 40},
+				{ID: "n3", Type: "jira", Label: "create-jira", X: 360, Y: 220},
+			},
+			Edges: []WorkflowEdge{
+				{ID: "e-n1-n2", Source: "n1", Target: "n2"},
+				{ID: "e-n1-n3", Source: "n1", Target: "n3"},
+			},
+		},
 	}
 
 	s.notebooks["nb-1"] = Notebook{
@@ -483,7 +504,7 @@ func (s *Store) SyntheticRuns(monitorID string) []SyntheticRun {
 	return append([]SyntheticRun(nil), s.syntheticRuns[monitorID]...)
 }
 
-// ListWorkflows returns workflows.
+// ListWorkflows returns workflows in a stable (name) order.
 func (s *Store) ListWorkflows() []Workflow {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -491,6 +512,7 @@ func (s *Store) ListWorkflows() []Workflow {
 	for _, w := range s.workflows {
 		out = append(out, w)
 	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
 }
 
@@ -503,6 +525,61 @@ func (s *Store) SaveWorkflow(w Workflow) Workflow {
 	}
 	s.workflows[w.ID] = w
 	return w
+}
+
+// UpdateWorkflow replaces an existing workflow by ID.
+func (s *Store) UpdateWorkflow(w Workflow) (Workflow, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.workflows[w.ID]; !ok {
+		return Workflow{}, false
+	}
+	s.workflows[w.ID] = w
+	return w, true
+}
+
+// DeleteWorkflow removes a workflow by ID.
+func (s *Store) DeleteWorkflow(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.workflows[id]; !ok {
+		return false
+	}
+	delete(s.workflows, id)
+	return true
+}
+
+// ListExtensionInstalls returns a copy of installed marketplace extensions
+// (key -> config) for demo/in-memory mode.
+func (s *Store) ListExtensionInstalls() map[string]map[string]string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make(map[string]map[string]string, len(s.extensionInstalls))
+	for k, cfg := range s.extensionInstalls {
+		copyCfg := make(map[string]string, len(cfg))
+		for ck, cv := range cfg {
+			copyCfg[ck] = cv
+		}
+		out[k] = copyCfg
+	}
+	return out
+}
+
+// InstallExtension records an extension install (and its config) in memory.
+func (s *Store) InstallExtension(key string, cfg map[string]string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if cfg == nil {
+		cfg = map[string]string{}
+	}
+	s.extensionInstalls[key] = cfg
+}
+
+// UninstallExtension removes an extension install from memory.
+func (s *Store) UninstallExtension(key string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.extensionInstalls, key)
 }
 
 // ListNotebooks returns notebooks.
@@ -587,12 +664,53 @@ func (s *Store) ListZones() []ManagementZone {
 	return out
 }
 
-// DemoAdminUsers returns demo admin users.
+// DemoAdminUsers returns the in-memory admin users.
 func (s *Store) DemoAdminUsers() []AdminUser {
-	return []AdminUser{
-		{ID: "u1", Email: "demo@neuralops.ai", Role: "admin", Active: true, TenantID: "default"},
-		{ID: "u2", Email: "sre@neuralops.ai", Role: "sre", Active: true, TenantID: "default"},
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]AdminUser, len(s.adminUsers))
+	copy(out, s.adminUsers)
+	return out
+}
+
+// CreateAdminUser provisions (or re-invites) an in-memory tenant user.
+func (s *Store) CreateAdminUser(tenantID, email, role string) AdminUser {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range s.adminUsers {
+		if strings.EqualFold(s.adminUsers[i].Email, email) {
+			s.adminUsers[i].Role = role
+			s.adminUsers[i].Active = true
+			return s.adminUsers[i]
+		}
 	}
+	user := AdminUser{
+		ID:       "u" + uuid.New().String()[:8],
+		Email:    email,
+		Role:     role,
+		Active:   true,
+		TenantID: tenantID,
+	}
+	s.adminUsers = append(s.adminUsers, user)
+	return user
+}
+
+// UpdateAdminUser mutates an in-memory user's role and/or active flag.
+func (s *Store) UpdateAdminUser(id string, role *string, active *bool) (AdminUser, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range s.adminUsers {
+		if s.adminUsers[i].ID == id {
+			if role != nil {
+				s.adminUsers[i].Role = *role
+			}
+			if active != nil {
+				s.adminUsers[i].Active = *active
+			}
+			return s.adminUsers[i], true
+		}
+	}
+	return AdminUser{}, false
 }
 
 // DemoAPIKeys returns demo API keys.

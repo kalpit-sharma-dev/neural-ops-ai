@@ -139,6 +139,30 @@ curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:3000/
 docker ps --filter name=neuralops --format "table {{.Names}}\t{{.Status}}"
 ```
 
+## Frontend dev server ports (Vite)
+
+For local UI development outside Docker, Vite defaults to `5173`. If that port is already in use, it automatically falls back to `5174` (or the next available port).
+
+Use this quick check:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5174/
+```
+
+## UI smoke test (merged stable selectors)
+
+The default smoke suite now includes critical action checks (Users, Workflows, Marketplace, Integrations, Security attack deep-link, Usage KPIs) using stable `data-testid` selectors.
+
+Run smoke against your active frontend port:
+
+```bash
+cd frontend
+PLAYWRIGHT_BASE_URL=http://localhost:5174 npx playwright test e2e/smoke.spec.ts
+```
+
+If `5173` is the active port on your machine, set `PLAYWRIGHT_BASE_URL=http://localhost:5173` instead.
+
 ## Related docs
 
 - [README.md](../README.md) — project overview

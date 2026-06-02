@@ -7,7 +7,8 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 export default function Dashboards() {
   const queryClient = useQueryClient();
@@ -36,19 +37,18 @@ export default function Dashboards() {
   });
 
   return (
-    <div>
-      <PageHeader
-        title="Dashboards"
-        subtitle="Custom observability dashboards"
-        actions={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input placeholder="Dashboard name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
-              Create dashboard
-            </Button>
-          </div>
-        }
-      />
+    <StitchPageShell
+      title="Dashboards"
+      subtitle="Custom observability dashboards"
+      actions={
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input placeholder="Dashboard name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
+            Create dashboard
+          </Button>
+        </div>
+      }
+    >
       {isLoading && <LoadingState />}
       <div className="dashboard-row-3">
         {(data ?? []).map((d) => (
@@ -59,6 +59,6 @@ export default function Dashboards() {
           </Card>
         ))}
       </div>
-    </div>
+    </StitchPageShell>
   );
 }

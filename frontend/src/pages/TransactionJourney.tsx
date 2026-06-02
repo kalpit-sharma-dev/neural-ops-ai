@@ -9,7 +9,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 const RECENT_KEY = 'neuralops-recent-txn';
 
@@ -57,9 +58,7 @@ export default function TransactionJourney() {
   };
 
   return (
-    <div>
-      <PageHeader title="Transaction Journey" subtitle="Trace every hop of a financial transaction" />
-
+    <StitchPageShell title="Transaction Journey" subtitle="Trace every hop of a financial transaction">
       <Card className="ui-card" hover={false}>
         <div style={{ display: 'flex', gap: 12, maxWidth: 640, margin: '0 auto' }}>
           <input
@@ -115,7 +114,7 @@ export default function TransactionJourney() {
           description="Visualize hops across API Gateway, auth, UPI, ledger, and notification services."
         />
       )}
-    </div>
+    </StitchPageShell>
   );
 }
 

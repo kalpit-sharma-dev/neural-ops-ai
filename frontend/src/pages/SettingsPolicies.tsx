@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import toast from 'react-hot-toast';
 import { fetchTenantPolicies, updateTenantPolicies } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function SettingsPolicies() {
   const queryClient = useQueryClient();
@@ -23,8 +23,11 @@ export default function SettingsPolicies() {
   if (isLoading || !data) return <LoadingState />;
 
   return (
-    <div>
-      <PageHeader title="Tenant policies" subtitle="Retention and ingestion limits" actions={<Link to="/settings">← Settings</Link>} />
+    <StitchPageShell
+      title="Tenant policies"
+      subtitle="Retention and ingestion limits"
+      breadcrumb={<SettingsBreadcrumb page="Tenant policies" />}
+    >
       <Card title="Data governance">
         <form
           className="form-stack"
@@ -42,6 +45,6 @@ export default function SettingsPolicies() {
           <Button type="submit" variant="primary">Save</Button>
         </form>
       </Card>
-    </div>
+    </StitchPageShell>
   );
 }

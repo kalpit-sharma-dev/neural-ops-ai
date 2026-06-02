@@ -1,0 +1,235 @@
+{
+  "summary": {
+    "routePass": 35,
+    "routeWarn": 1,
+    "routeFail": 0,
+    "actionPass": 0,
+    "actionWarn": 0,
+    "actionFail": 5
+  },
+  "report": {
+    "routes": [
+      {
+        "path": "/",
+        "status": "WARN",
+        "issues": [
+          "console/page errors: Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        ]
+      },
+      {
+        "path": "/incidents",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/logs",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/traces",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/traces/compare",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/service-flow",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/transactions",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/anomalies",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/service-map",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/alerts",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/metrics",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/dashboards",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/slos",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/infrastructure",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/kubernetes",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/databases",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/middleware",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/rum",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/synthetic",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/workflows",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/notebooks",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/security",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/marketplace",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/cloud",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/integrations",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/users",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/api-keys",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/audit",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/usage",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/sso",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/policies",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/settings/oncall",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/design-system",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/health",
+        "status": "PASS",
+        "issues": []
+      },
+      {
+        "path": "/workflows/editor",
+        "status": "PASS",
+        "issues": []
+      }
+    ],
+    "actions": [
+      {
+        "name": "Users invite user",
+        "status": "FAIL",
+        "issues": [
+          "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /invite|add user|create/i }).first()\n",
+          "console/page errors: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+        ]
+      },
+      {
+        "name": "Workflow create",
+        "status": "FAIL",
+        "issues": [
+          "TimeoutError: locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByLabel(/name/i)\n",
+          "console/page errors: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+        ]
+      },
+      {
+        "name": "Marketplace install open",
+        "status": "FAIL",
+        "issues": [
+          "Error: No install button found"
+        ]
+      },
+      {
+        "name": "Integrations connect modal open",
+        "status": "FAIL",
+        "issues": [
+          "Error: No connect button present"
+        ]
+      },
+      {
+        "name": "Security attack detail",
+        "status": "FAIL",
+        "issues": [
+          "Error: No attack detail links available"
+        ]
+      }
+    ]
+  }
+}

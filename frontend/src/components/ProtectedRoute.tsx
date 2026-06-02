@@ -11,8 +11,11 @@ export function ProtectedRoute({ children, authRequired = false }: ProtectedRout
   const accessToken = useAuthStore((s) => s.accessToken);
   const authEnabled = useAuthStore((s) => s.authEnabled);
   const location = useLocation();
+  const onAuthRoute = location.pathname === '/login' || location.pathname === '/auth/callback';
 
-  if (authRequired && authEnabled && !accessToken) {
+  // Prevent self-redirect loops: the pathless authed shell can render while
+  // auth routes are active, so never redirect when already on an auth route.
+  if (authRequired && authEnabled && !accessToken && !onAuthRoute) {
     return <Navigate to="/login" search={{ redirect: location.pathname }} replace />;
   }
 

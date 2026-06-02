@@ -4,7 +4,8 @@ import { fetchTraceRetention, updateTraceRetention } from '../api/observability'
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function TraceSettings() {
   const queryClient = useQueryClient();
@@ -22,8 +23,11 @@ export default function TraceSettings() {
   if (isLoading || !data) return <LoadingState />;
 
   return (
-    <div>
-      <PageHeader title="Trace sampling & retention" subtitle="Control head/tail sampling and ClickHouse retention" />
+    <StitchPageShell
+      title="Trace sampling & retention"
+      subtitle="Control head/tail sampling and ClickHouse retention"
+      breadcrumb={<SettingsBreadcrumb rootLabel="Trace Explorer" rootTo="/traces" page="Sampling & retention" />}
+    >
       <Card title="Policy">
         <div className="form-stack">
           <label>
@@ -60,6 +64,6 @@ export default function TraceSettings() {
           Ingestion applies head sampling per trace ID; error traces use tail sample rate. Retention TTL is applied on ClickHouse span store.
         </p>
       </Card>
-    </div>
+    </StitchPageShell>
   );
 }

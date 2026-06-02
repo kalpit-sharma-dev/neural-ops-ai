@@ -8,9 +8,11 @@ import { logsSearch } from '../utils/logsSearch';
 import { EntityShell, type EntityTab, type EntityType } from '../components/entity/EntityShell';
 import { Card } from '../components/ui/Card';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { MetricCard } from '../components/ui/MetricCard';
+import { KpiRow, StitchPageShell } from '../components/stitch';
 import { chartCartesianDefaults } from '../lib/chartTheme';
+import { useTimeBounds } from '../hooks/useTimeBounds';
 
 const VALID_TYPES: EntityType[] = ['service', 'host', 'pod', 'database', 'container'];
 
@@ -19,6 +21,7 @@ export default function EntityPage() {
   const search = useSearch({ strict: false }) as { tab?: EntityTab };
   const [tab, setTab] = useState<EntityTab>(search.tab ?? 'overview');
   const entityType = (VALID_TYPES.includes(type as EntityType) ? type : 'service') as EntityType;
+  const { key: rangeKey, resolve: resolveRange } = useTimeBounds();
 
   const topologyQuery = useQuery({
     queryKey: ['topology'],
@@ -27,14 +30,20 @@ export default function EntityPage() {
   });
 
   const latencyQuery = useQuery({
-    queryKey: ['entity-metric', id],
-    queryFn: () => queryMetric('latency_p99', id),
+    queryKey: ['entity-metric', id, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return queryMetric('latency_p99', id, { start: startIso, end: endIso });
+    },
     enabled: entityType === 'service' && id.length > 0 && (tab === 'metrics' || tab === 'overview'),
   });
 
   const tracesQuery = useQuery({
-    queryKey: ['entity-traces', id],
-    queryFn: () => searchTraces({ service: id, limit: 25 }),
+    queryKey: ['entity-traces', id, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return searchTraces({ service: id, start: startIso, end: endIso, limit: 25 });
+    },
     enabled: entityType === 'service' && id.length > 0 && tab === 'traces',
   });
 
@@ -49,10 +58,9 @@ export default function EntityPage() {
 
   if (!id) {
     return (
-      <div>
-        <PageHeader title="Entity" subtitle="Select an entity from topology or service map" />
+      <StitchPageShell title="Entity" subtitle="Select an entity from topology or service map">
         <Link to="/service-map">Open service map →</Link>
-      </div>
+      </StitchPageShell>
     );
   }
 
@@ -70,14 +78,14 @@ export default function EntityPage() {
 
       {tab === 'overview' && entityType === 'service' && (
         <>
-          <div className="dashboard-row-3">
+          <KpiRow columns={3}>
             <MetricCard label="Error rate" value={`${(node?.errorRate ?? 0).toFixed(2)}%`} />
             <MetricCard label="Throughput" value={`${Math.round(node?.throughputRpm ?? 0)} rpm`} />
             <MetricCard
               label="P99 latency"
               value={lastPoint?.value != null ? `${lastPoint.value.toFixed(0)}ms` : '—'}
             />
-          </div>
+          </KpiRow>
           <Card title="Quick links" style={{ marginTop: 24 }}>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <button type="button" className="pill" onClick={() => setTab('traces')}>Traces</button>

@@ -8,7 +8,8 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { Input } from '../components/ui/Input';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 
 function severityBadge(sev: string) {
@@ -52,9 +53,7 @@ export default function Incidents() {
   });
 
   return (
-    <div>
-      <PageHeader title="Incidents" subtitle="Active and recent operational incidents" />
-
+    <StitchPageShell title="Incidents" subtitle="Active and recent operational incidents">
       <div style={{ marginBottom: 16, maxWidth: 400 }}>
         <Input
           ref={searchRef}
@@ -108,6 +107,6 @@ export default function Incidents() {
           </table>
         </div>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

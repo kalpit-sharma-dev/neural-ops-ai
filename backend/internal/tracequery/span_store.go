@@ -180,6 +180,227 @@ LIMIT 20`, tenantID, since)
 	return out, rows.Err()
 }
 
+// ServiceAnomaly is a derived anomaly signal for one service/metric.
+type ServiceAnomaly struct {
+	Service    string
+	Metric     string // "error_rate" | "latency_p95"
+	Score      float64
+	Message    string
+	DetectedAt time.Time
+}
+
+// DetectAnomalies compares the last 15 minutes of spans against the preceding
+// baseline window per service and flags elevated error rate or p95 latency.
+// This is a lightweight, dependency-free detector over real trace telemetry.
+func (s *SpanStore) DetectAnomalies(ctx context.Context, tenantID string) ([]ServiceAnomaly, error) {
+	if s == nil || s.conn == nil {
+		return nil, fmt.Errorf("span store unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	rows, err := s.conn.Query(ctx, `
+SELECT service,
+       countIf(start_time >= now() - INTERVAL 15 MINUTE) AS recent_total,
+       countIf(start_time >= now() - INTERVAL 15 MINUTE AND status = 'ERROR') AS recent_err,
+       countIf(start_time <  now() - INTERVAL 15 MINUTE) AS base_total,
+       countIf(start_time <  now() - INTERVAL 15 MINUTE AND status = 'ERROR') AS base_err,
+       quantileIf(0.95)(duration_ms, start_time >= now() - INTERVAL 15 MINUTE) AS recent_p95,
+       quantileIf(0.95)(duration_ms, start_time <  now() - INTERVAL 15 MINUTE) AS base_p95
+FROM trace_spans
+WHERE tenant_id = ? AND start_time >= now() - INTERVAL 75 MINUTE
+GROUP BY service`, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	now := time.Now().UTC()
+	out := make([]ServiceAnomaly, 0)
+	for rows.Next() {
+		var (
+			service                string
+			recentTotal, recentErr uint64
+			baseTotal, baseErr     uint64
+			recentP95, baseP95     float64
+		)
+		if err := rows.Scan(&service, &recentTotal, &recentErr, &baseTotal, &baseErr, &recentP95, &baseP95); err != nil {
+			return nil, err
+		}
+		if recentTotal < 20 {
+			continue // insufficient recent volume to judge
+		}
+		recentRate := float64(recentErr) / float64(recentTotal)
+		baseRate := 0.0
+		if baseTotal > 0 {
+			baseRate = float64(baseErr) / float64(baseTotal)
+		}
+		// Error-rate anomaly: meaningfully elevated and at least 2x baseline.
+		if recentRate >= 0.02 && recentRate >= 2*maxFloat(baseRate, 0.005) {
+			ratio := recentRate / maxFloat(baseRate, 0.005)
+			out = append(out, ServiceAnomaly{
+				Service: service, Metric: "error_rate",
+				Score:      clampScore(recentRate * 100 * 5),
+				Message:    fmt.Sprintf("Error rate %.1f%% (%.1fx baseline)", recentRate*100, ratio),
+				DetectedAt: now,
+			})
+		}
+		// Latency anomaly: p95 elevated above baseline and above an absolute floor.
+		if baseP95 > 0 && recentP95 > 200 && recentP95 >= 1.5*baseP95 {
+			out = append(out, ServiceAnomaly{
+				Service: service, Metric: "latency_p95",
+				Score:      clampScore((recentP95/baseP95 - 1) * 100),
+				Message:    fmt.Sprintf("p95 latency %.0fms (%.1fx baseline)", recentP95, recentP95/baseP95),
+				DetectedAt: now,
+			})
+		}
+	}
+	return out, rows.Err()
+}
+
+// DBInstanceStat is a derived database instance summary from client db spans.
+type DBInstanceStat struct {
+	ID          string
+	Name        string
+	Engine      string
+	SlowQueries int
+	QPS         float64
+}
+
+// ListDatabases derives database instances from spans carrying OpenTelemetry
+// db.* attributes over the last 15 minutes.
+func (s *SpanStore) ListDatabases(ctx context.Context, tenantID string) ([]DBInstanceStat, error) {
+	if s == nil || s.conn == nil {
+		return nil, fmt.Errorf("span store unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	const windowSeconds = 900.0
+	rows, err := s.conn.Query(ctx, `
+SELECT tags['db.system'] AS engine,
+       tags['db.name'] AS db_name,
+       count() AS calls,
+       countIf(duration_ms > 100) AS slow
+FROM trace_spans
+WHERE tenant_id = ? AND tags['db.system'] != '' AND start_time >= now() - INTERVAL 15 MINUTE
+GROUP BY engine, db_name
+ORDER BY calls DESC
+LIMIT 50`, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]DBInstanceStat, 0)
+	for rows.Next() {
+		var engine, dbName string
+		var calls, slow uint64
+		if err := rows.Scan(&engine, &dbName, &calls, &slow); err != nil {
+			return nil, err
+		}
+		name := dbName
+		if name == "" {
+			name = engine
+		}
+		out = append(out, DBInstanceStat{
+			ID:          name,
+			Name:        name,
+			Engine:      engine,
+			SlowQueries: int(slow),
+			QPS:         round1(float64(calls) / windowSeconds),
+		})
+	}
+	return out, rows.Err()
+}
+
+// DBStatementStat is a derived top-statement summary for a database.
+type DBStatementStat struct {
+	Query   string
+	Calls   int64
+	AvgMs   float64
+	TotalMs float64
+}
+
+// DatabaseStatements returns the top db.statement spans for a database instance
+// (matched by db.name or db.system) over the last hour.
+func (s *SpanStore) DatabaseStatements(ctx context.Context, tenantID, instanceID string) ([]DBStatementStat, error) {
+	if s == nil || s.conn == nil {
+		return nil, fmt.Errorf("span store unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	rows, err := s.conn.Query(ctx, `
+SELECT tags['db.statement'] AS stmt,
+       count() AS calls,
+       avg(duration_ms) AS avg_ms,
+       sum(duration_ms) AS total_ms
+FROM trace_spans
+WHERE tenant_id = ? AND tags['db.statement'] != ''
+  AND (tags['db.name'] = ? OR tags['db.system'] = ?)
+  AND start_time >= now() - INTERVAL 60 MINUTE
+GROUP BY stmt
+ORDER BY total_ms DESC
+LIMIT 20`, tenantID, instanceID, instanceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]DBStatementStat, 0)
+	for rows.Next() {
+		var stmt string
+		var calls uint64
+		var avgMs, totalMs float64
+		if err := rows.Scan(&stmt, &calls, &avgMs, &totalMs); err != nil {
+			return nil, err
+		}
+		out = append(out, DBStatementStat{
+			Query: stmt, Calls: int64(calls), AvgMs: round1(avgMs), TotalMs: round1(totalMs),
+		})
+	}
+	return out, rows.Err()
+}
+
+// CountTraces returns the number of distinct traces ingested since the given time.
+func (s *SpanStore) CountTraces(ctx context.Context, tenantID string, since time.Time) (int64, error) {
+	if s == nil || s.conn == nil {
+		return 0, fmt.Errorf("span store unavailable")
+	}
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	var count uint64
+	if err := s.conn.QueryRow(ctx, `
+SELECT uniqExact(trace_id) FROM trace_spans WHERE tenant_id = ? AND start_time >= ?`,
+		tenantID, since.UTC()).Scan(&count); err != nil {
+		return 0, err
+	}
+	return int64(count), nil
+}
+
+func maxFloat(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func clampScore(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	if v > 100 {
+		return 100
+	}
+	return float64(int(v*10)) / 10
+}
+
+func round1(v float64) float64 {
+	return float64(int(v*10+0.5)) / 10
+}
+
 // ListOperations returns distinct operations for a service.
 func (s *SpanStore) ListOperations(ctx context.Context, tenantID, service string) ([]string, error) {
 	if tenantID == "" {

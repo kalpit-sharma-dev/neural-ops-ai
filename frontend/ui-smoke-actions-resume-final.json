@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "pass": 1,
+    "warn": 0,
+    "fail": 6,
+    "total": 7
+  },
+  "report": [
+    {
+      "name": "Users invite user row appears",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Workflows list has edit/delete controls",
+      "status": "FAIL",
+      "issues": [
+        "Error: Missing edit/delete controls: edit=0, delete=0"
+      ]
+    },
+    {
+      "name": "Workflow editor can save new workflow",
+      "status": "FAIL",
+      "issues": [
+        "Error: Saved workflow not visible in list"
+      ]
+    },
+    {
+      "name": "Marketplace has install/configure actions",
+      "status": "FAIL",
+      "issues": [
+        "Error: No install/configure button found"
+      ]
+    },
+    {
+      "name": "Integrations has connect/edit/disconnect actions",
+      "status": "FAIL",
+      "issues": [
+        "Error: No connect/edit/disconnect buttons found"
+      ]
+    },
+    {
+      "name": "Security attack detail opens",
+      "status": "FAIL",
+      "issues": [
+        "Error: No security attack link found"
+      ]
+    },
+    {
+      "name": "Settings usage counters render",
+      "status": "FAIL",
+      "issues": [
+        "Error: Usage counters not visible"
+      ]
+    }
+  ]
+}

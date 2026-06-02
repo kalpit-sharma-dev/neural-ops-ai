@@ -22,12 +22,14 @@ import { Button } from '../components/ui/Button';
 import { StatusDot } from '../components/ui/StatusDot';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ErrorState, PageHeader } from '../components/ui/PageStates';
+import { KpiRow } from '../components/stitch';
 import type { IncidentSummary } from '../api/types';
 import { getChartColors } from '../lib/chartColors';
 import { chartAxisProps, chartGridProps, chartTooltipStyle } from '../lib/chartTheme';
 import { useThemeStore } from '../store/themeStore';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useFilterStore } from '../store/filterStore';
+import { useTimeBounds } from '../hooks/useTimeBounds';
 
 const severityVariant = (s: string) => {
   const map: Record<string, 'p1' | 'p2' | 'p3' | 'p4'> = {
@@ -54,6 +56,7 @@ export default function Dashboard() {
   const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
   const setErrorsOnly = useFilterStore((s) => s.setErrorsOnly);
+  const { key: rangeKey, resolve: resolveRange } = useTimeBounds();
   const chartColors = useMemo(() => getChartColors(), [theme]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
@@ -69,8 +72,11 @@ export default function Dashboard() {
   );
 
   const chartQuery = useQuery({
-    queryKey: ['dashboard-error-series', services],
-    queryFn: () => fetchDashboardErrorSeries(services),
+    queryKey: ['dashboard-error-series', services, rangeKey],
+    queryFn: () => {
+      const { startIso, endIso } = resolveRange();
+      return fetchDashboardErrorSeries(services, { start: startIso, end: endIso });
+    },
     enabled: services.length > 0,
   });
 
@@ -169,7 +175,7 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <div className="dashboard-kpis">
+      <KpiRow>
         <button
           type="button"
           className="dashboard-kpi-btn"
@@ -214,7 +220,7 @@ export default function Dashboard() {
             footer={<span className="muted">resolved incidents</span>}
           />
         </button>
-      </div>
+      </KpiRow>
 
       <div className="dashboard-row-2">
         <Card title="Incident Timeline (24h)" hover>

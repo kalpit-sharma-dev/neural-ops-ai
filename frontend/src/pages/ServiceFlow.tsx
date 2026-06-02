@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { fetchServiceFlow } from '../api/observability';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 export default function ServiceFlow() {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ export default function ServiceFlow() {
   }, [data]);
 
   return (
-    <div>
-      <PageHeader title="Service Flow" subtitle="Request path latency and error rates between services" />
+    <StitchPageShell title="Service Flow" subtitle="Request path latency and error rates between services">
       {isLoading && <LoadingState />}
 
       {nodes.length > 0 && (
@@ -66,6 +66,6 @@ export default function ServiceFlow() {
           </tbody>
         </table>
       </Card>
-    </div>
+    </StitchPageShell>
   );
 }

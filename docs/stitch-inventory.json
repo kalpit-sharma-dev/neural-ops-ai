@@ -1,0 +1,762 @@
+{
+  "projectId": "37487902246048120",
+  "count": 84,
+  "screens": [
+    {
+      "screenId": "1072b670f8004514b454252c3773831e",
+      "title": "NeuralOps - Security Monitoring",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=1072b670f8004514b454252c3773831e"
+    },
+    {
+      "screenId": "4cb39d9f61af4865b830ef7e326105dd",
+      "title": "NeuralOps - AI Assistant",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=4cb39d9f61af4865b830ef7e326105dd"
+    },
+    {
+      "screenId": "ca888946970142af8c1bedcf53427236",
+      "title": "NeuralOps - Cloud Monitoring",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=ca888946970142af8c1bedcf53427236"
+    },
+    {
+      "screenId": "d201f47f19d94ada8406c28bd972153b",
+      "title": "NeuralOps - Real User Monitoring (RUM)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d201f47f19d94ada8406c28bd972153b"
+    },
+    {
+      "screenId": "fb0664d7c7cd4efc8ce2c879c1e4c72a",
+      "title": "NeuralOps - Databases Platform",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=fb0664d7c7cd4efc8ce2c879c1e4c72a"
+    },
+    {
+      "screenId": "55f3699c9df64dc8b9f21777cf244bc0",
+      "title": "NeuralOps - Trace Detail (UPI Failure)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=55f3699c9df64dc8b9f21777cf244bc0"
+    },
+    {
+      "screenId": "8cbae69fa21a40e2b49a980b6e41432b",
+      "title": "NeuralOps - Infrastructure (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=8cbae69fa21a40e2b49a980b6e41432b"
+    },
+    {
+      "screenId": "613553de745048b79cea7f61fbb2fd21",
+      "title": "NeuralOps - Service Performance Dashboard",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=613553de745048b79cea7f61fbb2fd21"
+    },
+    {
+      "screenId": "76e1696e9f24480290c56a9908acb177",
+      "title": "NeuralOps - Command Center (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=76e1696e9f24480290c56a9908acb177"
+    },
+    {
+      "screenId": "48c7987f57ff448faeb8f94586a4fb89",
+      "title": "NeuralOps - Settings: API Keys",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=48c7987f57ff448faeb8f94586a4fb89"
+    },
+    {
+      "screenId": "a864750f547e413bb5b63d4e3a52a181",
+      "title": "NeuralOps - Login",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=a864750f547e413bb5b63d4e3a52a181"
+    },
+    {
+      "screenId": "d980e4d6b6ba4263b68aa8d3645f819e",
+      "title": "NeuralOps - Workflows Editor",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d980e4d6b6ba4263b68aa8d3645f819e"
+    },
+    {
+      "screenId": "f5f61895c0504078babb668bb6e73011",
+      "title": "NeuralOps - Incidents List (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=f5f61895c0504078babb668bb6e73011"
+    },
+    {
+      "screenId": "9b01a2fed1be437bbaff1454287d1630",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=9b01a2fed1be437bbaff1454287d1630"
+    },
+    {
+      "screenId": "9a15024774a04f54a599116b316c2db8",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=9a15024774a04f54a599116b316c2db8"
+    },
+    {
+      "screenId": "d70db942e4184ab9ba5f12643b44dc5d",
+      "title": "NeuralOps - Settings: On-call Schedules",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d70db942e4184ab9ba5f12643b44dc5d"
+    },
+    {
+      "screenId": "c875b7566d894b5d92ee4ceeaa8ff4a4",
+      "title": "NeuralOps - Incident Investigation",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c875b7566d894b5d92ee4ceeaa8ff4a4"
+    },
+    {
+      "screenId": "acb97fbfccb14ea88336bf864d50304e",
+      "title": "NeuralOps - Settings Overview",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=acb97fbfccb14ea88336bf864d50304e"
+    },
+    {
+      "screenId": "9b9895c9fa2c4415a69d653f72fb3e1f",
+      "title": "NeuralOps - Entity: payment-api",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=9b9895c9fa2c4415a69d653f72fb3e1f"
+    },
+    {
+      "screenId": "da8a743169614b0788ee1351fb563b85",
+      "title": "NeuralOps - Transaction Journey",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=da8a743169614b0788ee1351fb563b85"
+    },
+    {
+      "screenId": "ba24577829d741a4ae422e4d38f86314",
+      "title": "NeuralOps - Middleware Monitoring",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=ba24577829d741a4ae422e4d38f86314"
+    },
+    {
+      "screenId": "030a5837ecb84808bac323d7ec92029a",
+      "title": "NeuralOps - Service Map",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=030a5837ecb84808bac323d7ec92029a"
+    },
+    {
+      "screenId": "ecc529cb841540489bc2d8dbebf640c5",
+      "title": "NeuralOps - Infrastructure & Kubernetes",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=ecc529cb841540489bc2d8dbebf640c5"
+    },
+    {
+      "screenId": "12c195b47bc74906a27b4af32722015c",
+      "title": "NeuralOps - Trace Sampling & Retention",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=12c195b47bc74906a27b4af32722015c"
+    },
+    {
+      "screenId": "7c33fc97473b43ec8982ae69932d7cc4",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=7c33fc97473b43ec8982ae69932d7cc4"
+    },
+    {
+      "screenId": "df42bd8ec62540f4ab653562486b0054",
+      "title": "NeuralOps - SLO Management",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=df42bd8ec62540f4ab653562486b0054"
+    },
+    {
+      "screenId": "c2d41efbe7bf4e0597afb9e7a0bbd1dd",
+      "title": "NeuralOps - Incidents List",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c2d41efbe7bf4e0597afb9e7a0bbd1dd"
+    },
+    {
+      "screenId": "1637ab0178844d77a570950f338289e1",
+      "title": "NeuralOps - Metrics Explorer",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=1637ab0178844d77a570950f338289e1"
+    },
+    {
+      "screenId": "6f46e7ed41e14e6da842d05619cc6e4a",
+      "title": "NeuralOps - Incident Detail",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=6f46e7ed41e14e6da842d05619cc6e4a"
+    },
+    {
+      "screenId": "8375c0e83c5b44739fa28682b4763a74",
+      "title": "NeuralOps - Dashboards List (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=8375c0e83c5b44739fa28682b4763a74"
+    },
+    {
+      "screenId": "2b855c91a3d949a78e0a95de13a8be9f",
+      "title": "NeuralOps - Incident Detail (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=2b855c91a3d949a78e0a95de13a8be9f"
+    },
+    {
+      "screenId": "6962e2df026349ebab6315792ecc4299",
+      "title": "NeuralOps - Trace Explorer",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=6962e2df026349ebab6315792ecc4299"
+    },
+    {
+      "screenId": "c435b6c0acc4470c95a9c7a2d53c1942",
+      "title": "NeuralOps - Settings Hub (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c435b6c0acc4470c95a9c7a2d53c1942"
+    },
+    {
+      "screenId": "0d2c2db663ac4e398a59036acb926c44",
+      "title": "NeuralOps - Infrastructure Dashboard",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=0d2c2db663ac4e398a59036acb926c44"
+    },
+    {
+      "screenId": "c1848c5c83ae4b2fbfb1c54914accec8",
+      "title": "NeuralOps - Settings: SSO",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c1848c5c83ae4b2fbfb1c54914accec8"
+    },
+    {
+      "screenId": "680fa11081424956a375b81d49501e57",
+      "title": "NeuralOps - Settings: Usage & Billing",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=680fa11081424956a375b81d49501e57"
+    },
+    {
+      "screenId": "e3de9f36718148108b9746e2c5207aab",
+      "title": "NeuralOps - Login (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=e3de9f36718148108b9746e2c5207aab"
+    },
+    {
+      "screenId": "55c7fa5812b0454d9bf4107535cf8067",
+      "title": "NeuralOps - Service Map (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=55c7fa5812b0454d9bf4107535cf8067"
+    },
+    {
+      "screenId": "1cf27c772d9d4e28a6eb571380a4ac0a",
+      "title": "NeuralOps - Environment Selector",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=1cf27c772d9d4e28a6eb571380a4ac0a"
+    },
+    {
+      "screenId": "89f7b1d417ec44d5961c0ed82ea4c309",
+      "title": "NeuralOps - Incident Trends Analysis",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2530",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=89f7b1d417ec44d5961c0ed82ea4c309"
+    },
+    {
+      "screenId": "6e481a4811d04fbd8bbd601f92213d04",
+      "title": "NeuralOps - Service Map (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=6e481a4811d04fbd8bbd601f92213d04"
+    },
+    {
+      "screenId": "c770f81cf1284b2e8cb99d99f76bc734",
+      "title": "NeuralOps - Dashboard Editor",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c770f81cf1284b2e8cb99d99f76bc734"
+    },
+    {
+      "screenId": "7d3f5202f5ac47bfb16e41b7247da6ad",
+      "title": "NeuralOps - Log Explorer (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=7d3f5202f5ac47bfb16e41b7247da6ad"
+    },
+    {
+      "screenId": "493f539847b842aba8e44690e6554610",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=493f539847b842aba8e44690e6554610"
+    },
+    {
+      "screenId": "3d0eed0bd9b54348bf94c1cfde46c43c",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=3d0eed0bd9b54348bf94c1cfde46c43c"
+    },
+    {
+      "screenId": "92d20792f41a4e21b4ebbb004d7b6c4b",
+      "title": "NeuralOps - Command Center (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=92d20792f41a4e21b4ebbb004d7b6c4b"
+    },
+    {
+      "screenId": "93c4a352c7974988829be902d2604ab6",
+      "title": "NeuralOps - Alerts (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=93c4a352c7974988829be902d2604ab6"
+    },
+    {
+      "screenId": "02f759296cf64caeabf52557a275fc6d",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=02f759296cf64caeabf52557a275fc6d"
+    },
+    {
+      "screenId": "33fd57aa179c431284a344f69a98c13b",
+      "title": "NeuralOps - Settings: Users & Teams",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=33fd57aa179c431284a344f69a98c13b"
+    },
+    {
+      "screenId": "53230243da7146da81980911986a3209",
+      "title": "NeuralOps - Settings: Audit Log",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=53230243da7146da81980911986a3209"
+    },
+    {
+      "screenId": "d230c989e17a4668946526cbecd8d775",
+      "title": "NeuralOps - Log Explorer (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d230c989e17a4668946526cbecd8d775"
+    },
+    {
+      "screenId": "3c6d7ae4ea3b4f07aa5f971befdcfca4",
+      "title": "NeuralOps - Synthetic Monitoring",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=3c6d7ae4ea3b4f07aa5f971befdcfca4"
+    },
+    {
+      "screenId": "0cd0afabbace4bfebac53ffee97b147f",
+      "title": "NeuralOps - Log Explorer",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=0cd0afabbace4bfebac53ffee97b147f"
+    },
+    {
+      "screenId": "f9d21d0a4e4347b1b9d4699c42b568b5",
+      "title": "NeuralOps - SLO Management (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=f9d21d0a4e4347b1b9d4699c42b568b5"
+    },
+    {
+      "screenId": "7c7533d543bf411d8a1410c099990804",
+      "title": "NeuralOps - Service Flow",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=7c7533d543bf411d8a1410c099990804"
+    },
+    {
+      "screenId": "ecb792d4c3d14c2a9d24d181a3b71917",
+      "title": "NeuralOps - Trace Compare Analysis",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=ecb792d4c3d14c2a9d24d181a3b71917"
+    },
+    {
+      "screenId": "10373578494939180219",
+      "title": "STITCH_PROMPTS.md",
+      "deviceType": "DESKTOP",
+      "width": "780",
+      "height": "1768",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=10373578494939180219"
+    },
+    {
+      "screenId": "fa04bfbfaee7455bbadb2bb8051f56fe",
+      "title": "NeuralOps - Log Explorer (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=fa04bfbfaee7455bbadb2bb8051f56fe"
+    },
+    {
+      "screenId": "7496445ae51a44bea96f1d45689c5e77",
+      "title": "NeuralOps Icon Logo",
+      "deviceType": "DESKTOP",
+      "width": "40",
+      "height": "40",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=7496445ae51a44bea96f1d45689c5e77"
+    },
+    {
+      "screenId": "2f6b39cac3854c7f8418232a1cd66c96",
+      "title": "NeuralOps - Infrastructure (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=2f6b39cac3854c7f8418232a1cd66c96"
+    },
+    {
+      "screenId": "25c9659fb5c5459296766342ca719df5",
+      "title": "NeuralOps - AI Assistant (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=25c9659fb5c5459296766342ca719df5"
+    },
+    {
+      "screenId": "d7352dec7d0744dda14bd25033c5509a",
+      "title": "NeuralOps - Anomaly Detection Settings",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2096",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d7352dec7d0744dda14bd25033c5509a"
+    },
+    {
+      "screenId": "680709399ebe445faffe57110bba766a",
+      "title": "NeuralOps - Integrations Marketplace",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=680709399ebe445faffe57110bba766a"
+    },
+    {
+      "screenId": "d663d7ec0fe64101ab2de492d0f2c591",
+      "title": "NeuralOps - Security Vulnerabilities",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2168",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d663d7ec0fe64101ab2de492d0f2c591"
+    },
+    {
+      "screenId": "c061bc55ec31437ebc3057b922136d8d",
+      "title": "NeuralOps - Command Center (Lumen)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c061bc55ec31437ebc3057b922136d8d"
+    },
+    {
+      "screenId": "4083002569983884660",
+      "title": "STITCH_PROMPTS.md",
+      "deviceType": "DESKTOP",
+      "width": "780",
+      "height": "1768",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=4083002569983884660"
+    },
+    {
+      "screenId": "6cc6a9e5a64b41c681d650117ef1c022",
+      "title": "NeuralOps - Alerts",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=6cc6a9e5a64b41c681d650117ef1c022"
+    },
+    {
+      "screenId": "2ed396f6018c47838d0702d1e52208c8",
+      "title": "NeuralOps - Settings: Tenant Policies",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=2ed396f6018c47838d0702d1e52208c8"
+    },
+    {
+      "screenId": "fffd2350ccb7482f9ab644f1f63c691e",
+      "title": "NeuralOps - Dashboards List",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=fffd2350ccb7482f9ab644f1f63c691e"
+    },
+    {
+      "screenId": "654c87d65f394766a4188fc74156f8d8",
+      "title": "NeuralOps - Notebooks Analysis Workspace",
+      "deviceType": "DESKTOP",
+      "width": "5120",
+      "height": "4096",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=654c87d65f394766a4188fc74156f8d8"
+    },
+    {
+      "screenId": "814287f0755f4ff4b8f15e1d49fea2cb",
+      "title": "NeuralOps - AI Assistant (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=814287f0755f4ff4b8f15e1d49fea2cb"
+    },
+    {
+      "screenId": "d89157720c4b4f9c83ec951e37ce90f0",
+      "title": "NeuralOps - AI Root Cause Analysis",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=d89157720c4b4f9c83ec951e37ce90f0"
+    },
+    {
+      "screenId": "4c4064947cf54909be39bf166c24d446",
+      "title": "NeuralOps - Anomaly Detection Dashboard",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=4c4064947cf54909be39bf166c24d446"
+    },
+    {
+      "screenId": "5ecebdb9f3e9472c92c0e5d4afa9cad9",
+      "title": "NeuralOps - Service Map Topology",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=5ecebdb9f3e9472c92c0e5d4afa9cad9"
+    },
+    {
+      "screenId": "c7cf6a4896f440d1aca3628b88348c28",
+      "title": "NeuralOps - Trace Explorer",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=c7cf6a4896f440d1aca3628b88348c28"
+    },
+    {
+      "screenId": "9219f212f70f4257a2d51df33852d7c1",
+      "title": "NeuralOps - Command Center",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=9219f212f70f4257a2d51df33852d7c1"
+    },
+    {
+      "screenId": "87f08fabe9a84e699db5aa3b4ba6b842",
+      "title": "Untitled Prototype",
+      "deviceType": "MOBILE",
+      "width": "390",
+      "height": "884",
+      "hasScreenshot": false,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=87f08fabe9a84e699db5aa3b4ba6b842"
+    },
+    {
+      "screenId": "3a8c7481cfc5449198d0b6a74c25867e",
+      "title": "NeuralOps - Log Query Workspace",
+      "deviceType": "DESKTOP",
+      "width": "3040",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=3a8c7481cfc5449198d0b6a74c25867e"
+    },
+    {
+      "screenId": "dfc0e3de9c6f43ea9c2f64a9f680bffb",
+      "title": "NeuralOps - Kubernetes Cluster Detail",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=dfc0e3de9c6f43ea9c2f64a9f680bffb"
+    },
+    {
+      "screenId": "4b2645ed11954e3abff2edcfe6f6995a",
+      "title": "NeuralOps - Marketplace Catalog",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=4b2645ed11954e3abff2edcfe6f6995a"
+    },
+    {
+      "screenId": "ee61d2d640ab4455b95cba58e189704e",
+      "title": "NeuralOps - Log Settings",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2104",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=ee61d2d640ab4455b95cba58e189704e"
+    },
+    {
+      "screenId": "dd7ecf6486624e4aa7a3d5af862b823f",
+      "title": "NeuralOps - Pods Inventory",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=dd7ecf6486624e4aa7a3d5af862b823f"
+    },
+    {
+      "screenId": "346818eac38e4f688aefc4c6805c0a2a",
+      "title": "NeuralOps - Incident Detail (Refined)",
+      "deviceType": "DESKTOP",
+      "width": "2560",
+      "height": "2048",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=346818eac38e4f688aefc4c6805c0a2a"
+    },
+    {
+      "screenId": "ba8aeda96ac64a17adc5e64682298891",
+      "title": "NeuralOps Wordmark",
+      "deviceType": "DESKTOP",
+      "width": "140",
+      "height": "40",
+      "hasScreenshot": true,
+      "previewUrl": "https://stitch.withgoogle.com/preview/37487902246048120?node-id=ba8aeda96ac64a17adc5e64682298891"
+    }
+  ]
+}

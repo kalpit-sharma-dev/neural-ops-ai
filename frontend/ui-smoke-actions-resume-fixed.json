@@ -1,0 +1,56 @@
+{
+  "summary": {
+    "pass": 2,
+    "warn": 0,
+    "fail": 5,
+    "total": 7
+  },
+  "report": [
+    {
+      "name": "Users invite",
+      "status": "FAIL",
+      "issues": [
+        "TimeoutError: locator.click: Timeout 12000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /invite user/i })\n",
+        "console: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+      ]
+    },
+    {
+      "name": "Workflow create",
+      "status": "FAIL",
+      "issues": [
+        "Error: workflow not visible"
+      ]
+    },
+    {
+      "name": "Marketplace action visible",
+      "status": "FAIL",
+      "issues": [
+        "Error: no install/configure button"
+      ]
+    },
+    {
+      "name": "Integrations action visible",
+      "status": "FAIL",
+      "issues": [
+        "Error: no connect/edit/disconnect button"
+      ]
+    },
+    {
+      "name": "Security attack detail",
+      "status": "FAIL",
+      "issues": [
+        "Error: no attack link"
+      ]
+    },
+    {
+      "name": "API key create API-level",
+      "status": "PASS",
+      "issues": []
+    },
+    {
+      "name": "Settings usage page",
+      "status": "PASS",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "summary": {
+    "pass": 0,
+    "fail": 5,
+    "total": 5
+  },
+  "report": [
+    {
+      "name": "Workflows actions present",
+      "status": "FAIL",
+      "issues": [
+        "Error: edit=0 delete=0"
+      ]
+    },
+    {
+      "name": "Marketplace actions present",
+      "status": "FAIL",
+      "issues": [
+        "Error: no install/configure"
+      ]
+    },
+    {
+      "name": "Integrations actions present",
+      "status": "FAIL",
+      "issues": [
+        "Error: no integration actions"
+      ]
+    },
+    {
+      "name": "Security detail link present",
+      "status": "FAIL",
+      "issues": [
+        "Error: no attack link"
+      ]
+    },
+    {
+      "name": "Settings usage counters visible",
+      "status": "FAIL",
+      "issues": [
+        "Error: usage counters missing"
+      ]
+    }
+  ]
+}

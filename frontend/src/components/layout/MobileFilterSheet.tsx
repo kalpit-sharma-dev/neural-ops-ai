@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useFilterStore, type Environment, type TimeRangePreset } from '../../store/filterStore';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
+import { toLocalInputValue } from './TimeRangePicker';
 
 interface MobileFilterSheetProps {
   open: boolean;
@@ -12,8 +14,45 @@ interface MobileFilterSheetProps {
 export function MobileFilterSheet({ open, onOpenChange }: MobileFilterSheetProps) {
   const environment = useFilterStore((s) => s.environment);
   const timeRange = useFilterStore((s) => s.timeRange);
+  const customStart = useFilterStore((s) => s.customStart);
+  const customEnd = useFilterStore((s) => s.customEnd);
   const setEnvironment = useFilterStore((s) => s.setEnvironment);
   const setTimeRange = useFilterStore((s) => s.setTimeRange);
+  const setCustomRange = useFilterStore((s) => s.setCustomRange);
+  const getTimeBounds = useFilterStore((s) => s.getTimeBounds);
+
+  const [startInput, setStartInput] = useState('');
+  const [endInput, setEndInput] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    const bounds = getTimeBounds();
+    setStartInput(toLocalInputValue(customStart ?? bounds.start));
+    setEndInput(toLocalInputValue(customEnd ?? bounds.end));
+    setError('');
+  }, [open, customStart, customEnd, getTimeBounds]);
+
+  const handleApply = () => {
+    if (timeRange === 'custom') {
+      const start = new Date(startInput);
+      const end = new Date(endInput);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        setError('Enter a valid start and end time.');
+        return;
+      }
+      if (start >= end) {
+        setError('Start must be before end.');
+        return;
+      }
+      if (end.getTime() > Date.now() + 60_000) {
+        setError('End time cannot be in the future.');
+        return;
+      }
+      setCustomRange(start, end);
+    }
+    onOpenChange(false);
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -39,8 +78,32 @@ export function MobileFilterSheet({ open, onOpenChange }: MobileFilterSheetProps
             <option value="6h">Last 6h</option>
             <option value="24h">Last 24h</option>
             <option value="7d">Last 7d</option>
+            <option value="custom">Custom range</option>
           </Select>
-          <Button variant="primary" onClick={() => onOpenChange(false)}>
+          {timeRange === 'custom' && (
+            <div className="time-range-popover__custom" style={{ borderTop: 'none', paddingTop: 0 }}>
+              <label className="time-range-field">
+                <span>Start</span>
+                <input
+                  type="datetime-local"
+                  value={startInput}
+                  max={endInput || undefined}
+                  onChange={(e) => setStartInput(e.target.value)}
+                />
+              </label>
+              <label className="time-range-field">
+                <span>End</span>
+                <input
+                  type="datetime-local"
+                  value={endInput}
+                  min={startInput || undefined}
+                  onChange={(e) => setEndInput(e.target.value)}
+                />
+              </label>
+              {error && <p className="time-range-error">{error}</p>}
+            </div>
+          )}
+          <Button variant="primary" onClick={handleApply}>
             Apply
           </Button>
         </Dialog.Content>

@@ -1,6 +1,8 @@
 package observability
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -84,6 +86,8 @@ func (h *Handler) RegisterRoutes(v1 *gin.RouterGroup) {
 	// Phase 11 — Workflows & notebooks
 	v1.GET("/workflows", h.ListWorkflows)
 	v1.POST("/workflows", h.CreateWorkflow)
+	v1.PUT("/workflows/:id", h.UpdateWorkflow)
+	v1.DELETE("/workflows/:id", h.DeleteWorkflow)
 	v1.GET("/notebooks", h.ListNotebooks)
 	v1.POST("/notebooks", h.CreateNotebook)
 
@@ -94,10 +98,17 @@ func (h *Handler) RegisterRoutes(v1 *gin.RouterGroup) {
 	v1.GET("/integrations", h.ListIntegrations)
 	v1.POST("/integrations/:id/connect", h.ConnectIntegration)
 
+	// Marketplace — installable apps & extensions catalog
+	v1.GET("/marketplace", h.ListMarketplace)
+	v1.POST("/marketplace/:key/install", h.InstallExtension)
+	v1.POST("/marketplace/:key/uninstall", h.UninstallExtension)
+
 	// Phase 5 — Admin (demo data; production uses IdentityStore extensions)
 	admin := v1.Group("/admin")
 	{
 		admin.GET("/users", h.ListAdminUsers)
+		admin.POST("/users", h.CreateAdminUser)
+		admin.PATCH("/users/:id", h.UpdateAdminUser)
 		admin.GET("/api-keys", h.ListAPIKeys)
 		admin.POST("/api-keys", h.CreateAPIKey)
 		admin.GET("/audit", h.ListAudit)
@@ -386,6 +397,28 @@ func (h *Handler) CreateSLO(c *gin.Context) {
 }
 
 func (h *Handler) ListAnomalies(c *gin.Context) {
+	tid := tenantID(c)
+	if h.deps.Spans != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if list, err := h.deps.Spans.DetectAnomalies(ctx, tid); err == nil && len(list) > 0 {
+			out := make([]EntityAnomaly, 0, len(list))
+			for i, a := range list {
+				out = append(out, EntityAnomaly{
+					ID:         fmt.Sprintf("an-%d", i+1),
+					EntityID:   a.Service,
+					EntityType: "service",
+					Service:    a.Service,
+					Metric:     a.Metric,
+					Score:      a.Score,
+					Message:    a.Message,
+					DetectedAt: a.DetectedAt,
+				})
+			}
+			writeSuccess(c, out)
+			return
+		}
+	}
 	writeSuccess(c, h.deps.Mem.ListAnomalies())
 }
 
@@ -423,11 +456,50 @@ func (h *Handler) ListK8sPods(c *gin.Context) {
 }
 
 func (h *Handler) ListDatabases(c *gin.Context) {
+	tid := tenantID(c)
+	if h.deps.Spans != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if list, err := h.deps.Spans.ListDatabases(ctx, tid); err == nil && len(list) > 0 {
+			out := make([]DatabaseInstance, 0, len(list))
+			for _, d := range list {
+				status := "healthy"
+				if d.SlowQueries > 10 {
+					status = "degraded"
+				}
+				out = append(out, DatabaseInstance{
+					ID:          d.ID,
+					Name:        d.Name,
+					Engine:      d.Engine,
+					Status:      status,
+					QPS:         d.QPS,
+					SlowQueries: d.SlowQueries,
+					Connections: 0, // not available from trace telemetry
+				})
+			}
+			writeSuccess(c, out)
+			return
+		}
+	}
 	writeSuccess(c, h.deps.Mem.ListDatabases())
 }
 
 func (h *Handler) DBStatements(c *gin.Context) {
-	writeSuccess(c, h.deps.Mem.DBStatements(c.Param("id")))
+	tid := tenantID(c)
+	id := c.Param("id")
+	if h.deps.Spans != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if list, err := h.deps.Spans.DatabaseStatements(ctx, tid, id); err == nil && len(list) > 0 {
+			out := make([]DBStatement, 0, len(list))
+			for _, st := range list {
+				out = append(out, DBStatement{Query: st.Query, Calls: st.Calls, AvgMs: st.AvgMs, TotalMs: st.TotalMs})
+			}
+			writeSuccess(c, out)
+			return
+		}
+	}
+	writeSuccess(c, h.deps.Mem.DBStatements(id))
 }
 
 func (h *Handler) KafkaLag(c *gin.Context) {
@@ -576,12 +648,22 @@ func (h *Handler) ListNotebooks(c *gin.Context) {
 	writeSuccess(c, h.deps.Mem.ListNotebooks())
 }
 
+// reconcileWorkflowGraph treats the authored graph as the source of truth: when
+// nodes are present the linear execution `steps` are recomputed via topological
+// sort so the executor never diverges from the branching topology the user drew.
+func reconcileWorkflowGraph(w *Workflow) {
+	if w.Graph != nil && len(w.Graph.Nodes) > 0 {
+		w.Steps = LinearizeGraph(w.Graph)
+	}
+}
+
 func (h *Handler) CreateWorkflow(c *gin.Context) {
 	var w Workflow
 	if err := c.ShouldBindJSON(&w); err != nil || w.Name == "" {
 		writeError(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	reconcileWorkflowGraph(&w)
 	if h.deps.PG != nil {
 		if saved, err := h.deps.PG.SaveWorkflow(c.Request.Context(), tenantID(c), w); err == nil {
 			writeSuccess(c, saved)
@@ -589,6 +671,42 @@ func (h *Handler) CreateWorkflow(c *gin.Context) {
 		}
 	}
 	writeSuccess(c, h.deps.Mem.SaveWorkflow(w))
+}
+
+func (h *Handler) UpdateWorkflow(c *gin.Context) {
+	var w Workflow
+	if err := c.ShouldBindJSON(&w); err != nil || w.Name == "" {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	w.ID = c.Param("id")
+	reconcileWorkflowGraph(&w)
+	if h.deps.PG != nil {
+		if saved, err := h.deps.PG.UpdateWorkflow(c.Request.Context(), tenantID(c), w); err == nil {
+			writeSuccess(c, saved)
+			return
+		}
+	}
+	if saved, ok := h.deps.Mem.UpdateWorkflow(w); ok {
+		writeSuccess(c, saved)
+		return
+	}
+	writeError(c, http.StatusNotFound, "workflow not found")
+}
+
+func (h *Handler) DeleteWorkflow(c *gin.Context) {
+	id := c.Param("id")
+	if h.deps.PG != nil {
+		if err := h.deps.PG.DeleteWorkflow(c.Request.Context(), tenantID(c), id); err == nil {
+			writeSuccess(c, gin.H{"deleted": true})
+			return
+		}
+	}
+	if h.deps.Mem.DeleteWorkflow(id) {
+		writeSuccess(c, gin.H{"deleted": true})
+		return
+	}
+	writeError(c, http.StatusNotFound, "workflow not found")
 }
 
 func (h *Handler) CreateNotebook(c *gin.Context) {
@@ -607,15 +725,46 @@ func (h *Handler) CreateNotebook(c *gin.Context) {
 }
 
 func (h *Handler) ListVulnerabilities(c *gin.Context) {
+	tid := tenantID(c)
+	if h.deps.CH != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if list, err := QuerySecurityVulnerabilities(ctx, h.deps.CH, tid); err == nil && len(list) > 0 {
+			writeSuccess(c, list)
+			return
+		}
+	}
 	writeSuccess(c, h.deps.Mem.ListVulnerabilities())
 }
 
 func (h *Handler) ListAttacks(c *gin.Context) {
+	tid := tenantID(c)
+	if h.deps.CH != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if list, err := QuerySecurityAttacks(ctx, h.deps.CH, tid); err == nil && len(list) > 0 {
+			writeSuccess(c, list)
+			return
+		}
+	}
 	writeSuccess(c, h.deps.Mem.ListAttacks())
 }
 
 func (h *Handler) GetAttack(c *gin.Context) {
 	id := c.Param("id")
+	tid := tenantID(c)
+	if h.deps.CH != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if list, err := QuerySecurityAttacks(ctx, h.deps.CH, tid); err == nil {
+			for _, a := range list {
+				if a.ID == id {
+					writeSuccess(c, a)
+					return
+				}
+			}
+		}
+	}
 	if a, ok := h.deps.Mem.GetAttack(id); ok {
 		writeSuccess(c, a)
 		return
@@ -664,6 +813,76 @@ func (h *Handler) ListAdminUsers(c *gin.Context) {
 		}
 	}
 	writeSuccess(c, h.deps.Mem.DemoAdminUsers())
+}
+
+type createUserRequest struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+func (h *Handler) CreateAdminUser(c *gin.Context) {
+	if !h.requireAdmin(c) {
+		return
+	}
+	var req createUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Email == "" {
+		writeError(c, http.StatusBadRequest, "email is required")
+		return
+	}
+	role := string(auth.ParseRole(req.Role))
+	tid := tenantID(c)
+	if h.deps.Identity != nil {
+		if user, err := auth.CreateUser(c.Request.Context(), h.deps.Identity, tid, req.Email, role); err == nil {
+			writeSuccess(c, user)
+			return
+		}
+	}
+	writeSuccess(c, h.deps.Mem.CreateAdminUser(tid, req.Email, role))
+}
+
+type updateUserRequest struct {
+	Role   *string `json:"role"`
+	Active *bool   `json:"active"`
+}
+
+func (h *Handler) UpdateAdminUser(c *gin.Context) {
+	if !h.requireAdmin(c) {
+		return
+	}
+	var req updateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil || (req.Role == nil && req.Active == nil) {
+		writeError(c, http.StatusBadRequest, "role or active is required")
+		return
+	}
+	id := c.Param("id")
+	tid := tenantID(c)
+	var normalizedRole *string
+	if req.Role != nil {
+		r := string(auth.ParseRole(*req.Role))
+		normalizedRole = &r
+	}
+	if h.deps.Identity != nil {
+		ok := true
+		if normalizedRole != nil {
+			if err := auth.UpdateUserRole(c.Request.Context(), h.deps.Identity, tid, id, *normalizedRole); err != nil {
+				ok = false
+			}
+		}
+		if ok && req.Active != nil {
+			if err := auth.SetUserActive(c.Request.Context(), h.deps.Identity, tid, id, *req.Active); err != nil {
+				ok = false
+			}
+		}
+		if ok {
+			writeSuccess(c, gin.H{"updated": true})
+			return
+		}
+	}
+	if _, ok := h.deps.Mem.UpdateAdminUser(id, normalizedRole, req.Active); !ok {
+		writeError(c, http.StatusNotFound, "user not found")
+		return
+	}
+	writeSuccess(c, gin.H{"updated": true})
 }
 
 func (h *Handler) ListAPIKeys(c *gin.Context) {
@@ -715,7 +934,34 @@ func (h *Handler) ListAudit(c *gin.Context) {
 }
 
 func (h *Handler) Usage(c *gin.Context) {
-	writeSuccess(c, h.deps.Mem.Usage())
+	stats := h.deps.Mem.Usage()
+	if h.deps.CH != nil {
+		ctx, cancel := withAnalyticsTimeout(c.Request.Context())
+		defer cancel()
+		if live, err := QueryUsageFromClickHouse(ctx, h.deps.CH, tenantID(c), time.Now().Add(-24*time.Hour)); err == nil {
+			if live.LogsIngestedGB > 0 {
+				stats.LogsIngestedGB = live.LogsIngestedGB
+			}
+			if live.TracesIngested > 0 {
+				stats.TracesIngested = live.TracesIngested
+			}
+			if live.MetricsIngested > 0 {
+				stats.MetricsIngested = live.MetricsIngested
+			}
+		}
+	}
+	writeSuccess(c, stats)
+}
+
+// requireAdmin enforces the ADMIN role for mutating admin endpoints. When no
+// principal is present (e.g. auth disabled in local dev) the call is allowed,
+// consistent with the gateway's dev-mode behaviour.
+func (h *Handler) requireAdmin(c *gin.Context) bool {
+	if p, ok := auth.FromContext(c.Request.Context()); ok && p.Role != auth.RoleAdmin {
+		writeError(c, http.StatusForbidden, "admin role required")
+		return false
+	}
+	return true
 }
 
 func tenantID(c *gin.Context) string {
@@ -728,6 +974,11 @@ func tenantID(c *gin.Context) string {
 		return h
 	}
 	return "default"
+}
+
+func withAnalyticsTimeout(parent context.Context) (context.Context, context.CancelFunc) {
+	// Keep analytics endpoints responsive under slow ClickHouse queries.
+	return context.WithTimeout(parent, 3*time.Second)
 }
 
 func writeSuccess(c *gin.Context, data any) {

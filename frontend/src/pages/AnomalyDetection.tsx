@@ -17,7 +17,8 @@ import { useRealtimeStore } from '../store/realtimeStore';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { StatusDot } from '../components/ui/StatusDot';
-import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 const ENVIRONMENTS = ['PROD', 'STAGING', 'DEV'] as const;
 
@@ -101,12 +102,10 @@ export default function AnomalyDetection() {
   );
 
   return (
-    <div>
-      <PageHeader
-        title="Anomaly Detection"
-        subtitle={`${activeCount} active anomalies · Neural score monitoring`}
-      />
-
+    <StitchPageShell
+      title="Anomaly Detection"
+      subtitle={`${activeCount} active anomalies · Neural score monitoring`}
+    >
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
 
@@ -220,6 +219,6 @@ export default function AnomalyDetection() {
           {events.length === 0 && <p className="muted">Waiting for realtime events…</p>}
         </aside>
       </div>
-    </div>
+    </StitchPageShell>
   );
 }

@@ -11,8 +11,8 @@ import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
-import { Link } from '@tanstack/react-router';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 const CONFIG_FIELDS: Record<string, { key: string; label: string; secret?: boolean }[]> = {
   jira: [
@@ -86,8 +86,11 @@ export default function Integrations() {
   };
 
   return (
-    <div>
-      <PageHeader title="Integrations" subtitle="Third-party connections" actions={<Link to="/settings">← Settings</Link>} />
+    <StitchPageShell
+      title="Integrations"
+      subtitle="Third-party connections"
+      breadcrumb={<SettingsBreadcrumb page="Integrations" />}
+    >
       {isLoading && <LoadingState />}
       <div className="settings-grid">
         {(data ?? []).map((i) => {
@@ -106,11 +109,11 @@ export default function Integrations() {
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 {!i.connected && (
                   <>
-                    <Button variant="secondary" size="sm" onClick={() => openConnect(key)}>
+                    <Button variant="secondary" size="sm" onClick={() => openConnect(key)} data-testid={`integrations-connect-${key}`}>
                       Connect
                     </Button>
                     {OAUTH_KEYS.has(key) && (
-                      <Button variant="secondary" size="sm" onClick={() => { window.location.href = integrationOAuthStartUrl(key); }}>
+                      <Button variant="secondary" size="sm" onClick={() => { window.location.href = integrationOAuthStartUrl(key); }} data-testid={`integrations-oauth-${key}`}>
                         OAuth
                       </Button>
                     )}
@@ -118,8 +121,8 @@ export default function Integrations() {
                 )}
                 {i.connected && (
                   <>
-                    <Button variant="secondary" size="sm" onClick={() => openConnect(key, true)}>Edit</Button>
-                    <Button variant="secondary" size="sm" onClick={() => disconnectMut.mutate(key)}>Disconnect</Button>
+                    <Button variant="secondary" size="sm" onClick={() => openConnect(key, true)} data-testid={`integrations-edit-${key}`}>Edit</Button>
+                    <Button variant="secondary" size="sm" onClick={() => disconnectMut.mutate(key)} data-testid={`integrations-disconnect-${key}`}>Disconnect</Button>
                   </>
                 )}
               </div>
@@ -152,6 +155,6 @@ export default function Integrations() {
           </Card>
         </div>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

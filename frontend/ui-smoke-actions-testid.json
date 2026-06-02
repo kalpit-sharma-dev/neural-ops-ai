@@ -1,0 +1,34 @@
+{
+  "base": "http://localhost:5174",
+  "summary": {
+    "pass": 6,
+    "fail": 0,
+    "total": 6
+  },
+  "report": [
+    {
+      "name": "Users invite button + row",
+      "status": "PASS"
+    },
+    {
+      "name": "Workflow action hooks present",
+      "status": "PASS"
+    },
+    {
+      "name": "Marketplace action hooks present",
+      "status": "PASS"
+    },
+    {
+      "name": "Integrations action hooks present",
+      "status": "PASS"
+    },
+    {
+      "name": "Security attack link hooks present",
+      "status": "PASS"
+    },
+    {
+      "name": "Usage metric hooks present",
+      "status": "PASS"
+    }
+  ]
+}

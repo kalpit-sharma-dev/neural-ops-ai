@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import toast from 'react-hot-toast';
 import { fetchSSOConfig, updateSSOConfig } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
 
 export default function SettingsSSO() {
   const queryClient = useQueryClient();
@@ -24,8 +24,11 @@ export default function SettingsSSO() {
   if (isLoading || !data) return <LoadingState />;
 
   return (
-    <div>
-      <PageHeader title="SSO / IdP" subtitle="OpenID Connect provider settings (live reload)" actions={<Link to="/settings">← Settings</Link>} />
+    <StitchPageShell
+      title="SSO / IdP"
+      subtitle="OpenID Connect provider settings (live reload)"
+      breadcrumb={<SettingsBreadcrumb page="SSO / IdP" />}
+    >
       <Card title="Identity provider">
         <form
           className="form-stack"
@@ -55,6 +58,6 @@ export default function SettingsSSO() {
           <Button type="submit" variant="primary">Save & reload</Button>
         </form>
       </Card>
-    </div>
+    </StitchPageShell>
   );
 }

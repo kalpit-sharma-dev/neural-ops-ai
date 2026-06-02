@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCloudDashboards, fetchCloudMetrics } from '../api/observability';
+import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 
 const PROVIDERS = ['aws', 'azure', 'gcp'] as const;
 
 export default function CloudMonitoring() {
   const [provider, setProvider] = useState<(typeof PROVIDERS)[number]>('aws');
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch, isFetched } = useQuery({
     queryKey: ['cloud-dashboards', provider],
     queryFn: () => fetchCloudDashboards(provider),
   });
@@ -21,8 +24,7 @@ export default function CloudMonitoring() {
   });
 
   return (
-    <div>
-      <PageHeader title="Cloud monitoring" subtitle="AWS, Azure, and GCP observability dashboards" />
+    <StitchPageShell title="Cloud monitoring" subtitle="AWS, Azure, and GCP observability dashboards">
       <div className="tab-bar" style={{ marginBottom: 24 }}>
         {PROVIDERS.map((p) => (
           <button
@@ -36,6 +38,10 @@ export default function CloudMonitoring() {
         ))}
       </div>
       {isLoading && <LoadingState />}
+      {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
+      {!error && isFetched && (data?.length ?? 0) === 0 && (
+        <EmptyState title={`No ${provider.toUpperCase()} dashboards`} description="Connect this cloud provider integration to import observability dashboards." />
+      )}
       {(data ?? []).map((d) => (
         <Card key={d.id} title={d.name}>
           <p className="muted">Region: {d.region}</p>
@@ -77,6 +83,6 @@ export default function CloudMonitoring() {
           )}
         </Card>
       )}
-    </div>
+    </StitchPageShell>
   );
 }

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Users invite user",
+    "status": "FAIL",
+    "issues": [
+      "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /invite user/i })\n",
+      "console: WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available | WebSocket connection to 'ws://localhost:8080/api/v1/ws/realtime' failed: HTTP Authentication failed; no valid credentials available"
+    ]
+  },
+  {
+    "name": "Workflow create",
+    "status": "FAIL",
+    "issues": [
+      "Error: new workflow not listed"
+    ]
+  },
+  {
+    "name": "Marketplace install",
+    "status": "FAIL",
+    "issues": [
+      "Error: no install button"
+    ]
+  },
+  {
+    "name": "Integrations connect",
+    "status": "FAIL",
+    "issues": [
+      "Error: no connect button"
+    ]
+  },
+  {
+    "name": "Security attack detail",
+    "status": "FAIL",
+    "issues": [
+      "Error: no attack link"
+    ]
+  }
+]

@@ -7,8 +7,10 @@ import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LoadingState } from '../components/ui/PageStates';
+import { StitchPageShell } from '../components/stitch';
 import { chartCartesianDefaults } from '../lib/chartTheme';
+import { useTimeBounds } from '../hooks/useTimeBounds';
 
 type CellType = 'markdown' | 'log' | 'promql';
 
@@ -26,6 +28,7 @@ export default function Notebooks() {
   const [name, setName] = useState('');
   const [results, setResults] = useState<Record<string, CellOutput[]>>({});
   const [runningCell, setRunningCell] = useState<string | null>(null);
+  const { resolve: resolveRange } = useTimeBounds();
 
   const createMut = useMutation({
     mutationFn: () =>
@@ -61,7 +64,8 @@ export default function Notebooks() {
     setRunningCell(cellId);
     try {
       if (type === 'promql') {
-        const series = await queryPromQL(content);
+        const { startIso, endIso } = resolveRange();
+        const series = await queryPromQL(content, { start: startIso, end: endIso });
         const chartData = (series.points ?? []).map((p) => ({
           time: new Date(p.timestamp).toLocaleTimeString(),
           value: p.value,
@@ -103,8 +107,7 @@ export default function Notebooks() {
   const chartDefaults = chartCartesianDefaults();
 
   return (
-    <div>
-      <PageHeader title="Notebooks" subtitle="Saved analysis notebooks" />
+    <StitchPageShell title="Notebooks" subtitle="Saved analysis notebooks">
       <Card title="New notebook" style={{ marginBottom: 24 }}>
         <div className="form-stack">
           <Input label="Notebook name" placeholder="Weekly error review" value={name} onChange={(e) => setName(e.target.value)} />
@@ -167,7 +170,7 @@ export default function Notebooks() {
           })}
         </Card>
       ))}
-    </div>
+    </StitchPageShell>
   );
 }
 
