@@ -1,0 +1,12 @@
+{{- if .Values.mesh.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: neuralops-mtls
+  namespace: {{ include "neuralops.namespace" . }}
+  labels:
+    {{- include "neuralops.labels" . | nindent 4 }}
+spec:
+  mtls:
+    mode: {{ .Values.mesh.mtlsMode | default "STRICT" }}
+{{- end }}

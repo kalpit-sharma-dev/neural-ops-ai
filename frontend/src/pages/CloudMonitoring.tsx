@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchCloudDashboards, fetchCloudMetrics } from '../api/observability';
+import { fetchCloudDashboards, fetchCloudMetrics, fetchServerlessFunctions } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -21,6 +21,11 @@ export default function CloudMonitoring() {
     queryKey: ['cloud-metrics', provider, selectedMetric],
     queryFn: () => fetchCloudMetrics(provider, selectedMetric!),
     enabled: !!selectedMetric,
+  });
+
+  const { data: serverless, isLoading: serverlessLoading } = useQuery({
+    queryKey: ['serverless-functions'],
+    queryFn: fetchServerlessFunctions,
   });
 
   return (
@@ -83,6 +88,38 @@ export default function CloudMonitoring() {
           )}
         </Card>
       )}
+
+      <Card title="Serverless functions" style={{ marginTop: 24 }} data-testid="serverless-functions">
+        {serverlessLoading && <LoadingState />}
+        {!serverlessLoading && (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Provider</th>
+                <th>Runtime</th>
+                <th>Invocations (24h)</th>
+                <th>Error %</th>
+                <th>P95 ms</th>
+                <th>Cold start %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(serverless ?? []).map((fn) => (
+                <tr key={fn.id}>
+                  <td>{fn.name}</td>
+                  <td>{fn.provider}</td>
+                  <td>{fn.runtime}</td>
+                  <td>{fn.invocations24h.toLocaleString()}</td>
+                  <td>{fn.errorRatePct.toFixed(2)}</td>
+                  <td>{fn.p95DurationMs.toFixed(0)}</td>
+                  <td>{fn.coldStartPct.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
     </StitchPageShell>
   );
 }

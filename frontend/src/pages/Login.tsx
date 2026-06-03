@@ -7,8 +7,10 @@ import { Button } from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
 import { Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '../store/themeStore';
+import { useI18n } from '../i18n/I18nProvider';
 
 export default function Login() {
+  const { tr } = useI18n();
   const navigate = useNavigate();
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
@@ -65,17 +67,17 @@ export default function Login() {
       </button>
       <div className="login-card">
         <h1>NeuralOps</h1>
-        <p className="muted">Sign in to your observability workspace</p>
+        <p className="muted">{tr('login.subtitle', 'Sign in to your observability workspace')}</p>
 
         {authConfig?.oidcEnabled && (
           <Button variant="primary" onClick={() => void startSSO()} disabled={loading} style={{ width: '100%' }}>
-            Continue with SSO
+            {tr('login.oidc', 'Continue with SSO')}
           </Button>
         )}
 
         {authConfig?.devLoginEnabled && (
           <div className="login-dev">
-            <label htmlFor="email">Dev login email</label>
+            <label htmlFor="email">{tr('login.devEmail', 'Dev login email')}</label>
             <input
               id="email"
               className="filter-input"
@@ -84,7 +86,7 @@ export default function Login() {
               placeholder="demo@neuralops.ai"
             />
             <Button variant="secondary" onClick={() => void loginDev()} disabled={loading} style={{ width: '100%' }}>
-              Dev sign in
+              {tr('login.devLogin', 'Dev sign in')}
             </Button>
           </div>
         )}

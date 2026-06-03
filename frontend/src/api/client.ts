@@ -96,10 +96,27 @@ export async function deleteData<T>(url: string): Promise<T> {
   return response.data.data;
 }
 
+export interface PlatformCapabilities {
+  product: string;
+  openTelemetry: boolean;
+  prometheus: boolean;
+  ebpf: boolean;
+  openApi: boolean;
+  streamingPipeline: boolean;
+  unifiedQuery: boolean;
+  aiFeatures: string[];
+  governanceFeatures: string[];
+  deploymentModes: string[];
+  standards: string[];
+  differentiators: string[];
+}
+
 export interface PlatformInfo {
   service: string;
   environment: string;
   version: string;
+  demoMode?: boolean;
+  capabilities?: PlatformCapabilities;
 }
 
 export interface HealthStatus {

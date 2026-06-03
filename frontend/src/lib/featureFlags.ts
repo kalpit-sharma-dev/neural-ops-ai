@@ -5,6 +5,15 @@ const flags: Record<string, boolean> = {
   SYNTHETIC: import.meta.env.VITE_FEATURE_SYNTHETIC !== 'false',
   SERVICE_MAP: import.meta.env.VITE_FEATURE_SERVICE_MAP !== 'false',
   NOTEBOOKS: import.meta.env.VITE_FEATURE_NOTEBOOKS !== 'false',
+  QUERY_WORKBENCH: import.meta.env.VITE_FEATURE_QUERY_WORKBENCH !== 'false',
+  AI_OPS: import.meta.env.VITE_FEATURE_AI_OPS !== 'false',
+  COLLECTORS_FLEET: import.meta.env.VITE_FEATURE_COLLECTORS_FLEET !== 'false',
+  ENTERPRISE_GOVERNANCE: import.meta.env.VITE_FEATURE_ENTERPRISE_GOVERNANCE !== 'false',
+  NFR_CERTIFICATION: import.meta.env.VITE_FEATURE_NFR_CERTIFICATION !== 'false',
+  ALERT_POLICIES: import.meta.env.VITE_FEATURE_ALERT_POLICIES !== 'false',
+  MATERIALIZATION: import.meta.env.VITE_FEATURE_MATERIALIZATION !== 'false',
+  BUSINESS_OBSERVABILITY: import.meta.env.VITE_FEATURE_BUSINESS_OBSERVABILITY !== 'false',
+  CLOUD_FINOPS: import.meta.env.VITE_FEATURE_CLOUD_FINOPS !== 'false',
 };
 
 export function isFeatureEnabled(key: string): boolean {

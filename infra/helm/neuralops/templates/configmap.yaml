@@ -9,9 +9,21 @@ data:
   ENVIRONMENT: {{ .Values.global.environment | quote }}
   DEMO_MODE: {{ .Values.config.demoMode | quote }}
   AUTH_DISABLED: {{ .Values.config.authDisabled | quote }}
+  AUTH_ALLOW_DEV_LOGIN: {{ .Values.config.authAllowDevLogin | quote }}
+  OIDC_ENABLED: {{ .Values.auth.oidc.enabled | quote }}
+  SAML_ENABLED: {{ .Values.auth.saml.enabled | quote }}
   INGESTION_URL: http://ingestion:{{ .Values.backend.ingestion.port }}
   ANALYSIS_URL: http://analysis:{{ .Values.backend.analysis.port }}
   CORRELATION_URL: http://correlation:{{ .Values.backend.correlation.port }}
   INCIDENT_URL: http://incident:{{ .Values.backend.incident.port }}
   SEARCH_URL: http://search:{{ .Values.backend.search.port }}
   ALERTING_URL: http://alerting:{{ .Values.backend.alerting.port }}
+  FINOPS_BILLING_MODE: {{ .Values.config.finopsBillingMode | default "simulated" | quote }}
+  FINOPS_REQUIRE_POSTGRES: {{ .Values.config.finopsRequirePostgres | default false | quote }}
+  FINOPS_ALLOW_SIMULATION: {{ .Values.config.finopsAllowSimulation | default false | quote }}
+  {{- if .Values.finopsCur.enabled }}
+  FINOPS_AWS_CUR_FILE: {{ .Values.finopsCur.curFile | quote }}
+  {{- end }}
+  AUTOFIX_ENABLED: {{ .Values.config.autofixEnabled | default false | quote }}
+  AUTOFIX_REQUIRE_APPROVAL: {{ .Values.config.autofixRequireApproval | default true | quote }}
+  AUTOFIX_ALLOWED_ROLES: {{ .Values.config.autofixAllowedRoles | default "ADMIN,SRE" | quote }}

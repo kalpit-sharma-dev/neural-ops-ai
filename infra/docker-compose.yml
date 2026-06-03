@@ -253,6 +253,32 @@ services:
       retries: 5
       start_period: 20s
 
+  materializer:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        SERVICE: materializer
+    container_name: neuralops-materializer
+    environment:
+      <<: *observability-env
+      SERVICE_NAME: materializer
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_GROUP: neuralops-materializer
+      MATERIALIZER_CONCURRENCY: 32
+      POSTGRES_DSN: postgres://neuralops:neuralops@postgres:5432/neuralops?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      gateway:
+        condition: service_healthy
+    networks:
+      - neuralops-net
+    restart: unless-stopped
+
   ingestion:
     build:
       context: ../backend

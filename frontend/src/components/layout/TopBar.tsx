@@ -12,6 +12,7 @@ import { useSidebarStore } from './Sidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { EnvPillBar } from './EnvPillBar';
 import { TimeRangePicker } from './TimeRangePicker';
+import { LocaleSwitcher } from './LocaleSwitcher';
 
 const THEME_LABEL: Record<ThemePreference, string> = {
   light: 'Light',
@@ -91,6 +92,7 @@ export function TopBar() {
         </button>
 
         <div className="topbar__actions">
+          <LocaleSwitcher />
           <button
             type="button"
             className="theme-toggle"

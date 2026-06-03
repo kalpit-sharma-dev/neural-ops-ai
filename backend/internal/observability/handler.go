@@ -1,9 +1,9 @@
 package observability
 
 import (
-	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,102 +21,6 @@ func NewHandler(deps Deps) *Handler {
 		deps.Mem = NewStore()
 	}
 	return &Handler{deps: deps}
-}
-
-// RegisterRoutes mounts observability routes under /api/v1.
-func (h *Handler) RegisterRoutes(v1 *gin.RouterGroup) {
-	// Phase 2 — APM / tracing (uses /apm prefix to avoid ingestion proxy conflict)
-	apm := v1.Group("/apm")
-	{
-		apm.GET("/traces/:traceId", h.GetTrace)
-		apm.POST("/traces/search", h.SearchTraces)
-		apm.GET("/flow", h.ServiceFlow)
-		apm.GET("/services/:service/operations", h.ListOperations)
-	}
-
-	// Phase 3 — Metrics & dashboards
-	v1.GET("/metrics/catalog", h.MetricCatalog)
-	v1.GET("/metrics/query", h.QueryMetric)
-	v1.GET("/dashboards", h.ListDashboards)
-	v1.POST("/dashboards", h.CreateDashboard)
-	v1.GET("/dashboards/:id", h.GetDashboard)
-	v1.PUT("/dashboards/:id", h.UpdateDashboard)
-	v1.DELETE("/dashboards/:id", h.DeleteDashboard)
-
-	// Phase 4 — Topology
-	v1.GET("/topology", h.Topology)
-	v1.GET("/zones", h.ListZones)
-
-	// Phase 6 — Log settings
-	v1.GET("/logs/metric-rules", h.ListLogMetricRules)
-	v1.POST("/logs/metric-rules", h.CreateLogMetricRule)
-	v1.GET("/logs/parsing-rules", h.ListLogParsingRules)
-	v1.POST("/logs/parsing-rules", h.CreateLogParsingRule)
-
-	// Phase 7 — SLOs & anomalies
-	v1.GET("/slos", h.ListSLOs)
-	v1.POST("/slos", h.CreateSLO)
-	v1.GET("/anomalies/entities", h.ListAnomalies)
-
-	// Phase 8 — Infra & K8s
-	infra := v1.Group("/infra")
-	{
-		infra.GET("/hosts", h.ListHosts)
-		infra.GET("/k8s/clusters", h.ListK8sClusters)
-		infra.GET("/k8s/pods", h.ListK8sPods)
-	}
-
-	// Phase 9 — DB & middleware
-	v1.GET("/databases", h.ListDatabases)
-	v1.GET("/databases/:id/statements", h.DBStatements)
-	v1.GET("/middleware/kafka/lag", h.KafkaLag)
-
-	// Phase 10 — RUM & synthetic
-	v1.GET("/rum/sessions", h.ListRUMSessions)
-	v1.GET("/rum/sessions/:sessionId/replay", h.GetSessionReplay)
-	v1.POST("/rum/beacon", h.IngestRUMBeacon)
-	v1.POST("/rum/replay", h.IngestRUMReplay)
-	v1.GET("/synthetic/monitors", h.ListSyntheticMonitors)
-	v1.POST("/synthetic/monitors", h.CreateSyntheticMonitor)
-	v1.GET("/synthetic/monitors/:id/runs", h.SyntheticRuns)
-
-	// PromQL proxy (fallback when ClickHouse empty)
-	v1.GET("/metrics/promql", h.QueryPromQL)
-
-	// Phase 11 — Workflows & notebooks
-	v1.GET("/workflows", h.ListWorkflows)
-	v1.POST("/workflows", h.CreateWorkflow)
-	v1.PUT("/workflows/:id", h.UpdateWorkflow)
-	v1.DELETE("/workflows/:id", h.DeleteWorkflow)
-	v1.GET("/notebooks", h.ListNotebooks)
-	v1.POST("/notebooks", h.CreateNotebook)
-
-	// Phase 12 — Security & integrations
-	v1.GET("/security/vulnerabilities", h.ListVulnerabilities)
-	v1.GET("/security/attacks", h.ListAttacks)
-	v1.GET("/security/attacks/:id", h.GetAttack)
-	v1.GET("/integrations", h.ListIntegrations)
-	v1.POST("/integrations/:id/connect", h.ConnectIntegration)
-
-	// Marketplace — installable apps & extensions catalog
-	v1.GET("/marketplace", h.ListMarketplace)
-	v1.POST("/marketplace/:key/install", h.InstallExtension)
-	v1.POST("/marketplace/:key/uninstall", h.UninstallExtension)
-
-	// Phase 5 — Admin (demo data; production uses IdentityStore extensions)
-	admin := v1.Group("/admin")
-	{
-		admin.GET("/users", h.ListAdminUsers)
-		admin.POST("/users", h.CreateAdminUser)
-		admin.PATCH("/users/:id", h.UpdateAdminUser)
-		admin.GET("/api-keys", h.ListAPIKeys)
-		admin.POST("/api-keys", h.CreateAPIKey)
-		admin.GET("/audit", h.ListAudit)
-		admin.GET("/usage", h.Usage)
-	}
-
-	h.RegisterDepthRoutes(v1)
-	h.RegisterExtendedRoutes(v1)
 }
 
 func (h *Handler) GetTrace(c *gin.Context) {
@@ -177,6 +81,110 @@ func (h *Handler) ListOperations(c *gin.Context) {
 
 func (h *Handler) MetricCatalog(c *gin.Context) {
 	writeSuccess(c, h.deps.Mem.MetricCatalog())
+}
+
+func (h *Handler) UnifiedQuery(c *gin.Context) {
+	var req UnifiedQueryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	recordUnifiedQuery(tenantID(c))
+	writeSuccess(c, PlanUnifiedQuery(h.deps.Mem, req))
+}
+
+func (h *Handler) ValidateUnifiedQuery(c *gin.Context) {
+	var req UnifiedQueryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	explain := BuildQueryExplain(req)
+	writeSuccess(c, gin.H{
+		"valid":   explain.Valid,
+		"message": explain.Message,
+		"explain": explain,
+	})
+}
+
+func (h *Handler) ListUnifiedQueryFunctions(c *gin.Context) {
+	writeSuccess(c, []string{
+		"where(field, op, value)",
+		"group_by(field)",
+		"count()",
+		"avg(field)",
+		"rate(field, window)",
+	})
+}
+
+func (h *Handler) ListCollectorFleet(c *gin.Context) {
+	writeSuccess(c, h.deps.Mem.ListCollectorFleet())
+}
+
+func (h *Handler) CreateCollectorAgent(c *gin.Context) {
+	var a CollectorFleetAgent
+	if err := c.ShouldBindJSON(&a); err != nil || a.Name == "" {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	writeSuccess(c, h.deps.Mem.SaveCollectorAgent(a))
+}
+
+func (h *Handler) UpdateCollectorAgent(c *gin.Context) {
+	var a CollectorFleetAgent
+	if err := c.ShouldBindJSON(&a); err != nil || a.Name == "" {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	updated, ok := h.deps.Mem.UpdateCollectorAgent(c.Param("id"), a)
+	if !ok {
+		writeError(c, http.StatusNotFound, "collector agent not found")
+		return
+	}
+	writeSuccess(c, updated)
+}
+
+func (h *Handler) ListCollectorPipelines(c *gin.Context) {
+	writeSuccess(c, h.deps.Mem.ListCollectorPipelines())
+}
+
+func (h *Handler) CreateCollectorPipeline(c *gin.Context) {
+	var p CollectorPipeline
+	if err := c.ShouldBindJSON(&p); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	ok, msg := h.deps.Mem.ValidateCollectorPipeline(p)
+	if !ok {
+		writeError(c, http.StatusBadRequest, msg)
+		return
+	}
+	writeSuccess(c, h.deps.Mem.SaveCollectorPipeline(p))
+}
+
+func (h *Handler) UpdateCollectorPipeline(c *gin.Context) {
+	var p CollectorPipeline
+	if err := c.ShouldBindJSON(&p); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	p.ID = c.Param("id")
+	ok, msg := h.deps.Mem.ValidateCollectorPipeline(p)
+	if !ok {
+		writeError(c, http.StatusBadRequest, msg)
+		return
+	}
+	writeSuccess(c, h.deps.Mem.SaveCollectorPipeline(p))
+}
+
+func (h *Handler) ValidateCollectorPipeline(c *gin.Context) {
+	var p CollectorPipeline
+	if err := c.ShouldBindJSON(&p); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	ok, msg := h.deps.Mem.ValidateCollectorPipeline(p)
+	writeSuccess(c, gin.H{"valid": ok, "message": msg})
 }
 
 func (h *Handler) QueryMetric(c *gin.Context) {
@@ -737,6 +745,58 @@ func (h *Handler) ListVulnerabilities(c *gin.Context) {
 	writeSuccess(c, h.deps.Mem.ListVulnerabilities())
 }
 
+type batchVulnerabilityFinding struct {
+	Source      string `json:"source"`
+	AssetType   string `json:"assetType"`
+	AssetID     string `json:"assetId"`
+	CVE         string `json:"cveId"`
+	CVEAlt      string `json:"cve"`
+	Severity    string `json:"severity"`
+	Service     string `json:"service"`
+	Package     string `json:"package"`
+	Description string `json:"description"`
+	DetectedAt  time.Time `json:"detectedAt"`
+}
+
+type batchImportVulnerabilitiesRequest struct {
+	Source      string                      `json:"source"`
+	Findings    []batchVulnerabilityFinding `json:"findings"`
+	Vulnerabilities []SecurityVulnerability `json:"vulnerabilities"`
+}
+
+func (h *Handler) BatchImportVulnerabilities(c *gin.Context) {
+	var req batchImportVulnerabilitiesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	items := append([]SecurityVulnerability(nil), req.Vulnerabilities...)
+	for _, f := range req.Findings {
+		cve := f.CVE
+		if cve == "" {
+			cve = f.CVEAlt
+		}
+		desc := f.Description
+		if desc == "" && f.Package != "" {
+			desc = f.Package
+		}
+		svc := f.Service
+		if svc == "" && f.AssetID != "" {
+			svc = f.AssetID
+		}
+		items = append(items, SecurityVulnerability{
+			CVE: cve, Severity: strings.ToUpper(f.Severity), Service: svc,
+			Description: desc, DetectedAt: f.DetectedAt,
+		})
+	}
+	if len(items) == 0 {
+		writeError(c, http.StatusBadRequest, "findings or vulnerabilities required")
+		return
+	}
+	count := h.deps.Mem.IngestVulnerabilities(items)
+	writeSuccess(c, gin.H{"accepted": true, "source": req.Source, "count": count})
+}
+
 func (h *Handler) ListAttacks(c *gin.Context) {
 	tid := tenantID(c)
 	if h.deps.CH != nil {
@@ -770,6 +830,83 @@ func (h *Handler) GetAttack(c *gin.Context) {
 		return
 	}
 	writeError(c, http.StatusNotFound, "attack not found")
+}
+
+func (h *Handler) ListSecurityFindings(c *gin.Context) {
+	tid := tenantID(c)
+	if h.deps.SRS != nil && h.deps.SRS.available() {
+		if list, err := h.deps.SRS.ListSecurityFindings(c.Request.Context(), tid); err == nil && len(list) > 0 {
+			writeSuccess(c, list)
+			return
+		}
+	}
+	writeSuccess(c, h.deps.Mem.ListSecurityFindings())
+}
+
+type importSecurityFindingsRequest struct {
+	Source   string            `json:"source"`
+	Findings []SecurityFinding `json:"findings"`
+}
+
+func (h *Handler) ImportSecurityFindings(c *gin.Context) {
+	var req importSecurityFindingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	count := h.deps.Mem.IngestSecurityFindings(req.Findings)
+	writeSuccess(c, gin.H{"accepted": true, "source": req.Source, "count": count})
+}
+
+type cspmImportRequest struct {
+	Source   string            `json:"source"`
+	Findings []SecurityFinding `json:"findings"`
+}
+
+func (h *Handler) ImportCSPMFindings(c *gin.Context) {
+	var req cspmImportRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	for i := range req.Findings {
+		if req.Findings[i].Category == "" {
+			req.Findings[i].Category = "cspm"
+		}
+	}
+	count := h.deps.Mem.IngestSecurityFindings(req.Findings)
+	writeSuccess(c, gin.H{"accepted": true, "source": req.Source, "category": "cspm", "count": count})
+}
+
+func (h *Handler) GetSecurityPosture(c *gin.Context) {
+	writeSuccess(c, h.deps.Mem.SecurityPosture())
+}
+
+type siemExportRequest struct {
+	Provider string `json:"provider"`
+	Target   string `json:"target"`
+}
+
+func (h *Handler) ExportSecurityToSIEM(c *gin.Context) {
+	var req siemExportRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Provider == "" {
+		writeError(c, http.StatusBadRequest, "provider is required")
+		return
+	}
+	if h.deps.SIEM != nil {
+		res, err := h.deps.SIEM.Export(c.Request.Context(), req.Provider, req.Target, nil)
+		if err != nil {
+			writeError(c, http.StatusBadGateway, err.Error())
+			return
+		}
+		writeSuccess(c, res)
+		return
+	}
+	writeSuccess(c, gin.H{
+		"queued":   true,
+		"provider": req.Provider,
+		"target":   req.Target,
+	})
 }
 
 func (h *Handler) ListIntegrations(c *gin.Context) {
@@ -953,6 +1090,89 @@ func (h *Handler) Usage(c *gin.Context) {
 	writeSuccess(c, stats)
 }
 
+func (h *Handler) ListAlertPolicies(c *gin.Context) {
+	tid := tenantID(c)
+	if h.deps.SRS != nil && h.deps.SRS.available() {
+		if list, err := h.deps.SRS.ListAlertPolicies(c.Request.Context(), tid); err == nil && len(list) > 0 {
+			writeSuccess(c, list)
+			return
+		}
+	}
+	writeSuccess(c, h.deps.Mem.ListAlertPolicies())
+}
+
+func (h *Handler) CreateAlertPolicy(c *gin.Context) {
+	var p AlertPolicy
+	if err := c.ShouldBindJSON(&p); err != nil || p.Name == "" {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	p = h.deps.Mem.SaveAlertPolicy(p)
+	if h.deps.SRS != nil && h.deps.SRS.available() {
+		_ = h.deps.SRS.SaveAlertPolicy(c.Request.Context(), tenantID(c), p)
+	}
+	writeSuccess(c, p)
+}
+
+func (h *Handler) UpdateAlertPolicy(c *gin.Context) {
+	var p AlertPolicy
+	if err := c.ShouldBindJSON(&p); err != nil || p.Name == "" {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	p.ID = c.Param("id")
+	writeSuccess(c, h.deps.Mem.SaveAlertPolicy(p))
+}
+
+func (h *Handler) DeleteAlertPolicy(c *gin.Context) {
+	if !h.deps.Mem.DeleteAlertPolicy(c.Param("id")) {
+		writeError(c, http.StatusNotFound, "alert policy not found")
+		return
+	}
+	writeSuccess(c, gin.H{"deleted": true})
+}
+
+type createSuppressionRequest struct {
+	ServicePattern string `json:"servicePattern"`
+	Reason         string `json:"reason"`
+	Duration       string `json:"duration"`
+}
+
+func (h *Handler) ListAlertSuppressions(c *gin.Context) {
+	writeSuccess(c, h.deps.Mem.ListAlertSuppressions())
+}
+
+func (h *Handler) CreateAlertSuppression(c *gin.Context) {
+	var req createSuppressionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	dur := 30 * time.Minute
+	if req.Duration != "" {
+		if parsed, err := time.ParseDuration(req.Duration); err == nil {
+			dur = parsed
+		}
+	}
+	now := time.Now().UTC()
+	sup := AlertSuppression{
+		ServicePattern: req.ServicePattern,
+		Reason:         req.Reason,
+		StartsAt:       now,
+		EndsAt:         now.Add(dur),
+		CreatedBy:      "ui",
+	}
+	writeSuccess(c, h.deps.Mem.SaveAlertSuppression(sup))
+}
+
+func (h *Handler) DeleteAlertSuppression(c *gin.Context) {
+	if !h.deps.Mem.DeleteAlertSuppression(c.Param("id")) {
+		writeError(c, http.StatusNotFound, "alert suppression not found")
+		return
+	}
+	writeSuccess(c, gin.H{"deleted": true})
+}
+
 // requireAdmin enforces the ADMIN role for mutating admin endpoints. When no
 // principal is present (e.g. auth disabled in local dev) the call is allowed,
 // consistent with the gateway's dev-mode behaviour.
@@ -962,38 +1182,4 @@ func (h *Handler) requireAdmin(c *gin.Context) bool {
 		return false
 	}
 	return true
-}
-
-func tenantID(c *gin.Context) string {
-	if v, ok := c.Get("tenant_id"); ok {
-		if s, ok := v.(string); ok && s != "" {
-			return s
-		}
-	}
-	if h := c.GetHeader("X-Tenant-ID"); h != "" {
-		return h
-	}
-	return "default"
-}
-
-func withAnalyticsTimeout(parent context.Context) (context.Context, context.CancelFunc) {
-	// Keep analytics endpoints responsive under slow ClickHouse queries.
-	return context.WithTimeout(parent, 3*time.Second)
-}
-
-func writeSuccess(c *gin.Context, data any) {
-	c.JSON(http.StatusOK, gin.H{
-		"status":    "success",
-		"data":      data,
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
-}
-
-func writeError(c *gin.Context, status int, message string) {
-	c.JSON(status, gin.H{
-		"status":    "error",
-		"errorCode": "OBS001",
-		"message":   message,
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
 }

@@ -44,7 +44,58 @@ ingress:
 config:
   demoMode: false
   authDisabled: false
+  authAllowDevLogin: false
+  finopsBillingMode: simulated
+  finopsRequirePostgres: false
+  finopsAllowSimulation: true
+  autofixEnabled: false
+  autofixRequireApproval: true
+  autofixAllowedRoles: "ADMIN,SRE"
+
+finopsCur:
+  enabled: false
+  storageSize: 50Gi
+  storageClass: ""
+  mountPath: /var/lib/neuralops/cur
+  curFile: /var/lib/neuralops/cur/latest.ndjson
+  syncSchedule: "0 3 * * *"
+  s3:
+    bucket: ""
+    prefix: cur/exports/
+    region: us-east-1
+    roleArn: ""
+
+auth:
+  oidc:
+    enabled: false
+  saml:
+    enabled: false
 
 secrets:
   create: false
   name: neuralops-secrets
+
+# Istio east-west mTLS (Wave 1.3) — requires istio-injection=enabled on namespace
+mesh:
+  enabled: false
+  mtlsMode: STRICT
+
+# External Secrets Operator (Wave 1.1) — enable in staging/prod values
+externalSecrets:
+  enabled: false
+  storeRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  remoteKey: neuralops/prod
+
+# Default-deny NetworkPolicy with gateway allow rules (Wave 1.4 / bank hardening)
+networkPolicy:
+  enabled: false
+  ingressNamespace: ingress-nginx
+
+# Offline license (BANK-018) — mount Secret and set path/secret on gateway
+license:
+  enabled: false
+  secretName: neuralops-license
+  key: license.json
+  secretEnv: "" # set via ExternalSecret NEURALOPS_LICENSE_SECRET

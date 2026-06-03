@@ -118,6 +118,8 @@ func (e *Executor) runStep(ctx context.Context, tenantID string, step Step, ctxD
 		return e.notifySlack(ctx, tenantID, step, ctxData)
 	case "pagerduty", "page":
 		return e.notifyPagerDuty(ctx, tenantID, step, ctxData)
+	case "servicenow", "servicenow_incident", "itsm":
+		return e.createServiceNowIncident(ctx, tenantID, step, ctxData)
 	default:
 		if strings.Contains(strings.ToLower(step.Label), "jira") {
 			return e.createJiraTicketImpl(ctx, tenantID, step, ctxData)
@@ -127,6 +129,9 @@ func (e *Executor) runStep(ctx context.Context, tenantID string, step Step, ctxD
 		}
 		if strings.Contains(strings.ToLower(step.Label), "pager") {
 			return e.notifyPagerDuty(ctx, tenantID, step, ctxData)
+		}
+		if strings.Contains(strings.ToLower(step.Label), "servicenow") || strings.Contains(strings.ToLower(step.Label), "snow") {
+			return e.createServiceNowIncident(ctx, tenantID, step, ctxData)
 		}
 		return fmt.Sprintf("Executed: %s", step.Label), nil
 	}
@@ -141,6 +146,8 @@ func inferType(label string) string {
 		return "slack"
 	case strings.Contains(l, "pager"):
 		return "pagerduty"
+	case strings.Contains(l, "servicenow"), strings.Contains(l, "snow"):
+		return "servicenow"
 	default:
 		return "action"
 	}

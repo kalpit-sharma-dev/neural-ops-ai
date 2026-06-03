@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { fetchDashboardErrorSeries, fetchDashboardOverview } from '../api/dashboard';
 import { getApiErrorMessage } from '../api/client';
+import { usePlatformInfo } from '../hooks/usePlatformInfo';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -28,6 +29,8 @@ import { getChartColors } from '../lib/chartColors';
 import { chartAxisProps, chartGridProps, chartTooltipStyle } from '../lib/chartTheme';
 import { useThemeStore } from '../store/themeStore';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useI18n } from '../i18n/I18nProvider';
+import { pageSubtitle, pageTitle } from '../i18n/messages';
 import { useFilterStore } from '../store/filterStore';
 import { useTimeBounds } from '../hooks/useTimeBounds';
 
@@ -52,6 +55,7 @@ function countBySeverity(incidents: IncidentSummary[]) {
 }
 
 export default function Dashboard() {
+  const { locale, tr } = useI18n();
   const theme = useThemeStore((s) => s.theme);
   const reducedMotion = useReducedMotion();
   const navigate = useNavigate();
@@ -65,6 +69,8 @@ export default function Dashboard() {
     queryFn: fetchDashboardOverview,
     refetchInterval: 30_000,
   });
+
+  const platformQuery = usePlatformInfo();
 
   const services = useMemo(
     () => (data?.topFailingServices ?? []).map((s) => s.service),
@@ -131,15 +137,16 @@ export default function Dashboard() {
   return (
     <motion.div className="dashboard-grid" {...motionProps}>
       <PageHeader
-        title="Command Center"
-        subtitle="Real-time observability overview"
+        title={pageTitle(locale, 'dashboard', 'Command Center')}
+        subtitle={pageSubtitle(locale, 'dashboard', 'Real-time observability overview')}
         actions={
           <div className="dashboard-header-actions">
             <span className="muted dashboard-refresh">
-              Updated {formatDistanceToNow(dataUpdatedAt ? new Date(dataUpdatedAt) : lastRefresh, { addSuffix: true })}
+              {tr('dashboard.updated', 'Updated')}{' '}
+              {formatDistanceToNow(dataUpdatedAt ? new Date(dataUpdatedAt) : lastRefresh, { addSuffix: true })}
             </span>
             <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isFetching}>
-              <RefreshCw size={14} className={isFetching ? 'spin' : ''} /> Refresh
+              <RefreshCw size={14} className={isFetching ? 'spin' : ''} /> {tr('dashboard.refresh', 'Refresh')}
             </Button>
             {openP1 && (
               <Button
@@ -147,12 +154,35 @@ export default function Dashboard() {
                 size="sm"
                 onClick={() => navigate({ to: '/incidents/$id', params: { id: openP1.id } })}
               >
-                <Siren size={14} /> War room
+                <Siren size={14} /> {tr('dashboard.warRoom', 'War room')}
               </Button>
             )}
           </div>
         }
       />
+
+      {platformQuery.data?.capabilities && (
+        <Card className="platform-capabilities-strip">
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
+            <span className="muted">{tr('dashboard.unifiedPlatform', 'Unified platform')}</span>
+            {platformQuery.data.capabilities.differentiators.slice(0, 3).map((d) => (
+              <Badge key={d} variant="info">
+                {d.replace(/-/g, ' ')}
+              </Badge>
+            ))}
+            <Link to="/settings/platform">
+              <Button variant="ghost" size="sm">
+                {tr('dashboard.allCapabilities', 'All capabilities')}
+              </Button>
+            </Link>
+            <Link to="/query-workbench">
+              <Button variant="secondary" size="sm">
+                {tr('dashboard.nexqlWorkbench', 'NexQL workbench')}
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {hasCritical && (
         <Card className="incident-strip">
@@ -182,7 +212,7 @@ export default function Dashboard() {
           onClick={() => navigate({ to: '/incidents' })}
         >
           <MetricCard
-            label="Active Incidents"
+            label={tr('dashboard.activeIncidents', 'Active Incidents')}
             value={data?.activeIncidents.length ?? 0}
             accent={hasCritical ? 'danger' : 'default'}
             footer={
@@ -205,7 +235,7 @@ export default function Dashboard() {
           }}
         >
           <MetricCard
-            label="Error Rate (1h)"
+            label={tr('dashboard.errorRate', 'Error Rate (1h)')}
             value={`${(data?.errorRateLastHour ?? 0).toFixed(2)}%`}
             trend={data?.errorRateLastHour ? 12 : -3}
           />

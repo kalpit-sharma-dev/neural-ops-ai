@@ -4,6 +4,10 @@ Production-grade monorepo for an AI-powered log analysis and incident management
 
 ## Architecture
 
+Full reference (C4, sequence, ER, component diagrams, section-wise flows):
+
+**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+
 ```
 backend/     Go microservices (gateway, ingestion, analysis, correlation, incident, search, alerting)
 frontend/    React 18 + TypeScript + Vite dashboard
@@ -35,6 +39,37 @@ Or use the helper script:
 ```bash
 ./scripts/quickstart.sh
 ```
+
+## CLI & IaC (Phase 7)
+
+### NeuralOps CLI
+
+```bash
+cd backend
+go build -o neuralops ./cmd/neuralops
+./neuralops version
+./neuralops msp-tenants list
+./neuralops abac-policies get --tenant default
+./neuralops export logs --destination s3://bucket/path
+```
+
+### Terraform provider
+
+```bash
+cd terraform-provider-neuralops
+go build -o terraform-provider-neuralops
+# dev_overrides in ~/.terraformrc pointing at this directory
+```
+
+Resources: `neuralops_export_job`, `neuralops_alert_policy`, `neuralops_branding`.
+
+### Pulumi
+
+See [`providers/pulumi-neuralops/README.md`](providers/pulumi-neuralops/README.md) for the Terraform-bridge workflow.
+
+### Hyperscale (operator, cloud SDKs, streaming)
+
+See [`docs/HYPERSCALE.md`](docs/HYPERSCALE.md) for controller-runtime collector operator, AWS/GCP/Azure inventory, and the Kafka materializer service.
 
 ## Local Development
 
@@ -114,6 +149,9 @@ Go module: `github.com/neuralops/platform`
 | [backend/openapi/swagger.yaml](backend/openapi/swagger.yaml) | Backend Swagger/OpenAPI YAML for gateway consumers |
 | [docs/UI_IMPROVEMENT_ROADMAP.md](docs/UI_IMPROVEMENT_ROADMAP.md) | Phased, trackable UI/UX improvement backlog (checkboxes per task) |
 | [docs/PRODUCTION_AND_GTM.md](docs/PRODUCTION_AND_GTM.md) | Production ship plan, enterprise sales, pricing, and onboarding guidelines |
+| [docs/BANK_PRODUCTION_READINESS_ROADMAP.md](docs/BANK_PRODUCTION_READINESS_ROADMAP.md) | Bank prod + sales checklist (waves 0–6, gates A–F); `./scripts/gate-verify.sh --gate C` |
+| [docs/bank/README.md](docs/bank/README.md) | Bank customer pack index + gate close-out runbooks |
+| [docs/bank/README.md](docs/bank/README.md) | Bank customer pack index (security, legal, runbooks) |
 | [docs/UI_DYNATRACE_GAP.md](docs/UI_DYNATRACE_GAP.md) | UI feature gap analysis vs Dynatrace (parity matrix and roadmap) |
 | [docs/UI_DYNATRACE_IMPLEMENTATION_PLAN.md](docs/UI_DYNATRACE_IMPLEMENTATION_PLAN.md) | Phase-wise plan to implement all Dynatrace UI gaps (12 phases) |
 | [docs/AUDIT_COMPLIANCE.md](docs/AUDIT_COMPLIANCE.md) | CI quality gates and auth/mTLS audit traceability |

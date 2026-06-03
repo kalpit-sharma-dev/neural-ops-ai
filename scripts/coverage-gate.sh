@@ -19,7 +19,7 @@ declare -A EXTENDED_MIN=(
   ["./internal/security/..."]="$MIN_SECURITY"
   ["./internal/notebook/..."]="25"
   ["./internal/mobile/..."]="25"
-  ["./internal/observability/..."]="15"
+  ["./internal/observability/..."]="25"
 )
 
 REPORT_PACKAGES=(

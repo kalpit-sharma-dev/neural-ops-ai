@@ -11,8 +11,9 @@ import {
   fetchRecommendations,
   resolveIncident,
 } from '../api/incidents';
-import { triggerWorkflows } from '../api/observability';
+import { fetchIncidentRCA, triggerWorkflows } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
+import { UnifiedContextPanel } from '../components/incident/UnifiedContextPanel';
 import { IncidentLogsTab } from '../components/incident/IncidentLogsTab';
 import { IncidentMetricsTab } from '../components/incident/IncidentMetricsTab';
 import { IncidentTracesTab } from '../components/incident/IncidentTracesTab';
@@ -82,6 +83,12 @@ export default function IncidentDetail() {
     enabled: !!id && tab === 'Recommendations',
   });
 
+  const liveRcaQuery = useQuery({
+    queryKey: ['incident-rca-live', id],
+    queryFn: () => fetchIncidentRCA(id),
+    enabled: !!id && tab === 'AI Analysis',
+  });
+
   const ackMutation = useMutation({
     mutationFn: () => acknowledgeIncident(id),
     onSuccess: () => {
@@ -145,6 +152,7 @@ export default function IncidentDetail() {
   }, [navigate, ackMutation, resolveMutation]);
 
   const rca = incident?.rootCauseAnalysis;
+  const liveRca = liveRcaQuery.data;
   const aiSections = useMemo(() => {
     const text = rca?.rootCauseDescription ?? incident?.summary ?? '';
     return {
@@ -217,6 +225,12 @@ export default function IncidentDetail() {
       <div className="incident-detail-body">
         {tab === 'Overview' && (
           <div className="incident-overview-grid">
+            <UnifiedContextPanel
+              incidentId={incident.id}
+              primaryService={incident.affectedServices?.[0]}
+              affectedServices={incident.affectedServices}
+            />
+
             <Card title="AI Root Cause Analysis">
               {rca ? (
                 <>
@@ -320,30 +334,61 @@ export default function IncidentDetail() {
 
         {tab === 'AI Analysis' && (
           <Card title="Full RCA">
-            <section className="rca-section">
-              <h4>1. What happened</h4>
-              <p>{aiSections.executive}</p>
-            </section>
-            <section className="rca-section">
-              <h4>2. Technical root cause</h4>
-              <p>{aiSections.technical}</p>
-            </section>
-            <section className="rca-section">
-              <h4>3. Contributing factors</h4>
-              <ul className="insight-list">
-                {aiSections.contributing.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </section>
-            <section className="rca-section">
-              <h4>4. Why it propagated</h4>
-              <p>{aiSections.propagation}</p>
-            </section>
-            <section className="rca-section">
-              <h4>5. Detection gap</h4>
-              <p>{aiSections.detectionGap}</p>
-            </section>
+            {liveRcaQuery.isLoading && <LoadingState label="Loading AI RCA…" />}
+            {liveRcaQuery.isError && (
+              <p className="muted">Live RCA unavailable — showing incident summary fallback.</p>
+            )}
+            {liveRca ? (
+              <>
+                <p className="muted">
+                  Explanation {liveRca.explanationId} · confidence {(liveRca.confidence * 100).toFixed(0)}%
+                </p>
+                <section className="rca-section">
+                  <h4>Summary</h4>
+                  <p>{liveRca.summary}</p>
+                </section>
+                <section className="rca-section">
+                  <h4>Root hypothesis</h4>
+                  <p>
+                    <strong>{liveRca.root.label}</strong> ({(liveRca.root.confidence * 100).toFixed(0)}%)
+                  </p>
+                  <ul className="insight-list">
+                    {(liveRca.root.evidence ?? []).map((e, i) => (
+                      <li key={i}>
+                        {e.signal}: {e.detail}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </>
+            ) : (
+              <>
+                <section className="rca-section">
+                  <h4>1. What happened</h4>
+                  <p>{aiSections.executive}</p>
+                </section>
+                <section className="rca-section">
+                  <h4>2. Technical root cause</h4>
+                  <p>{aiSections.technical}</p>
+                </section>
+                <section className="rca-section">
+                  <h4>3. Contributing factors</h4>
+                  <ul className="insight-list">
+                    {aiSections.contributing.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                </section>
+                <section className="rca-section">
+                  <h4>4. Why it propagated</h4>
+                  <p>{aiSections.propagation}</p>
+                </section>
+                <section className="rca-section">
+                  <h4>5. Detection gap</h4>
+                  <p>{aiSections.detectionGap}</p>
+                </section>
+              </>
+            )}
           </Card>
         )}
 

@@ -24,6 +24,7 @@ import { useAuthStore } from '../store/authStore';
 import { highlightMatches, hasStackTrace } from '../utils/highlightText';
 import { buildShareLink, exportLogsCsv, exportLogsJson } from '../utils/logExport';
 import { deleteSavedSearch, listSavedSearches, saveSearch, type SavedSearch } from '../lib/savedSearches';
+import { useLogTail } from '../hooks/useLogTail';
 import { loadLogColumns, saveLogColumns, type LogColumnPref } from '../lib/logColumnPrefs';
 
 type SearchMode = 'text' | 'regex' | 'ai';
@@ -132,14 +133,22 @@ export default function LogExplorer() {
         size: 1000,
       });
     },
-    enabled: query.length > 0,
-    refetchInterval: liveTail && !tailPaused ? 5000 : false,
+    enabled: query.length > 0 && !(liveTail && !tailPaused),
+    refetchInterval: liveTail && !tailPaused ? false : undefined,
   });
 
-  const hits = useMemo(
-    () => applyClientFilters(searchQuery.data?.hits ?? [], filterState),
-    [searchQuery.data, services, severities, environment, hasStackTrace, hasAIExplanation, filterState],
-  );
+  const tail = useLogTail(liveTail && !tailPaused, {
+    services,
+    severities,
+    query: mode === 'text' ? query : '',
+  });
+
+  const hits = useMemo(() => {
+    if (liveTail && !tailPaused) {
+      return applyClientFilters(tail.lines, filterState);
+    }
+    return applyClientFilters(searchQuery.data?.hits ?? [], filterState);
+  }, [liveTail, tailPaused, tail.lines, searchQuery.data, filterState, services, severities, environment, hasStackTrace, hasAIExplanation]);
 
   const severityCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -175,7 +184,8 @@ export default function LogExplorer() {
   }, [query, start, end, mode]);
 
   const clearTail = () => {
-    searchQuery.refetch();
+    tail.clear();
+    if (!liveTail) searchQuery.refetch();
     toast.success('Stream cleared — showing latest results');
   };
 
@@ -222,12 +232,18 @@ export default function LogExplorer() {
               ))}
               <label className="checkbox-row log-stream__live">
                 <input type="checkbox" checked={liveTail} onChange={(e) => setLiveTail(e.target.checked)} />
-                Live tail
+                Live tail {liveTail && (tail.connected ? '(WS)' : '(connecting…)')}
               </label>
               {liveTail && (
-                <Button variant="ghost" size="sm" onClick={clearTail}>
-                  Clear
-                </Button>
+                <>
+                  <label className="checkbox-row log-stream__live">
+                    <input type="checkbox" checked={tailPaused} onChange={(e) => setTailPaused(e.target.checked)} />
+                    Pause
+                  </label>
+                  <Button variant="ghost" size="sm" onClick={clearTail}>
+                    Clear
+                  </Button>
+                </>
               )}
             </div>
             <div className="log-saved-searches">

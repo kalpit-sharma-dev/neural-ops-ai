@@ -1,0 +1,2 @@
+{"provider":"aws","accountId":"111122223333","service":"AmazonEC2","region":"us-east-1","resourceId":"i-0abc123","usageType":"BoxUsage","quantity":720,"unit":"Hrs","amortizedCost":420.50,"billingPeriod":"2026-06-01","tags":{"team":"payments","env":"production"}}
+{"provider":"aws","accountId":"111122223333","service":"AmazonRDS","region":"us-east-1","resourceId":"db-ledger","usageType":"InstanceUsage","quantity":720,"unit":"Hrs","amortizedCost":310.25,"billingPeriod":"2026-06-01","tags":{"team":"payments","env":"production"}}

@@ -44,6 +44,17 @@ spec:
               value: gateway
             - name: HTTP_PORT
               value: {{ .Values.gateway.port | quote }}
+            {{- if .Values.license.enabled }}
+            - name: NEURALOPS_LICENSE_PATH
+              value: /etc/neuralops/license/{{ .Values.license.key }}
+            {{- if .Values.license.secretEnv }}
+            - name: NEURALOPS_LICENSE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name | default "neuralops-secrets" }}
+                  key: {{ .Values.license.secretEnv }}
+            {{- end }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /live
@@ -52,6 +63,32 @@ spec:
             httpGet:
               path: /ready
               port: http
+          {{- if or .Values.finopsCur.enabled .Values.license.enabled }}
+          volumeMounts:
+            {{- if .Values.finopsCur.enabled }}
+            - name: finops-cur-data
+              mountPath: {{ .Values.finopsCur.mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- if .Values.license.enabled }}
+            - name: neuralops-license
+              mountPath: /etc/neuralops/license
+              readOnly: true
+            {{- end }}
+          {{- end }}
+      {{- if or .Values.finopsCur.enabled .Values.license.enabled }}
+      volumes:
+        {{- if .Values.finopsCur.enabled }}
+        - name: finops-cur-data
+          persistentVolumeClaim:
+            claimName: finops-cur-data
+        {{- end }}
+        {{- if .Values.license.enabled }}
+        - name: neuralops-license
+          secret:
+            secretName: {{ .Values.license.secretName }}
+        {{- end }}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

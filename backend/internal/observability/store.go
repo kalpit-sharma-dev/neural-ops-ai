@@ -15,17 +15,66 @@ import (
 type Store struct {
 	mu sync.RWMutex
 
-	traces        map[string]TraceDetail
-	dashboards    map[string]Dashboard
-	logMetrics    map[string]LogMetricRule
-	logParsing    map[string]LogParsingRule
-	slos          map[string]SLO
-	workflows     map[string]Workflow
-	notebooks     map[string]Notebook
-	synthetic     map[string]SyntheticMonitor
-	syntheticRuns map[string][]SyntheticRun
-	zones         map[string]ManagementZone
-	adminUsers    []AdminUser
+	traces             map[string]TraceDetail
+	dashboards         map[string]Dashboard
+	logMetrics         map[string]LogMetricRule
+	logParsing         map[string]LogParsingRule
+	slos               map[string]SLO
+	workflows          map[string]Workflow
+	notebooks          map[string]Notebook
+	synthetic          map[string]SyntheticMonitor
+	syntheticRuns      map[string][]SyntheticRun
+	zones              map[string]ManagementZone
+	alertPolicies      map[string]AlertPolicy
+	suppressions       map[string]AlertSuppression
+	collectorFleet     map[string]CollectorFleetAgent
+	collectorPipelines map[string]CollectorPipeline
+	rcaByIncident      map[string]RCAResponse
+	explanations       map[string]RCAResponse
+	autofixPlans       map[string]AutoFixPlan
+	autofixActions     map[string]AutoFixActionRecord
+	cloudAssets        []CloudAsset
+	cloudAssetTopology CloudAssetTopology
+	finopsAnomalies    []FinOpsCostAnomaly
+	finopsCarbon       FinOpsCarbonFootprint
+	networkFlows       []NetworkFlow
+	networkDevices     []NetworkDevice
+	networkTopology    NetworkTopologyGraph
+	networkAnomalies          []NetworkAnomaly
+	rumFunnels                map[string]RUMFunnel
+	syntheticBrowserTests     map[string]SyntheticBrowserTest
+	syntheticMobileTests      map[string]SyntheticMobileTest
+	syntheticPrivateLocations map[string]SyntheticPrivateLocation
+	businessKPIPacks          map[string]BusinessKPIPack
+	abacPolicy                ABACPolicy
+	dataResidency             DataResidencyPolicy
+	branding                  BrandingTheme
+	mspTenants                []MSPTenant
+	exportJobs                map[string]ExportJob
+	derivedMetrics            map[string]DerivedMetric
+	securityFindingIncidents  map[string]string
+	nfrBenchmarks             []NFRBenchmark
+	nfrReliability            []NFRReliabilityDrill
+	nfrA11y                   NFRA11yReport
+	nfrLocales                []NFRLocale
+	nfrCertification          NFRCertificationReport
+	adminUsers                []AdminUser
+	vulnerabilities           map[string]SecurityVulnerability
+	securityFindings          map[string]SecurityFinding
+	logTierPolicies           map[string]LogTierPolicy
+	serverlessFunctions       map[string]ServerlessFunction
+	savedQueries              map[string][]SavedQuery
+	signalPolicies            map[string][]SignalPolicy
+	siemConfigs               map[string]SIEMConfig
+	serviceCatalog            map[string]ServiceCatalogEntry
+	apmReleases               map[string]APMRelease
+	logAnomalies              map[string]LogAnomaly
+	cardinalityPolicies       map[string]CardinalityAlertPolicy
+	maintenanceWindows        map[string]MaintenanceWindow
+	fatigueConfigs            map[string]AlertFatigueConfig
+	discoveredServices        []DiscoveredService
+	threatFeed                []ThreatIndicator
+	netflowRecords            []NetFlowRecord
 	// extensionInstalls maps extension key -> stored config (marketplace demo state).
 	extensionInstalls map[string]map[string]string
 }
@@ -33,16 +82,32 @@ type Store struct {
 // NewStore creates a store seeded with demo observability data.
 func NewStore() *Store {
 	s := &Store{
-		traces:        make(map[string]TraceDetail),
-		dashboards:    make(map[string]Dashboard),
-		logMetrics:    make(map[string]LogMetricRule),
-		logParsing:    make(map[string]LogParsingRule),
-		slos:          make(map[string]SLO),
-		workflows:     make(map[string]Workflow),
-		notebooks:     make(map[string]Notebook),
-		synthetic:     make(map[string]SyntheticMonitor),
-		syntheticRuns: make(map[string][]SyntheticRun),
-		zones:         make(map[string]ManagementZone),
+		traces:             make(map[string]TraceDetail),
+		dashboards:         make(map[string]Dashboard),
+		logMetrics:         make(map[string]LogMetricRule),
+		logParsing:         make(map[string]LogParsingRule),
+		slos:               make(map[string]SLO),
+		workflows:          make(map[string]Workflow),
+		notebooks:          make(map[string]Notebook),
+		synthetic:          make(map[string]SyntheticMonitor),
+		syntheticRuns:      make(map[string][]SyntheticRun),
+		zones:              make(map[string]ManagementZone),
+		alertPolicies:      make(map[string]AlertPolicy),
+		suppressions:       make(map[string]AlertSuppression),
+		collectorFleet:     make(map[string]CollectorFleetAgent),
+		collectorPipelines: make(map[string]CollectorPipeline),
+		rcaByIncident:      make(map[string]RCAResponse),
+		explanations:       make(map[string]RCAResponse),
+		autofixPlans:       make(map[string]AutoFixPlan),
+		autofixActions:            make(map[string]AutoFixActionRecord),
+		rumFunnels:                make(map[string]RUMFunnel),
+		syntheticBrowserTests:     make(map[string]SyntheticBrowserTest),
+		syntheticMobileTests:      make(map[string]SyntheticMobileTest),
+		syntheticPrivateLocations: make(map[string]SyntheticPrivateLocation),
+		businessKPIPacks:          make(map[string]BusinessKPIPack),
+		exportJobs:                make(map[string]ExportJob),
+		derivedMetrics:           make(map[string]DerivedMetric),
+		securityFindingIncidents: make(map[string]string),
 		adminUsers: []AdminUser{
 			{ID: "u1", Email: "demo@neuralops.ai", Role: "ADMIN", Active: true, TenantID: "default"},
 			{ID: "u2", Email: "sre@neuralops.ai", Role: "SRE", Active: true, TenantID: "default"},
@@ -146,6 +211,111 @@ func (s *Store) seed() {
 
 	s.zones["zone-1"] = ManagementZone{ID: "zone-1", Name: "Payments", Services: []string{"payment-service", "ledger-service"}}
 	s.zones["zone-2"] = ManagementZone{ID: "zone-2", Name: "Platform", Services: []string{"api-gateway", "auth-service"}}
+	s.alertPolicies["ap-1"] = AlertPolicy{
+		ID:             "ap-1",
+		Name:           "P1 payment escalation",
+		ServicePattern: "payment-*",
+		Severity:       "P1",
+		Enabled:        true,
+		Expression:     "severity:P1 AND service:payment-*",
+		DedupeKey:      "payment-p1",
+		Context:        defaultAlertContext("payment-service"),
+		Routes: []AlertPolicyRoute{
+			{Channel: "slack", Target: "#oncall-payments", After: "0m", Priority: 1},
+			{Channel: "pagerduty", Target: "payments-primary", After: "5m", Priority: 2},
+		},
+	}
+	s.alertPolicies["finops-budget-alert"] = AlertPolicy{
+		ID:             "finops-budget-alert",
+		Name:           "FinOps budget threshold",
+		ServicePattern: "*",
+		Severity:       "P2",
+		Enabled:        true,
+		Expression:     "finops:budget_threshold",
+		DedupeKey:      "finops-budget",
+		Context: AlertContext{
+			RunbookURL: "/docs/RUNBOOK.md#finops-budgets",
+			Owner:      "finops@neuralops.ai",
+		},
+		Routes: []AlertPolicyRoute{
+			{Channel: "slack", Target: "#finops-alerts", After: "0m", Priority: 1},
+			{Channel: "email", Target: "finops@neuralops.ai", After: "0m", Priority: 2},
+		},
+	}
+	s.alertPolicies["finops-ingest-stale"] = AlertPolicy{
+		ID:             "finops-ingest-stale",
+		Name:           "FinOps billing ingest stale",
+		ServicePattern: "finops-ingest",
+		Severity:       "P2",
+		Enabled:        true,
+		Expression:     "finops:ingest_stale",
+		DedupeKey:      "finops-ingest",
+		Context: AlertContext{
+			RunbookURL: "/docs/RUNBOOK.md#finops-ingest",
+			Owner:      "finops@neuralops.ai",
+		},
+		Routes: []AlertPolicyRoute{
+			{Channel: "slack", Target: "#finops-alerts", After: "0m", Priority: 1},
+		},
+	}
+	s.alertPolicies["finops-commitment-alert"] = AlertPolicy{
+		ID:             "finops-commitment-alert",
+		Name:           "FinOps commitment expiry/utilization",
+		ServicePattern: "*",
+		Severity:       "P2",
+		Enabled:        true,
+		Expression:     "finops:commitment_alert",
+		DedupeKey:      "finops-commitment",
+		Context: AlertContext{
+			RunbookURL: "/docs/RUNBOOK.md#finops-commitments",
+			Owner:      "finops@neuralops.ai",
+		},
+		Routes: []AlertPolicyRoute{
+			{Channel: "slack", Target: "#finops-alerts", After: "0m", Priority: 1},
+			{Channel: "email", Target: "finops@neuralops.ai", After: "1h", Priority: 2},
+		},
+	}
+	s.alertPolicies["finops-cost-anomaly"] = AlertPolicy{
+		ID:             "finops-cost-anomaly",
+		Name:           "FinOps cost anomaly",
+		ServicePattern: "*",
+		Severity:       "P2",
+		Enabled:        true,
+		Expression:     "finops:cost_anomaly",
+		DedupeKey:      "finops-cost",
+		Context: AlertContext{
+			RunbookURL: "/docs/RUNBOOK.md#finops-cost-anomaly",
+			Owner:      "finops@neuralops.ai",
+		},
+		Routes: []AlertPolicyRoute{
+			{Channel: "slack", Target: "#finops-alerts", After: "0m", Priority: 1},
+			{Channel: "jira", Target: "FINOPS", After: "15m", Priority: 2},
+		},
+	}
+	s.collectorFleet["agent-1"] = CollectorFleetAgent{
+		ID: "agent-1", Name: "prod-node-01", Environment: "prod", Version: "1.2.0", Status: "healthy",
+		LastHeartbeatAt: now.Add(-25 * time.Second), PolicyID: "default",
+	}
+	s.collectorFleet["agent-2"] = CollectorFleetAgent{
+		ID: "agent-2", Name: "prod-node-02", Environment: "prod", Version: "1.1.4", Status: "degraded",
+		LastHeartbeatAt: now.Add(-95 * time.Second), PolicyID: "default",
+	}
+	s.collectorPipelines["pipe-1"] = CollectorPipeline{
+		ID: "pipe-1", Name: "default-ingest", Description: "Primary ingest parse+enrich pipeline", Enabled: true,
+		Stages: []CollectorPipelineStage{
+			{ID: "st-parse", Type: "parse", Config: map[string]string{"format": "json"}, Enabled: true},
+			{ID: "st-mask", Type: "mask", Config: map[string]string{"fields": "password,token"}, Enabled: true},
+			{ID: "st-route", Type: "route", Config: map[string]string{"target": "analytics"}, Enabled: true},
+		},
+		UpdatedAt: now,
+	}
+	s.seedAI()
+	s.seedPhase5()
+	s.seedPhase6()
+	s.seedPhase7()
+	s.seedPhase8()
+	s.seedRoadmapPartial()
+	s.seedDerivedMetricsCatalog()
 }
 
 // GetTrace returns trace detail by ID.
@@ -607,10 +777,73 @@ func (s *Store) SaveNotebook(n Notebook) Notebook {
 
 // ListVulnerabilities returns security vulnerabilities.
 func (s *Store) ListVulnerabilities() []SecurityVulnerability {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if len(s.vulnerabilities) > 0 {
+		out := make([]SecurityVulnerability, 0, len(s.vulnerabilities))
+		for _, v := range s.vulnerabilities {
+			out = append(out, v)
+		}
+		sort.Slice(out, func(i, j int) bool {
+			return out[i].DetectedAt.After(out[j].DetectedAt)
+		})
+		return out
+	}
 	now := time.Now().UTC()
 	return []SecurityVulnerability{
 		{ID: "v1", CVE: "CVE-2025-1234", Severity: "HIGH", Service: "payment-service", Description: "Outdated dependency in payment SDK", DetectedAt: now.Add(-24 * time.Hour)},
 	}
+}
+
+// IngestVulnerabilities upserts scanner findings (SEC-01 batch ingest).
+func (s *Store) IngestVulnerabilities(items []SecurityVulnerability) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.vulnerabilities == nil {
+		s.vulnerabilities = make(map[string]SecurityVulnerability)
+	}
+	count := 0
+	for _, item := range items {
+		if item.CVE == "" && item.Description == "" {
+			continue
+		}
+		if item.ID == "" {
+			item.ID = "v-" + uuid.New().String()[:8]
+		}
+		if item.DetectedAt.IsZero() {
+			item.DetectedAt = time.Now().UTC()
+		}
+		s.vulnerabilities[item.ID] = item
+		count++
+	}
+	return count
+}
+
+// IngestSecurityFindings upserts normalized AppSec findings.
+func (s *Store) IngestSecurityFindings(findings []SecurityFinding) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.securityFindings == nil {
+		s.securityFindings = make(map[string]SecurityFinding)
+	}
+	count := 0
+	for _, f := range findings {
+		if f.Title == "" && f.ID == "" {
+			continue
+		}
+		if f.ID == "" {
+			f.ID = "sf-" + uuid.New().String()[:8]
+		}
+		if f.DetectedAt.IsZero() {
+			f.DetectedAt = time.Now().UTC()
+		}
+		if f.Status == "" {
+			f.Status = "OPEN"
+		}
+		s.securityFindings[f.ID] = f
+		count++
+	}
+	return count
 }
 
 // ListAttacks returns attack events.
@@ -631,13 +864,61 @@ func (s *Store) GetAttack(id string) (SecurityAttack, bool) {
 	return SecurityAttack{}, false
 }
 
+// ListSecurityFindings returns normalized security findings across AppSec and posture feeds.
+func (s *Store) ListSecurityFindings() []SecurityFinding {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	now := time.Now().UTC()
+	list := []SecurityFinding{
+		{
+			ID: "sf-1", Title: "Vulnerable dependency in payment-service", Category: "sca", Severity: "HIGH",
+			Service: "payment-service", Asset: "container:payment-api:v1.4.2", Status: "OPEN", Exploitability: "reachable",
+			IncidentID: "inc-1", DetectedAt: now.Add(-2 * time.Hour),
+		},
+		{
+			ID: "sf-2", Title: "Privileged container in prod namespace", Category: "cspm", Severity: "MEDIUM",
+			Service: "gateway", Asset: "k8s:platform/gateway", Status: "OPEN", Exploitability: "configuration", DetectedAt: now.Add(-5 * time.Hour),
+		},
+	}
+	if len(s.securityFindings) > 0 {
+		list = make([]SecurityFinding, 0, len(s.securityFindings))
+		for _, f := range s.securityFindings {
+			list = append(list, f)
+		}
+		sort.Slice(list, func(i, j int) bool {
+			return list[i].DetectedAt.After(list[j].DetectedAt)
+		})
+	}
+	for i := range list {
+		if inc, ok := s.securityFindingIncidents[list[i].ID]; ok {
+			list[i].IncidentID = inc
+		}
+	}
+	return list
+}
+
+// LinkSecurityFindingIncident associates a finding with an incident id.
+func (s *Store) LinkSecurityFindingIncident(findingID, incidentID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.securityFindingIncidents == nil {
+		s.securityFindingIncidents = make(map[string]string)
+	}
+	s.securityFindingIncidents[findingID] = incidentID
+}
+
+// SecurityPosture returns posture checks summary.
+func (s *Store) SecurityPosture() []SecurityPostureCheck {
+	return []SecurityPostureCheck{
+		{ID: "pc-1", Name: "Public S3 bucket disabled", Provider: "aws", Resource: "s3://prod-audit-logs", Status: "pass", Severity: "LOW"},
+		{ID: "pc-2", Name: "Kubernetes API server anonymous auth disabled", Provider: "kubernetes", Resource: "prod-cluster", Status: "fail", Severity: "HIGH"},
+		{ID: "pc-3", Name: "Security group ingress restricted", Provider: "aws", Resource: "sg-0a12b", Status: "warn", Severity: "MEDIUM"},
+	}
+}
+
 // ListIntegrations returns integrations.
 func (s *Store) ListIntegrations() []Integration {
-	return []Integration{
-		{ID: "int-1", Name: "Slack", Type: "slack", Status: "connected", Connected: true},
-		{ID: "int-2", Name: "Jira", Type: "jira", Status: "disconnected", Connected: false},
-		{ID: "int-3", Name: "PagerDuty", Type: "pagerduty", Status: "connected", Connected: true},
-	}
+	return s.IntegrationsWithDevOps()
 }
 
 // ConnectIntegration marks an integration as connected (in-memory demo).
@@ -734,6 +1015,332 @@ func (s *Store) Usage() UsageStats {
 	return UsageStats{LogsIngestedGB: 42.5, TracesIngested: 1_240_000, MetricsIngested: 8_900_000, AITokensUsed: 125_000, ActiveUsers: 12}
 }
 
+// UnifiedQuery runs a simple cross-signal in-memory query.
+func (s *Store) UnifiedQuery(req UnifiedQueryRequest) UnifiedQueryResponse {
+	q := strings.TrimSpace(strings.ToLower(req.Query))
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	now := time.Now().UTC()
+	hits := make([]UnifiedQueryHit, 0, 8)
+	add := func(h UnifiedQueryHit) {
+		if len(hits) >= limit {
+			return
+		}
+		hits = append(hits, h)
+	}
+	want := func(signal string) bool {
+		switch strings.ToLower(strings.TrimSpace(req.From)) {
+		case "", "all":
+			return true
+		default:
+			return strings.EqualFold(signal, req.From)
+		}
+	}
+	matches := func(values ...string) bool {
+		if q == "" {
+			return true
+		}
+		for _, v := range values {
+			if strings.Contains(strings.ToLower(v), q) {
+				return true
+			}
+		}
+		return false
+	}
+	if want("logs") && matches("error rate spike", req.Service, "payment-service") {
+		add(UnifiedQueryHit{
+			ID: "log-err-1", Signal: "logs", Service: "payment-service",
+			Title: "Error rate spike in payment-service", Summary: "5xx responses increased 3.2x baseline in last 15m",
+			Severity: "P1", Timestamp: now.Add(-12 * time.Minute), Link: "/logs?q=payment-service+status:500",
+			Fields: map[string]interface{}{"errorRate": 3.2, "window": "15m"},
+		})
+	}
+	if want("metrics") && matches("latency p95", req.Service, "payment-service") {
+		add(UnifiedQueryHit{
+			ID: "metric-lat-1", Signal: "metrics", Service: "payment-service",
+			Title: "P95 latency elevated", Summary: "P95 latency above 300ms threshold",
+			Severity: "P2", Timestamp: now.Add(-10 * time.Minute), Link: "/metrics",
+			Fields: map[string]interface{}{"p95Ms": 348},
+		})
+	}
+	if want("traces") && matches("trace error", req.Service, "payment-service") {
+		traceID := "trace-demo-04"
+		if req.TraceID != "" {
+			traceID = req.TraceID
+		}
+		add(UnifiedQueryHit{
+			ID: traceID, Signal: "traces", Service: "payment-service",
+			Title: "Failing checkout trace", Summary: "Trace with downstream ledger timeout",
+			Severity: "P1", Timestamp: now.Add(-8 * time.Minute), Link: "/traces/" + traceID,
+			Fields: map[string]interface{}{"traceId": traceID, "txnId": req.TxnID},
+		})
+	}
+	if req.TxnID != "" && want("logs") {
+		add(UnifiedQueryHit{
+			ID: "log-txn-" + req.TxnID, Signal: "logs", Service: coalesce(req.Service, "payment-service"),
+			Title: "Transaction log correlation", Summary: "Logs correlated by txnId=" + req.TxnID,
+			Severity: "info", Timestamp: now.Add(-6 * time.Minute), Link: "/logs?q=txnId:" + req.TxnID,
+			Fields: map[string]interface{}{"txnId": req.TxnID},
+		})
+	}
+	if want("events") && matches("deployment", req.Service, "payment-service") {
+		add(UnifiedQueryHit{
+			ID: "evt-deploy-1", Signal: "events", Service: "payment-service",
+			Title: "Recent deployment detected", Summary: "Release 2026.06.02.4 deployed 9 minutes before anomaly",
+			Severity: "info", Timestamp: now.Add(-9 * time.Minute), Link: "/incidents",
+		})
+	}
+	return UnifiedQueryResponse{Hits: hits, Count: len(hits)}
+}
+
+func coalesce(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
+}
+
+// ListSavedQueries returns saved NexQL queries for a tenant.
+func (s *Store) ListSavedQueries(tenantID string) []SavedQuery {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.savedQueries == nil {
+		return []SavedQuery{}
+	}
+	out := append([]SavedQuery(nil), s.savedQueries[tenantID]...)
+	return out
+}
+
+// SaveSavedQuery upserts a saved query.
+func (s *Store) SaveSavedQuery(tenantID string, q SavedQuery) SavedQuery {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.savedQueries == nil {
+		s.savedQueries = make(map[string][]SavedQuery)
+	}
+	q.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	list := s.savedQueries[tenantID]
+	found := false
+	for i, existing := range list {
+		if existing.ID == q.ID {
+			list[i] = q
+			found = true
+			break
+		}
+	}
+	if !found {
+		list = append(list, q)
+	}
+	s.savedQueries[tenantID] = list
+	return q
+}
+
+// DeleteSavedQuery removes a saved query by id.
+func (s *Store) DeleteSavedQuery(tenantID, id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.savedQueries == nil {
+		return false
+	}
+	list := s.savedQueries[tenantID]
+	out := list[:0]
+	deleted := false
+	for _, q := range list {
+		if q.ID == id {
+			deleted = true
+			continue
+		}
+		out = append(out, q)
+	}
+	if deleted {
+		s.savedQueries[tenantID] = out
+	}
+	return deleted
+}
+
+// ListAlertPolicies returns all alert policies in stable order.
+func (s *Store) ListAlertPolicies() []AlertPolicy {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]AlertPolicy, 0, len(s.alertPolicies))
+	for _, p := range s.alertPolicies {
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
+// SaveAlertPolicy upserts an alert policy.
+func (s *Store) SaveAlertPolicy(p AlertPolicy) AlertPolicy {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if p.ID == "" {
+		p.ID = "ap-" + uuid.New().String()[:8]
+	}
+	s.alertPolicies[p.ID] = p
+	return p
+}
+
+// DeleteAlertPolicy removes one policy by ID.
+func (s *Store) DeleteAlertPolicy(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.alertPolicies[id]; !ok {
+		return false
+	}
+	delete(s.alertPolicies, id)
+	return true
+}
+
+// ListAlertSuppressions returns all suppressions by latest end time.
+func (s *Store) ListAlertSuppressions() []AlertSuppression {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]AlertSuppression, 0, len(s.suppressions))
+	for _, sup := range s.suppressions {
+		out = append(out, sup)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].EndsAt.After(out[j].EndsAt) })
+	return out
+}
+
+// SaveAlertSuppression creates a suppression.
+func (s *Store) SaveAlertSuppression(sup AlertSuppression) AlertSuppression {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if sup.ID == "" {
+		sup.ID = "sup-" + uuid.New().String()[:8]
+	}
+	s.suppressions[sup.ID] = sup
+	return sup
+}
+
+// DeleteAlertSuppression removes a suppression by ID.
+func (s *Store) DeleteAlertSuppression(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.suppressions[id]; !ok {
+		return false
+	}
+	delete(s.suppressions, id)
+	return true
+}
+
+// ListDerivedMetrics returns configured derived metrics.
+func (s *Store) ListDerivedMetrics() []DerivedMetric {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if len(s.derivedMetrics) == 0 {
+		return []DerivedMetric{
+			{ID: "dm-1", Name: "checkout_error_budget", Expression: "error_rate * 100", Unit: "percent", UpdatedAt: time.Now().UTC()},
+		}
+	}
+	out := make([]DerivedMetric, 0, len(s.derivedMetrics))
+	for _, m := range s.derivedMetrics {
+		out = append(out, m)
+	}
+	return out
+}
+
+// SaveDerivedMetric stores a derived metric definition.
+func (s *Store) SaveDerivedMetric(m DerivedMetric) DerivedMetric {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if m.ID == "" {
+		m.ID = "dm-" + uuid.New().String()[:8]
+	}
+	m.UpdatedAt = time.Now().UTC()
+	m.Value = EvaluateDerivedMetric(m.Expression)
+	if s.derivedMetrics == nil {
+		s.derivedMetrics = make(map[string]DerivedMetric)
+	}
+	s.derivedMetrics[m.ID] = m
+	return m
+}
+
+// ListCollectorFleet returns collector agents in stable order.
+func (s *Store) ListCollectorFleet() []CollectorFleetAgent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]CollectorFleetAgent, 0, len(s.collectorFleet))
+	for _, a := range s.collectorFleet {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
+// SaveCollectorAgent upserts one collector agent.
+func (s *Store) SaveCollectorAgent(a CollectorFleetAgent) CollectorFleetAgent {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if a.ID == "" {
+		a.ID = "agent-" + uuid.New().String()[:8]
+	}
+	if a.LastHeartbeatAt.IsZero() {
+		a.LastHeartbeatAt = time.Now().UTC()
+	}
+	s.collectorFleet[a.ID] = a
+	return a
+}
+
+// UpdateCollectorAgent updates an existing collector agent.
+func (s *Store) UpdateCollectorAgent(id string, a CollectorFleetAgent) (CollectorFleetAgent, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.collectorFleet[id]; !ok {
+		return CollectorFleetAgent{}, false
+	}
+	a.ID = id
+	if a.LastHeartbeatAt.IsZero() {
+		a.LastHeartbeatAt = time.Now().UTC()
+	}
+	s.collectorFleet[id] = a
+	return a, true
+}
+
+// ListCollectorPipelines returns pipelines in stable order.
+func (s *Store) ListCollectorPipelines() []CollectorPipeline {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]CollectorPipeline, 0, len(s.collectorPipelines))
+	for _, p := range s.collectorPipelines {
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
+// SaveCollectorPipeline upserts one collector pipeline.
+func (s *Store) SaveCollectorPipeline(p CollectorPipeline) CollectorPipeline {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if p.ID == "" {
+		p.ID = "pipe-" + uuid.New().String()[:8]
+	}
+	p.UpdatedAt = time.Now().UTC()
+	s.collectorPipelines[p.ID] = p
+	return p
+}
+
+// ValidateCollectorPipeline performs lightweight validation checks.
+func (s *Store) ValidateCollectorPipeline(p CollectorPipeline) (bool, string) {
+	if strings.TrimSpace(p.Name) == "" {
+		return false, "pipeline name is required"
+	}
+	if len(p.Stages) == 0 {
+		return false, "at least one stage is required"
+	}
+	for _, st := range p.Stages {
+		if strings.TrimSpace(st.Type) == "" {
+			return false, "stage type is required"
+		}
+	}
+	return true, "pipeline accepted"
+}
+
 // ListProfiles returns demo code hotspots for a service.
 func (s *Store) ListProfiles(service string) []ProfileHotspot {
 	return []ProfileHotspot{
@@ -759,4 +1366,75 @@ func (s *Store) ListCloudDashboards(provider string) []CloudDashboard {
 		}
 	}
 	return out
+}
+
+// LogTierPolicy returns retention tiers for a tenant.
+func (s *Store) LogTierPolicy(tenantID string) LogTierPolicy {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.logTierPolicies != nil {
+		if p, ok := s.logTierPolicies[tenantID]; ok {
+			return p
+		}
+	}
+	return LogTierPolicy{
+		TenantID: tenantID, HotRetentionDays: 7, WarmRetentionDays: 30,
+		ColdRetentionDays: 90, RestoreSLAHours: 4, UpdatedAt: time.Now().UTC(),
+	}
+}
+
+// SaveLogTierPolicy upserts log tier policy for a tenant.
+func (s *Store) SaveLogTierPolicy(tenantID string, p LogTierPolicy) LogTierPolicy {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.logTierPolicies == nil {
+		s.logTierPolicies = make(map[string]LogTierPolicy)
+	}
+	p.TenantID = tenantID
+	p.UpdatedAt = time.Now().UTC()
+	s.logTierPolicies[tenantID] = p
+	return p
+}
+
+// ListServerlessFunctions returns monitored FaaS workloads.
+func (s *Store) ListServerlessFunctions() []ServerlessFunction {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if len(s.serverlessFunctions) > 0 {
+		out := make([]ServerlessFunction, 0, len(s.serverlessFunctions))
+		for _, fn := range s.serverlessFunctions {
+			out = append(out, fn)
+		}
+		sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+		return out
+	}
+	now := time.Now().UTC()
+	return []ServerlessFunction{
+		{ID: "fn-upi-auth", Name: "upi-auth-validator", Provider: "aws", Runtime: "provided.al2023", Region: "ap-south-1",
+			Invocations24h: 1_240_000, ErrorRatePct: 0.08, P95DurationMs: 42, ColdStartPct: 1.2, MemoryMB: 512, Status: "healthy", UpdatedAt: now},
+		{ID: "fn-ledger-sync", Name: "ledger-nightly-sync", Provider: "azure", Runtime: "node20", Region: "centralindia",
+			Invocations24h: 12_400, ErrorRatePct: 0.0, P95DurationMs: 890, ColdStartPct: 8.5, MemoryMB: 1024, Status: "healthy", UpdatedAt: now},
+	}
+}
+
+// GetServerlessFunction returns one function by id.
+func (s *Store) GetServerlessFunction(id string) (ServerlessFunction, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if fn, ok := s.serverlessFunctions[id]; ok {
+		return fn, true
+	}
+	now := time.Now().UTC()
+	seed := []ServerlessFunction{
+		{ID: "fn-upi-auth", Name: "upi-auth-validator", Provider: "aws", Runtime: "provided.al2023", Region: "ap-south-1",
+			Invocations24h: 1_240_000, ErrorRatePct: 0.08, P95DurationMs: 42, ColdStartPct: 1.2, MemoryMB: 512, Status: "healthy", UpdatedAt: now},
+		{ID: "fn-ledger-sync", Name: "ledger-nightly-sync", Provider: "azure", Runtime: "node20", Region: "centralindia",
+			Invocations24h: 12_400, ErrorRatePct: 0.0, P95DurationMs: 890, ColdStartPct: 8.5, MemoryMB: 1024, Status: "healthy", UpdatedAt: now},
+	}
+	for _, fn := range seed {
+		if fn.ID == id {
+			return fn, true
+		}
+	}
+	return ServerlessFunction{}, false
 }

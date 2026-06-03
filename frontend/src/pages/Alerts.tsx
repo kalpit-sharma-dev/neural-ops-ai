@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from '@tanstack/react-router';
+import { fetchAlertPolicies, type AlertPolicy } from '../api/observability';
 import {
   acknowledgeAlert,
   createAlertRule,
@@ -59,6 +60,24 @@ export default function Alerts() {
     queryFn: fetchEscalationPolicies,
     enabled: tab === 'Escalation',
   });
+
+  const alertPoliciesQuery = useQuery({
+    queryKey: ['obs-alert-policies'],
+    queryFn: fetchAlertPolicies,
+    enabled: tab === 'Active',
+  });
+
+  const policyForAlert = useMemo(() => {
+    const policies = alertPoliciesQuery.data ?? [];
+    return (alert: AlertRecord): AlertPolicy | undefined => {
+      return policies.find(
+        (p) =>
+          p.enabled &&
+          (p.servicePattern === '*' ||
+            alert.service.toLowerCase().includes(p.servicePattern.replace('*', '').toLowerCase())),
+      );
+    };
+  }, [alertPoliciesQuery.data]);
 
   const [escalationForm, setEscalationForm] = useState({
     name: '',
@@ -358,6 +377,33 @@ export default function Alerts() {
             {selectedAlert.linkedIncidentId && (
               <Link to="/incidents/$id" params={{ id: selectedAlert.linkedIncidentId }}>View linked incident →</Link>
             )}
+            {(() => {
+              const policy = policyForAlert(selectedAlert);
+              if (!policy?.context) return null;
+              return (
+                <Card title="Policy context" style={{ marginTop: 16 }}>
+                  <p>
+                    <strong>Policy:</strong>{' '}
+                    <Link to="/settings/alert-policies">{policy.name}</Link>
+                  </p>
+                  {policy.context.owner && <p>Owner: {policy.context.owner}</p>}
+                  {policy.context.runbookUrl && (
+                    <p>
+                      Runbook: <a href={policy.context.runbookUrl}>{policy.context.runbookUrl}</a>
+                    </p>
+                  )}
+                  <div className="incident-detail-actions" style={{ marginTop: 8 }}>
+                    {policy.context.topologyLink && (
+                      <Link to={policy.context.topologyLink}>Topology →</Link>
+                    )}
+                    {policy.context.tracePivotLink && (
+                      <Link to={policy.context.tracePivotLink}>Traces →</Link>
+                    )}
+                    {policy.context.logPivotLink && <Link to={policy.context.logPivotLink}>Logs →</Link>}
+                  </div>
+                </Card>
+              );
+            })()}
           </>
         )}
       </Modal>

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: neuralops-collector-operator
+  namespace: neuralops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: neuralops-collector-operator
+rules:
+  - apiGroups: ["observability.neuralops.io"]
+    resources: ["collectoragents"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["observability.neuralops.io"]
+    resources: ["collectoragents/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: neuralops-collector-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: neuralops-collector-operator
+subjects:
+  - kind: ServiceAccount
+    name: neuralops-collector-operator
+    namespace: neuralops

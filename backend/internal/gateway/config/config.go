@@ -17,6 +17,7 @@ type Config struct {
 	Tenant    TenantConfig    `mapstructure:"tenant"`
 	RateLimit RateLimitConfig `mapstructure:"rate_limit"`
 	AuthRateLimit AuthRateLimitConfig `mapstructure:"auth_rate_limit"`
+	TenantQuota TenantQuotaConfig `mapstructure:"tenant_quota"`
 	Redis     RedisConfig     `mapstructure:"redis"`
 	Postgres  PostgresConfig  `mapstructure:"postgres"`
 	ClickHouse ClickHouseConfig `mapstructure:"clickhouse"`
@@ -126,6 +127,16 @@ type AuthRateLimitConfig struct {
 	RequestsPerMinute int  `mapstructure:"requests_per_minute"`
 }
 
+// TenantQuotaConfig bounds per-tenant daily ingest volume for multi-tenant
+// fairness. Zero quota values mean "unlimited"; empty Paths uses the built-in
+// ingest path set.
+type TenantQuotaConfig struct {
+	Enabled           bool     `mapstructure:"enabled"`
+	DailyRequestQuota int64    `mapstructure:"daily_request_quota"`
+	DailyBytesQuota   int64    `mapstructure:"daily_bytes_quota"`
+	Paths             []string `mapstructure:"paths"`
+}
+
 type ClickHouseConfig struct {
 	DSN string `mapstructure:"dsn"`
 }
@@ -209,6 +220,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rate_limit.burst", 100)
 	v.SetDefault("auth_rate_limit.enabled", true)
 	v.SetDefault("auth_rate_limit.requests_per_minute", 20)
+	v.SetDefault("tenant_quota.enabled", false)
+	v.SetDefault("tenant_quota.daily_request_quota", 0)
+	v.SetDefault("tenant_quota.daily_bytes_quota", 0)
 	v.SetDefault("dashboard.fetch_timeout", "3s")
 	v.SetDefault("websocket.ping_interval", "30s")
 	v.SetDefault("prometheus.url", "http://prometheus:9090")
@@ -253,6 +267,9 @@ func bindEnv(v *viper.Viper) {
 	_ = v.BindEnv("services.search", "SEARCH_URL")
 	_ = v.BindEnv("services.alerting", "ALERTING_URL")
 	_ = v.BindEnv("demo_mode", "DEMO_MODE")
+	_ = v.BindEnv("tenant_quota.enabled", "TENANT_QUOTA_ENABLED")
+	_ = v.BindEnv("tenant_quota.daily_request_quota", "TENANT_QUOTA_DAILY_REQUESTS")
+	_ = v.BindEnv("tenant_quota.daily_bytes_quota", "TENANT_QUOTA_DAILY_BYTES")
 	_ = v.BindEnv("prometheus.url", "PROMETHEUS_URL")
 	_ = v.BindEnv("server.environment", "ENVIRONMENT")
 }
@@ -264,7 +281,7 @@ func (c *Config) Validate() error {
 	if c.Services.Ingestion == "" {
 		return fmt.Errorf("services.ingestion is required")
 	}
-	return nil
+	return c.ValidateProduction()
 }
 
 func (c *Config) LLMClientConfig() ai.ClientConfig {

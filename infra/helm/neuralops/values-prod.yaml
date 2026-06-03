@@ -1,0 +1,55 @@
+# Production overrides — bank self-hosted / dedicated (Gate D)
+# Usage: helm upgrade -i neuralops ./infra/helm/neuralops -f values.yaml -f values-prod.yaml
+
+global:
+  environment: production
+  imagePullPolicy: IfNotPresent
+  imageTag: "" # REQUIRED: pin image digest, not :latest
+
+gateway:
+  replicas: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+
+config:
+  demoMode: false
+  authDisabled: false
+  authAllowDevLogin: false
+  finopsBillingMode: live
+  finopsRequirePostgres: true
+  finopsAllowSimulation: false
+  autofixEnabled: false
+  autofixRequireApproval: true
+
+finopsCur:
+  enabled: true
+  storageSize: 100Gi
+  curFile: /var/lib/neuralops/cur/latest.ndjson
+  s3:
+    bucket: "" # REQUIRED: customer CUR bucket
+    prefix: cur/monthly/
+    region: us-east-1
+    roleArn: "" # IRSA role for S3 read
+
+auth:
+  oidc:
+    enabled: true
+  saml:
+    enabled: false # set true for SAML-only banks
+
+secrets:
+  create: false
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    app: app.neuralops.customer.example
+    api: api.neuralops.customer.example
+
+# Enable after Istio install + namespace label istio-injection=enabled
+mesh:
+  enabled: false
+  mtlsMode: STRICT

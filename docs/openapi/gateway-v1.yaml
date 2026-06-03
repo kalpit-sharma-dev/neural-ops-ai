@@ -9,7 +9,30 @@ servers:
 paths:
   /info:
     get:
-      summary: Platform metadata
+      summary: Platform metadata and capability matrix
+      responses:
+        '200':
+          description: Service info with open-standards capabilities
+  /unified/incidents/{id}/context:
+    get:
+      summary: Cross-signal incident triage context (logs, traces, metrics, security)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: service
+          in: query
+          schema:
+            type: string
+        - name: services
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unified context with deep links and correlated findings
   /auth/config:
     get:
       summary: Client auth configuration
@@ -25,6 +48,329 @@ paths:
   /dashboard/overview:
     get:
       summary: Command center overview
+  /query/explain:
+    post:
+      summary: NexQL explain plan without executing query (MET-04 M1)
+  /query/saved:
+    get:
+      summary: List saved NexQL queries for tenant
+    post:
+      summary: Save NexQL query
+  /query/saved/{id}:
+    delete:
+      summary: Delete saved NexQL query
+  /collectors/autoinstrumentation:
+    get:
+      summary: OTEL auto-instrumentation support matrix (COLL-03)
+  /collectors/discovery:
+    get:
+      summary: Auto-discovered services from fleet agents (COLL-01)
+  /collectors/supported-platforms:
+    get:
+      summary: Certified OS/kernel matrix (COLL-01)
+  /collectors/fleet/drift:
+    get:
+      summary: Fleet version drift summary (COLL-09)
+  /collectors/fleet/{id}/spool-status:
+    get:
+      summary: Air-gap spool buffer status (COLL-06)
+  /collectors/fleet/{id}/benchmark:
+    post:
+      summary: Agent idle CPU/RAM benchmark (COLL-05)
+  /collectors/fleet/{id}/rollout:
+    put:
+      summary: Canary/rolling collector rollout (COLL-07)
+  /query/cardinality-alerts:
+    get:
+      summary: NexQL cardinality breach alert policy (MET-02)
+    put:
+      summary: Update cardinality alert policy
+  /alerts/maintenance-windows:
+    get:
+      summary: List maintenance windows (ALR-02)
+    post:
+      summary: Create maintenance window
+  /apm/errors:
+    get:
+      summary: Grouped error tracking with release linkage (APM-04)
+  /apm/releases:
+    get:
+      summary: Deployment release history (APM-04)
+  /apm/service-catalog:
+    get:
+      summary: Service ownership catalog (APM-06)
+  /apm/business-transactions/{txnId}:
+    get:
+      summary: Business transaction join view (APM-07)
+  /logs/ingest-formats:
+    get:
+      summary: Supported log ingest formats (LOG-01)
+  /logs/anomalies:
+    get:
+      summary: Log anomaly AI with precision metrics (LOG-06)
+  /admin/signal-policies:
+    get:
+      summary: Per-signal retention and masking (ADM-02)
+    put:
+      summary: Update signal policies
+  /admin/siem-config:
+    get:
+      summary: SIEM export configuration (SEC-02)
+    put:
+      summary: Update SIEM config
+  /cloud/metrics/catalog:
+    get:
+      summary: Cloud native metric catalog (INF-02)
+  /security/threat-feed:
+    get:
+      summary: Threat intelligence indicators (SEC-03)
+  /integrations/github/webhook:
+    post:
+      summary: GitHub deploy webhook (INT-01)
+  /integrations/gitlab/webhook:
+    post:
+      summary: GitLab deploy webhook (INT-01)
+  /integrations/jenkins/webhook:
+    post:
+      summary: Jenkins deploy webhook (INT-01)
+  /security/cspm/import:
+    post:
+      summary: Import CSPM posture findings batch (SEC-01)
+  /query/unified:
+    post:
+      summary: Cross-signal unified query (logs/metrics/traces/events)
+  /query/validate:
+    post:
+      summary: Validate unified query syntax/body
+  /query/functions:
+    get:
+      summary: List supported unified query helper functions
+  /collectors/fleet:
+    get:
+      summary: List collector fleet agents
+    post:
+      summary: Enroll collector fleet agent
+  /collectors/fleet/{id}:
+    get:
+      summary: Get collector fleet agent by id
+    put:
+      summary: Update collector fleet agent
+  /collectors/fleet/{id}/upgrade:
+    post:
+      summary: Upgrade collector agent version (canary supported via targetVersion)
+  /metrics/derived:
+    get:
+      summary: List derived metric definitions
+    post:
+      summary: Create derived metric definition
+  /metrics/derived/{id}/samples:
+    get:
+      summary: Materialized derived metric buckets (streaming aggregator)
+  /alerts/policies/{id}/scores:
+    get:
+      summary: Materialized alert fatigue scores per policy
+  /alerts/policies/{id}/feedback:
+    get:
+      summary: List alert quality feedback for a policy
+    post:
+      summary: Submit alert quality feedback (noise/usefulness)
+  /alerts/policies/{id}/trigger:
+    post:
+      summary: Evaluate and trigger alert policy (routing, suppression, context enrichment)
+  /collectors/pipelines:
+    get:
+      summary: List collector pipelines
+    post:
+      summary: Create collector pipeline
+  /collectors/pipelines/{id}:
+    put:
+      summary: Update collector pipeline
+  /collectors/pipelines/{id}/validate:
+    post:
+      summary: Validate collector pipeline configuration
+  /ai/rca/{incidentId}:
+    get:
+      summary: Causal root-cause analysis for an incident
+  /ai/explanations/{id}:
+    get:
+      summary: Fetch explainable AI RCA graph by explanation id
+  /ai/forecast:
+    post:
+      summary: Capacity/SLO/incident-risk forecast projection
+  /ai/autofix/plan:
+    post:
+      summary: Generate AutoFix remediation plan with policy evaluation
+      description: Returns 403 when AUTOFIX_ENABLED=false (bank default in production).
+  /ai/autofix/execute:
+    post:
+      summary: Execute approved AutoFix plan
+      description: Requires approved=true when AUTOFIX_REQUIRE_APPROVAL=true. Role-gated via AUTOFIX_ALLOWED_ROLES.
+  /ai/autofix/rollback:
+    post:
+      summary: Roll back a completed AutoFix action
+  /ai/llm/workloads:
+    get:
+      summary: List LLM inference workloads with latency, token, and cost metrics
+  /ai/llm/usage:
+    get:
+      summary: Aggregate LLM token and cost usage for a time window
+      parameters:
+        - name: window
+          in: query
+          schema:
+            type: string
+            default: 24h
+  /ai/llm/workloads/{id}/traces:
+    get:
+      summary: LLM inference trace spans for a workload (AI-03)
+  /logs/tiering:
+    get:
+      summary: Get hot/warm/cold log retention policy (LOG-05)
+    put:
+      summary: Update log tier retention policy
+  /logs/tail/ws:
+    get:
+      summary: WebSocket live log tail with backpressure (LOG-04 preview)
+  /infra/serverless/functions:
+    get:
+      summary: List monitored serverless functions (INF-04)
+  /infra/serverless/functions/{id}:
+    get:
+      summary: Get serverless function detail
+  /finops/costs:
+    get:
+      summary: FinOps cost trends and budget comparison
+  /finops/costs/breakdown:
+    get:
+      summary: FinOps cost allocation breakdown tree
+  /finops/allocation/rules:
+    get:
+      summary: List FinOps allocation rules
+    post:
+      summary: Create FinOps allocation rule
+  /finops/kubernetes/cost:
+    get:
+      summary: Kubernetes namespace/workload cost allocation
+  /finops/anomalies:
+    get:
+      summary: FinOps cost anomaly alerts
+  /finops/recommendations:
+    get:
+      summary: FinOps optimization recommendations
+  /finops/budgets:
+    get:
+      summary: List FinOps budgets
+    post:
+      summary: Create FinOps budget
+  /finops/budgets/alerts:
+    get:
+      summary: Active budget threshold alerts (50/80/100/forecast)
+  /finops/forecast:
+    get:
+      summary: FinOps spend forecast with confidence band
+  /finops/ingest/run:
+    post:
+      summary: Run FinOps billing ingest connectors
+  /finops/ingest/status:
+    get:
+      summary: FinOps billing ingest freshness and reconciliation status
+  /finops/reconciliation:
+    get:
+      summary: Invoice reconciliation snapshots per cloud provider (FIN-PROD-04)
+      description: Drift percentage vs invoice total; driftAlert when above 1%.
+  /finops/audit/export:
+    get:
+      summary: Export FinOps mutation audit log as CSV (FIN-PROD-09)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 500
+      responses:
+        '200':
+          description: text/csv attachment (finops-audit.csv)
+  /finops/line-items/lake/export:
+    get:
+      summary: Queue Iceberg/Parquet lake export for cost line items (FIN-PROD-08 preview)
+  /finops/imports:
+    post:
+      summary: Import custom/SaaS cost feed (CSV/JSON)
+  /finops/allocation/tag-suggestions:
+    get:
+      summary: ML-assisted tagging suggestions for untagged spend
+  /finops/commitments:
+    get:
+      summary: RI/SP/CUD coverage and utilization
+  /finops/commitments/recommendations:
+    get:
+      summary: Commitment purchase recommendations
+  /finops/unit-economics:
+    get:
+      summary: Cost per request/transaction/customer metrics
+  /finops/carbon/recommendations:
+    get:
+      summary: Carbon reduction recommendations with cost trade-off
+  /finops/reports:
+    get:
+      summary: Generated FinOps reports
+  /finops/reports/schedule:
+    post:
+      summary: Schedule FinOps report delivery
+  /finops/audit:
+    get:
+      summary: FinOps mutation audit log
+  /finops/chargeback/statements:
+    get:
+      summary: List showback/chargeback statements
+    post:
+      summary: Generate chargeback statement per cost-center
+  /finops/chargeback/statements/{id}/export:
+    get:
+      summary: Export chargeback statement as CSV
+  /finops/scenarios:
+    get:
+      summary: List what-if scenario runs
+    post:
+      summary: Run what-if cost/carbon scenario
+  /finops/commitments/alerts:
+    get:
+      summary: Expiring or under-utilized commitment alerts
+  /finops/carbon/recommendations/{id}/actions:
+    post:
+      summary: Simulate or apply carbon reduction action
+  /finops/governance/policies:
+    get:
+      summary: FinOps governance policies
+  /finops/carbon:
+    get:
+      summary: FinOps carbon footprint estimate
+  /network/flows:
+    get:
+      summary: Network flow records (NPM)
+  /network/devices:
+    get:
+      summary: Monitored network devices
+  /network/topology:
+    get:
+      summary: NPM network topology graph
+  /network/anomalies:
+    get:
+      summary: NPM latency/loss/jitter anomalies
+  /network/flows/netflow:
+    get:
+      summary: Extended NetFlow export records
+  /network/sdwan/tunnels:
+    get:
+      summary: SD-WAN tunnel health metrics
+  /network/wireless/links:
+    get:
+      summary: Wireless access point link metrics
+  /apm/sampling/policies:
+    get:
+      summary: List tail-based trace sampling policies
+    post:
+      summary: Create tail-based trace sampling policy
   /chat/query:
     post:
       summary: AI chat SSE stream
@@ -46,6 +392,24 @@ paths:
   /alerts:
     get:
       summary: List alerts (proxied)
+  /alerts/policies:
+    get:
+      summary: List alert routing policies
+    post:
+      summary: Create alert routing policy
+  /alerts/policies/{id}:
+    put:
+      summary: Update alert routing policy
+    delete:
+      summary: Delete alert routing policy
+  /alerts/suppressions:
+    get:
+      summary: List alert suppressions
+    post:
+      summary: Create alert suppression window
+  /alerts/suppressions/{id}:
+    delete:
+      summary: Delete alert suppression window
   /metrics/catalog:
     get:
       summary: Metric catalog
@@ -101,6 +465,12 @@ paths:
   /integrations/oauth/callback:
     get:
       summary: OAuth callback
+  /cloud/assets:
+    get:
+      summary: Multi-cloud asset inventory
+  /cloud/topology:
+    get:
+      summary: Cloud asset relationship topology
   /cloud/dashboards:
     get:
       summary: Cloud dashboard catalog
@@ -131,12 +501,47 @@ paths:
   /security/vulnerabilities:
     get:
       summary: List runtime vulnerability findings (live log-derived with demo fallback)
+    post:
+      summary: Alias — batch import scanner findings (see /batch)
+  /security/vulnerabilities/batch:
+    post:
+      summary: Batch import SCA/container vulnerabilities (Trivy/Grype normalized schema)
   /security/attacks:
     get:
       summary: List runtime attack events (live log-derived with demo fallback)
   /security/attacks/{id}:
     get:
       summary: Get one attack event by id
+  /security/findings:
+    get:
+      summary: List normalized security findings across AppSec and posture feeds
+  /security/findings/{id}:
+    get:
+      summary: Get security finding by id (includes incident linkage when correlated)
+  /security/findings/{id}/correlate:
+    post:
+      summary: Correlate finding to incident (auto-match or create linkage)
+  /nfr/sla/run:
+    post:
+      summary: Run automated SLA certification checks
+  /nfr/benchmark/run:
+    post:
+      summary: Run live NFR performance benchmark
+  /admin/regions:
+    get:
+      summary: Multi-region active-active deployment status
+  /security/sca/import:
+    post:
+      summary: Import SCA findings payload
+  /security/images/import:
+    post:
+      summary: Import container image security findings payload
+  /security/cspm/posture:
+    get:
+      summary: List CSPM posture checks
+  /security/siem/exports:
+    post:
+      summary: Export security findings/signals to SIEM sink
   /marketplace:
     get:
       summary: List installable apps & extensions catalog with per-tenant install state
@@ -167,6 +572,50 @@ paths:
       summary: SSO config (per tenant)
     put:
       summary: Update SSO (multi-tenant reload)
+  /admin/abac-policies:
+    get:
+      summary: Get ABAC policies
+    put:
+      summary: Update ABAC policies
+  /admin/data-residency:
+    get:
+      summary: Get data residency policy
+    put:
+      summary: Update data residency policy
+  /admin/branding:
+    get:
+      summary: Get white-label branding theme
+    put:
+      summary: Update white-label branding theme
+  /admin/msp/tenants:
+    get:
+      summary: List MSP child tenants
+    post:
+      summary: Register MSP child tenant (ADM-03)
+  /exports/warehouse:
+    post:
+      summary: Export telemetry batch to warehouse
+  /exports/bi:
+    post:
+      summary: Export dataset to BI connector
+  /exports/events:
+    post:
+      summary: Export event stream checkpoint
+  /nfr/benchmarks:
+    get:
+      summary: NFR performance benchmark results
+  /nfr/reliability:
+    get:
+      summary: HA/DR reliability drill results
+  /nfr/accessibility:
+    get:
+      summary: WCAG accessibility certification summary
+  /nfr/i18n/locales:
+    get:
+      summary: Supported UI locales and coverage
+  /nfr/certification:
+    get:
+      summary: Signed NFR certification exit-gate report
   /admin/oncall:
     get:
       summary: On-call schedules
@@ -183,9 +632,35 @@ paths:
   /mobile/push/register:
     post:
       summary: Register Expo push token
+  /rum/funnels:
+    get:
+      summary: List RUM conversion funnels
+    post:
+      summary: Create RUM conversion funnel
   /rum/beacon:
     post:
       summary: RUM beacon
   /rum/consent:
     post:
       summary: GDPR consent
+  /synthetic/browser-tests:
+    get:
+      summary: List browser synthetic tests
+    post:
+      summary: Create browser synthetic test
+  /synthetic/mobile-tests:
+    get:
+      summary: List mobile synthetic tests
+    post:
+      summary: Create mobile synthetic test
+  /synthetic/private-locations:
+    get:
+      summary: List private synthetic probe locations
+    post:
+      summary: Register private synthetic probe location
+  /business/kpi-packs:
+    get:
+      summary: List business KPI packs
+  /business/kpi-packs/{id}/enable:
+    post:
+      summary: Enable business KPI pack

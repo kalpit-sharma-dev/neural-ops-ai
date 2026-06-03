@@ -1,57 +1,38 @@
-# Architecture
+# Architecture (summary)
 
-NeuralOps is an AI-powered observability platform for log analysis, incident management, and service intelligence.
+NeuralOps is an AI-powered observability platform. This file is a **short index**; the full architecture reference for the architecture team lives in:
 
-## High-level design
+**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+
+That document includes:
+
+- C4 system context and container diagrams  
+- Deployment (Docker Compose & Kubernetes)  
+- Backend microservices and gateway component model  
+- Observability UI API layer (route domains)  
+- Frontend architecture and auth flow  
+- PostgreSQL ER diagrams (core, FinOps, UI entities)  
+- Section-wise sequence diagrams (ingest, search, incidents, alerts, FinOps, AI, collectors, streaming)  
+- Security and platform observability  
+
+## Quick reference
 
 ```
-Clients (Web UI, API keys, webhooks)
-        │
-        ▼
-   API Gateway ──► RBAC, auth, rate limits, audit, WebSocket
-        │
-        ├── Ingestion ──► Kafka ──► Analysis / Correlation
-        ├── Search ──► Elasticsearch + Qdrant + ClickHouse
-        ├── Incident ──► Postgres
-        └── Alerting ──► Postgres + notifiers
+Clients → Frontend (:3000) → API Gateway (:8080)
+                ├── Observability UI APIs (/api/v1/* on gateway)
+                └── Proxies → Ingestion, Search, Incident, Analysis, Alerting
+Data: PostgreSQL, ClickHouse, Elasticsearch, Kafka, Redis, Qdrant
 ```
 
-## Services
+| Service | Port |
+|---------|------|
+| Frontend | 3000 |
+| Gateway | 8080 |
+| Ingestion | 8081 |
+| Analysis | 8082 |
+| Correlation | 8083 |
+| Incident | 8084 |
+| Search | 8085 |
+| Alerting | 8086 |
 
-| Service | Port | Responsibility |
-|---------|------|----------------|
-| Gateway | 8080 | Auth, proxy, dashboard aggregation, AI chat, WebSocket |
-| Ingestion | 8081 | Log/metric/event/trace intake, Kafka publish |
-| Analysis | 8082 | LLM classification, embeddings, anomaly scoring |
-| Correlation | 8083 | Trace/transaction correlation |
-| Incident | 8084 | Incident lifecycle, RCA, recommendations |
-| Search | 8085 | Full-text, semantic, trace, transaction search |
-| Alerting | 8086 | Alert ingestion, dedup, escalation, notifications |
-
-## Data stores
-
-- **PostgreSQL** — tenants, users, incidents, alerts, audit logs, auth sessions
-- **Elasticsearch** — log documents (per-tenant indexes `tenant-{id}-logs-*`)
-- **ClickHouse** — analytics logs, transactions, audit replication
-- **Qdrant** — vector embeddings for semantic search
-- **Redis** — rate limiting, rolling metrics
-- **Kafka** — event bus between ingestion and processors
-
-## Security model
-
-- Authentication: internal JWT, API keys, OIDC PKCE with one-time SPA exchange codes
-- Authorization: RBAC (`ADMIN`, `SRE`, `DEVELOPER`, `READ_ONLY`, `ALERT_MANAGER`)
-- Tenant isolation: gateway injects `X-Tenant-ID`; search/analysis scope by tenant
-- Audit: Postgres source of truth with ClickHouse replication
-
-## Observability
-
-- Prometheus metrics on `/metrics` for every service
-- OpenTelemetry traces exported to Jaeger via OTLP
-- Grafana dashboards for platform overview, Kafka ingestion, search/incidents, AI usage, gateway API
-
-## Deployment targets
-
-- Local/demo: `infra/docker-compose.yml`
-- Kubernetes: `infra/k8s/` (Kustomize)
-- Terraform bootstrap: `infra/terraform/`
+See [README.md](README.md) for quick start commands.

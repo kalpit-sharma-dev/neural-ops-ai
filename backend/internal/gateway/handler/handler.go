@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/neuralops/platform/internal/gateway/auth"
 	"github.com/neuralops/platform/internal/gateway/chat"
 	"github.com/neuralops/platform/internal/gateway/config"
 	"github.com/neuralops/platform/internal/gateway/dashboard"
@@ -22,16 +23,18 @@ type Handler struct {
 	dashboard   *dashboard.Aggregator
 	chat        *chat.Service
 	wsHub       *websocket.Hub
+	logTailHub  *websocket.LogTailHub
 }
 
 // New creates a gateway handler.
-func New(log *zap.Logger, cfg config.Config, dashboardAgg *dashboard.Aggregator, chatSvc *chat.Service, wsHub *websocket.Hub) *Handler {
+func New(log *zap.Logger, cfg config.Config, dashboardAgg *dashboard.Aggregator, chatSvc *chat.Service, wsHub *websocket.Hub, logTailHub *websocket.LogTailHub) *Handler {
 	return &Handler{
-		log:       log,
-		cfg:       cfg,
-		dashboard: dashboardAgg,
-		chat:      chatSvc,
-		wsHub:     wsHub,
+		log:        log,
+		cfg:        cfg,
+		dashboard:  dashboardAgg,
+		chat:       chatSvc,
+		wsHub:      wsHub,
+		logTailHub: logTailHub,
 	}
 }
 
@@ -43,15 +46,19 @@ func (h *Handler) RegisterNativeRoutes(router *gin.Engine) {
 		v1.POST("/chat/query", h.ChatQuery)
 	}
 	router.GET("/api/v1/ws/realtime", h.RealtimeWebSocket)
+	if h.logTailHub != nil {
+		router.GET("/api/v1/logs/tail/ws", h.LogTailWebSocket)
+	}
 }
 
 // Info returns platform metadata for clients.
 func (h *Handler) Info(c *gin.Context) {
 	writeSuccess(c, gin.H{
-		"service":     "gateway",
-		"environment": h.cfg.Server.Environment,
-		"version":     health.DefaultVersion,
-		"demoMode":    h.cfg.DemoMode,
+		"service":      "gateway",
+		"environment":  h.cfg.Server.Environment,
+		"version":      health.DefaultVersion,
+		"demoMode":     h.cfg.DemoMode,
+		"capabilities": DefaultCapabilities(h.cfg.DemoMode),
 	})
 }
 
@@ -113,6 +120,20 @@ func (h *Handler) ChatQuery(c *gin.Context) {
 // RealtimeWebSocket upgrades to websocket for dashboard events.
 func (h *Handler) RealtimeWebSocket(c *gin.Context) {
 	h.wsHub.Handle(c.Writer, c.Request, h.cfg.WebSocket.PingInterval)
+}
+
+// LogTailWebSocket streams live logs (LOG-04).
+func (h *Handler) LogTailWebSocket(c *gin.Context) {
+	if env := h.cfg.Server.Environment; env == "production" || env == "staging" {
+		if p, ok := auth.PrincipalFromGin(c); ok && p.Role == auth.RoleReadOnly {
+			c.JSON(http.StatusForbidden, gin.H{
+				"status": "error", "errorCode": "LOGTAIL001",
+				"message": "read-only role cannot use live log tail in regulated environments",
+			})
+			return
+		}
+	}
+	h.logTailHub.Handle(c.Writer, c.Request, h.cfg.WebSocket.PingInterval)
 }
 
 func writeSuccess(c *gin.Context, data any) {

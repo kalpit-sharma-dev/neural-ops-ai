@@ -1,0 +1,18 @@
+{{- if .Values.finopsCur.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: finops-cur-data
+  namespace: {{ include "neuralops.namespace" . }}
+  labels:
+    {{- include "neuralops.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.finopsCur.storageSize | default "50Gi" }}
+  {{- if .Values.finopsCur.storageClass }}
+  storageClassName: {{ .Values.finopsCur.storageClass }}
+  {{- end }}
+{{- end }}

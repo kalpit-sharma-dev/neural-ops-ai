@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neuralops-collector-operator
+  namespace: neuralops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neuralops-collector-operator
+  template:
+    metadata:
+      labels:
+        app: neuralops-collector-operator
+    spec:
+      serviceAccountName: neuralops-collector-operator
+      containers:
+        - name: operator
+          image: neuralops/collector-operator:latest
+          args: []
+          ports:
+            - name: metrics
+              containerPort: 8082
+            - name: probes
+              containerPort: 8083
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8083
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8083
+            initialDelaySeconds: 5
+          env:
+            - name: NEURALOPS_API_URL
+              value: http://gateway.neuralops.svc:8080/api/v1
+            - name: NEURALOPS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: neuralops-api-token
+                  key: token
+                  optional: true
+---
+apiVersion: observability.neuralops.io/v1
+kind: CollectorAgent
+metadata:
+  name: agent-k8s-1
+  namespace: neuralops
+spec:
+  name: k8s-daemonset
+  environment: prod
+  version: "1.3.0"
+  policyId: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collector-reconcile-spec
+  namespace: neuralops
+data:
+  reconcile.json: |
+    {
+      "agents": [
+        {
+          "id": "agent-k8s-1",
+          "name": "k8s-daemonset",
+          "environment": "prod",
+          "version": "1.3.0",
+          "policyId": "default"
+        }
+      ]
+    }

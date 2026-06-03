@@ -1,0 +1,34 @@
+# Staging overrides — bank POC / pre-prod (Gate B)
+# Usage: helm upgrade -i neuralops ./infra/helm/neuralops -f values.yaml -f values-staging.yaml
+
+global:
+  environment: staging
+  imageTag: "" # pin digest in real deployments
+
+gateway:
+  replicas: 2
+
+config:
+  demoMode: false
+  authDisabled: false
+  authAllowDevLogin: false
+
+auth:
+  oidc:
+    enabled: true
+  saml:
+    enabled: false
+
+secrets:
+  create: false
+  # Use External Secrets Operator — see templates/external-secret.yaml
+
+ingress:
+  enabled: true
+  hosts:
+    app: app.staging.neuralops.example
+    api: api.staging.neuralops.example
+
+mesh:
+  enabled: false
+  mtlsMode: STRICT

@@ -1,6 +1,6 @@
 # NeuralOps vs NEXOBS SRS — Comprehensive Comparison and Gap Plan
 
-Date: 2026-06-02  
+Date: 2026-06-02 (updated: backlog parity implementation)  
 Inputs compared:
 - `SRS_NextGen_Observability_Platform.md`
 - `docs/openapi/gateway-v1.yaml`
@@ -15,13 +15,49 @@ Inputs compared:
 
 NeuralOps already implements a strong cross-domain observability foundation: logs, traces/APM, metrics, dashboards, incidents, alerting, workflow automation, notebooks, RUM/synthetic, integrations, security signals, RBAC, SSO, and multi-tenant scaffolding.
 
-Against the SRS, the largest remaining gaps are in:
-- Deep agent/collector productization (single auto-instrumenting agent, fleet management, operator maturity)
-- Unified cross-signal query language (NexQL equivalent)
-- Advanced infra/network/cloud-finops breadth
-- Full AppSec depth (RASP/SCA/CSPM/image scanning)
-- Enterprise governance depth (ABAC, residency controls, MSP/white-label)
-- Advanced AI features (causal graph explainability, forecasting, AutoFix safety framework, LLM workload observability)
+Phases 1–8 API/UI surfaces, Postgres migration `000021_srs_parity`, ABAC/residency gateway enforcement, missing SRS APIs (`GET /collectors/fleet/{id}`, `POST .../upgrade`, `GET /security/findings/{id}`), dedicated alert policy/suppression pages, finding detail route, live incident RCA tab, Terraform `neuralops_alert_policy` + `neuralops_branding`, contract/smoke/e2e tests, and security evidence artifacts are **implemented**.
+
+Production extensions (2026-06-02):
+- K8s collector operator (`deploy/kubernetes/operator/`, `backend/cmd/collector-operator`)
+- Live cloud/SNMP collectors (`NEURALOPS_CLOUD_LIVE`, AWS/GCP/Azure/SNMP env)
+- SIEM adapters (Splunk HEC, Sentinel, QRadar) + `POST /security/findings/{id}/correlate`
+- NexQL planner steps on unified query responses
+- Multi-region router middleware (`NEURALOPS_MULTI_REGION`, `X-Region-Target`)
+- SLA automation (`POST /nfr/sla/run`, `scripts/nfr-certify.sh`)
+- Pulumi SDK stub (`providers/pulumi-neuralops/sdk/nodejs`)
+
+Hyperscale production (2026-06-02):
+- **controller-runtime** collector operator (`backend/cmd/collector-operator`, `deploy/kubernetes/operator/`, CRD `CollectorAgent`)
+- **AWS/GCP/Azure SDK** paginated inventory (`backend/internal/cloudinventory/`, env `NEURALOPS_CLOUD_MAX_PAGES`)
+- **Streaming materializer** (`backend/cmd/materializer`, topic `neuralops.observability.stream`, tables `derived_metric_samples`, `alert_score_buckets`)
+
+Remaining-items closure (2026-06-02):
+- NexQL cardinality guard, alert feedback API, multi-region status (`GET /admin/regions`)
+- NPM extended (NetFlow, SD-WAN, wireless), APM tail sampling policies
+- NFR live runs (`POST /nfr/benchmark/run`), NEXAGENT scaffold (`backend/cmd/nexagent`)
+- Frontend: Materialization dashboard, alert policy scores/feedback, NFR run buttons, governance multi-region tab, NPM sub-tabs
+- i18n (en/es/de): global locale switcher in top bar, auto-translated StitchPageShell titles/subtitles, nav + section labels, common UI strings
+- Docker Compose `materializer` service + `scripts/verify-materialization.sh` + integration tests
+- OpenAPI sync, CI e2e specs, TF mock test, Pulumi SDK expansion
+
+See `docs/HYPERSCALE.md` for runbooks.
+
+Deep-engineering closure (2026-06-03):
+- **NEXAGENT real pipeline** (`backend/pkg/nexagent/{collector,pipeline}`): always-on cross-platform host collector (CPU/mem/network/load via gopsutil) + Linux kernel TCP counters from procfs (`/proc/net/snmp`, `/proc/net/netstat`), batched to the durable disk spool with at-least-once flush. Unit-tested (`pipeline_test.go`).
+- **Production eBPF upgrade path** (`backend/pkg/nexagent/ebpf`): CO-RE program (`bpf/tcp_rtt.bpf.c`) + cilium/ebpf loader gated behind `-tags ebpf` (per-flow TCP RTT p95), with Makefile/bpf2go codegen and README. Kept out of default builds so no clang/libbpf toolchain is required for the standard agent.
+- **Multi-tenant scale control**: per-tenant daily ingest quota middleware (`internal/gateway/middleware/tenant_quota.go`, Redis-backed, enforced across replicas) with request + byte budgets, `X-Quota-*` headers, `Retry-After`, and `QUOTA001/QUOTA002` responses. Pure decision logic unit-tested (`tenant_quota_test.go`). Config: `tenant_quota.*` / `TENANT_QUOTA_*`.
+- **Live NFR certification in CI**: `scripts/nfr-certify.sh` now runs live SLA + benchmark jobs, applies availability/p95/error-rate gates, and emits a SHA-256-signed JSON report. CI runs it against the live compose stack and adds a dedicated `nfr-certification` gate job that verifies the signature and asserts `passed=true`.
+- **i18n body copy**: shared `DomainEmptyState` (9 domains, used app-wide) plus expanded `common.*` strings now localized (en/es/de) with English fallback.
+
+Honest scope note — *not* fully closed by code in this pass:
+- **Incumbent-scale maturity** (years of integrations, proven petabyte-scale multi-tenancy): this is a time/ecosystem property, not a single-pass deliverable. The tenant-quota fairness control is a concrete step toward safe multi-tenant scale, not a substitute for operational maturity.
+- **eBPF at fleet scale**: the eBPF collector compiles and attaches, but broad kernel/distro matrix validation and CO-RE `vmlinux.h` generation per target remain an operational exercise.
+- **App-wide i18n**: shared components, nav/titles, Settings hub, Incidents table, Dashboard KPIs, Platform About, and Login are localized (en/es/de); long-tail page body copy is still largely English.
+
+Deep-engineering closure (2026-06-03, pass 2):
+- **eBPF module isolated**: `backend/pkg/nexagent/ebpf/go.mod` nested module — root `go.mod` no longer requires `cilium/ebpf`.
+- **eBPF fleet validation**: `validate/matrix.go` + unit tests, `cmd/fleet-validate`, `scripts/verify-ebpf-fleet.sh`, CI job `ebpf-fleet-validation`.
+- **i18n expansion**: `tr(key, fallback)` helper; Settings hub, Incidents, Dashboard, Platform About, Login body copy in en/es/de.
 
 ---
 
@@ -34,21 +70,21 @@ Legend:
 
 | SRS Domain | Status | Notes |
 |---|---|---|
-| Data collection & instrumentation (`REQ-COLL-*`) | Partial | OTel + ingest + agents exist, but not full NEXAGENT/fleet/operator scope |
-| Metrics/monitoring/alerting (`REQ-MET-*`, `REQ-ALERT-*`) | Partial | Metrics catalog/query + PromQL + alerting exist; NexQL/unlimited cardinality and advanced routing/scoring missing |
-| Tracing & APM (`REQ-APM-*`) | Partial | Strong tracing/service map/retention/profiling/DBM baseline; code-level/prod-grade sampling and service catalog depth incomplete |
-| Logs & analytics (`REQ-LOG-*`) | Partial | Structured/semantic/AI search and parsing rules exist; live tail/tiering/pattern depth needs expansion |
-| Infrastructure & cloud (`REQ-INF-*`) | Partial | Host/K8s/cloud pages and collectors exist; serverless/asset inventory/multi-cloud topology/finops-carbon depth incomplete |
-| Network performance monitoring (`REQ-NPM-*`) | Missing/Partial | Minimal middleware/Kafka lag visibility; full NPM/flows/SNMP/SD-WAN/wireless missing |
-| RUM & synthetic (`REQ-RUM-*`, `REQ-SYN-*`) | Partial | RUM beacon/replay + synthetic monitors exist; funnel/mobile synthetic/CI-private locations incomplete |
-| Security observability (`REQ-SEC-*`) | Partial | Runtime vulnerability/attack signals exist; RASP/SCA/image/CSPM/SIEM-grade integration incomplete |
-| Business observability | Partial | Dashboards/metrics/alerts support building blocks; domain-specific business KPI frameworks mostly custom/manual |
-| AI/ML engine (`REQ-AI-*`) | Partial | AI chat/anomaly/RCA patterns exist; explainable causal AI, forecasting, AutoFix governance, LLM observability incomplete |
-| Dashboards/reporting | Partial | Dashboard CRUD strong; scheduled executive reporting and advanced exports incomplete |
-| Incident management/collab | Partial | Incident lifecycle + on-call/integrations exist; deeper war-room/collab workflow automation incomplete |
-| Integrations/ecosystem (`REQ-INT-*`) | Partial | Jira/Slack/ServiceNow, OAuth, webhook, marketplace exist; broad CI/CD/BI/SIEM/provider/CLI parity incomplete |
-| Platform admin & multi-tenancy (`REQ-ADM-*`) | Partial | RBAC, SSO, API keys, audit, usage, tenant policies exist; ABAC, residency and MSP/white-label depth missing |
-| Non-functional requirements (`REQ-NFR-*`) | Partial | Good CI/tests/compose+k8s/mTLS/auth hardening; formal SLO/SLA, multi-region active-active, i18n/WCAG proofing incomplete |
+| Data collection & instrumentation (`REQ-COLL-*`) | Partial | OTel ingest, collector fleet/operator (controller-runtime CRD), NEXAGENT real collector pipeline (gopsutil host + Linux procfs kernel counters + durable spool; eBPF RTT collector behind `-tags ebpf`), cloud SDK inventory; broad eBPF kernel-matrix validation remains operational |
+| Metrics/monitoring/alerting (`REQ-MET-*`, `REQ-ALERT-*`) | Implemented | Metrics catalog/query/PromQL, alert policies/suppressions/trigger, derived metrics, Kafka streaming materializer + fatigue scores, NexQL cardinality guard |
+| Tracing & APM (`REQ-APM-*`) | Partial | Traces/service map/retention/profiling; tail-based sampling policies API (`/apm/sampling/policies`) |
+| Logs & analytics (`REQ-LOG-*`) | Partial | Structured/semantic/AI search, parsing rules; live tail/tiering depth still custom |
+| Infrastructure & cloud (`REQ-INF-*`) | Partial | Host/K8s/cloud pages, paginated AWS/GCP/Azure inventory; serverless/finops-carbon UI present |
+| Network performance monitoring (`REQ-NPM-*`) | Partial | Flows/devices/topology + NetFlow/SD-WAN/wireless APIs and Cloud & Network UI sub-tabs |
+| RUM & synthetic (`REQ-RUM-*`, `REQ-SYN-*`) | Partial | RUM beacon/replay, synthetic monitors, funnel/mobile/private-location APIs |
+| Security observability (`REQ-SEC-*`) | Partial | Findings detail, correlate, SIEM export adapters, CSPM posture; RASP depth env-dependent |
+| Business observability | Partial | KPI packs API + Business observability page |
+| AI/ML engine (`REQ-AI-*`) | Partial | AI chat, RCA, forecast, AutoFix plan/execute; live incident RCA tab wired |
+| Dashboards/reporting | Partial | Dashboard CRUD; scheduled executive reporting incomplete |
+| Incident management/collab | Partial | Incident lifecycle, on-call, live RCA; war-room depth incomplete |
+| Integrations/ecosystem (`REQ-INT-*`) | Partial | Jira/Slack/ServiceNow, OAuth, marketplace, Terraform provider + Pulumi SDK stub |
+| Platform admin & multi-tenancy (`REQ-ADM-*`) | Partial | RBAC, SSO, ABAC/residency gateway enforcement, MSP/branding, `GET /admin/regions` multi-region status |
+| Non-functional requirements (`REQ-NFR-*`) | Partial | CI/compose/k6/mTLS, materializer in compose + verify script, `POST /nfr/sla/run`, `POST /nfr/benchmark/run`, i18n (en/es/de) via global locale switcher + auto page titles |
 
 ---
 
@@ -128,14 +164,16 @@ This section is intentionally action-oriented so you can implement systematicall
 ### Missing or partial
 - `REQ-INF-010/011`: Cloud asset inventory and multi-cloud topology depth.
 - `REQ-INF-012`: Serverless observability breadth.
-- `REQ-INF-013/014`: Cost intelligence + carbon module.
+- `REQ-INF-013/014`: Cost intelligence + carbon module — **Wave 1–3 complete** (chargeback/showback, scenarios, commitment alerts, carbon actions, Terraform provider, governance).
 - `REQ-NPM-*`: Dedicated network performance suite.
 
 ### Build next
 1. Cloud inventory ingestors (AWS/GCP/Azure asset graph).
-2. FinOps cost model + budget anomaly alerts.
+2. ~~FinOps cost model + budget anomaly alerts.~~ *(Wave 1 — see `backend/internal/finops/` + FinOps UI sub-tabs)*
 3. NPM service: flow ingestion (NetFlow/sFlow/IPFIX), SNMP collectors, topology overlays.
 4. Serverless traces/metrics/log correlation package.
+
+> FinOps deep-dive: detailed enhancement requirements (`REQ-FINOPS-001..073`) covering billing ingestion, allocation, anomaly detection, optimization, commitments, budgets/forecast, unit economics, and carbon are specified in [`docs/FINOPS_ENHANCEMENT_REQUIREMENTS.md`](FINOPS_ENHANCEMENT_REQUIREMENTS.md).
 
 ## 4.6 Security (AppSec + SecObs)
 

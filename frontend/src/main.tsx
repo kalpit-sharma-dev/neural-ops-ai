@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
+import { clearChunkReloadGuard } from './routes/lazyPage';
+import { I18nProvider } from './i18n/I18nProvider';
 import { initTheme } from './store/themeStore';
 import './styles/global.css';
 
 initTheme();
+clearChunkReloadGuard();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,7 +23,9 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <I18nProvider>
+        <App />
+      </I18nProvider>
       <Toaster
           position="top-right"
           toastOptions={{

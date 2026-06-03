@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -17,10 +19,14 @@ import (
 	"github.com/neuralops/platform/internal/gateway/dashboard"
 	_ "github.com/neuralops/platform/internal/gateway/docs"
 	gatewayhandler "github.com/neuralops/platform/internal/gateway/handler"
+	"github.com/neuralops/platform/internal/gateway/logtail"
 	gwmiddleware "github.com/neuralops/platform/internal/gateway/middleware"
 	"github.com/neuralops/platform/internal/gateway/proxy"
 	"github.com/neuralops/platform/internal/gateway/websocket"
+	"github.com/neuralops/platform/internal/kafka"
+	"github.com/neuralops/platform/internal/finops"
 	"github.com/neuralops/platform/internal/observability"
+	"github.com/neuralops/platform/internal/streaming"
 	"github.com/neuralops/platform/internal/platform/db"
 	"github.com/neuralops/platform/internal/platform/health"
 	"github.com/neuralops/platform/internal/security"
@@ -38,6 +44,7 @@ type App struct {
 	router *gin.Engine
 	wsHub  *websocket.Hub
 	pool   *pgxpool.Pool
+	finOps *finops.Service
 }
 
 // NewApp wires the API gateway.
@@ -115,7 +122,9 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 	dashboardAgg := dashboard.NewAggregator(*cfg)
 	chatSvc := chat.NewService(*cfg, llmClient)
 	wsHub := websocket.NewHub(log, cfg.CORS.AllowedOrigins)
+	logTailHub := websocket.NewLogTailHub(log, cfg.CORS.AllowedOrigins)
 	wsHub.StartHeartbeat(60 * time.Second)
+	logtail.Start(ctx, log, logTailHub)
 
 	upstreamTransport, err := proxy.BuildTransport(proxy.MTLSConfig{
 		Enabled:    cfg.Auth.MTLS.Enabled,
@@ -168,12 +177,26 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 	router.Use(gin.Recovery())
 	router.Use(gwmiddleware.CORS(cfg.CORS))
 	router.Use(gwmiddleware.RequestLogger(log))
+	router.Use(gwmiddleware.LicenseEnforcement())
 	router.Use(gwmiddleware.AuthRateLimit(cfg.AuthRateLimit, redisClient))
 	router.Use(authenticator.Middleware())
 	router.Use(gwmiddleware.Tenant(cfg.Tenant, identityStore))
 	router.Use(gwmiddleware.DeveloperScope())
 	router.Use(gwmiddleware.RateLimit(cfg.RateLimit, redisClient))
+	router.Use(gwmiddleware.TenantQuota(cfg.TenantQuota, redisClient))
 	router.Use(gwmiddleware.RBAC())
+
+	memStore := observability.NewStore()
+	srsRepo := observability.NewSRSRepo(pgPool)
+	governanceSvc := observability.NewGovernanceService(pgPool, memStore)
+	if srsRepo != nil && srsRepo.Available() {
+		if seedErr := srsRepo.SeedFromStore(ctx, cfg.Tenant.DefaultTenant, memStore); seedErr != nil {
+			log.Warn("srs postgres seed", zap.Error(seedErr))
+		}
+	}
+	router.Use(gwmiddleware.GovernanceEnforcement(governanceSvc))
+	router.Use(gwmiddleware.MultiRegionRouter())
+
 	router.Use(gwmiddleware.AuditLog(auditRepo, log))
 
 	metrics.RegisterRoutes(router, "gateway")
@@ -182,7 +205,7 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 	router.GET("/live", simpleLiveHandler("gateway"))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	h := gatewayhandler.New(log, *cfg, dashboardAgg, chatSvc, wsHub)
+	h := gatewayhandler.New(log, *cfg, dashboardAgg, chatSvc, wsHub, logTailHub)
 	h.RegisterNativeRoutes(router)
 
 	var chConn driver.Conn
@@ -199,10 +222,32 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 			spanStore = ss
 		}
 	}
+	var streamPub *streaming.Publisher
+	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
+		if prod := kafka.NewProducer(kafka.ProducerConfig{
+			Brokers: splitCommaBrokers(brokers),
+		}, log); prod != nil {
+			streamPub = streaming.NewPublisher(prod)
+		}
+	}
+	if err := finops.ValidateProductionFinOps(pgPool); err != nil {
+		return nil, err
+	}
+	finOpsSvc := finops.NewPostgresService(pgPool, &observability.FinOpsCloudAdapter{Store: memStore})
+	finOpsAlerter := &observability.FinOpsAnomalyAlerter{Mem: memStore, Stream: streamPub}
+	finOpsSvc.SetAlerter(finOpsAlerter)
+	finOpsSvc.SetBudgetAlerter(finOpsAlerter)
+	finOpsSvc.SetStaleIngestAlerter(finOpsAlerter)
+	finOpsSvc.SetLogger(log)
 	obsHandler := observability.NewHandler(observability.Deps{
-		Log: log, Mem: observability.NewStore(), Spans: spanStore, PG: observability.NewPostgresRepo(pgPool),
-		Collectors: observability.NewCollectorsRepo(pgPool),
-		Prom:       observability.NewPromQLClient(cfg.Prometheus.URL),
+		Log: log, Mem: memStore, Spans: spanStore, PG: observability.NewPostgresRepo(pgPool),
+		Collectors: observability.NewCollectorsRepo(pgPool), SRS: srsRepo, Governance: governanceSvc,
+		Cloud: observability.NewCloudCollectorService(memStore),
+		SIEM:  observability.NewSIEMService(memStore),
+		SecCorr: observability.NewSecurityCorrelationService(memStore, srsRepo),
+		Stream: streamPub,
+		FinOps: finOpsSvc,
+		Prom: observability.NewPromQLClient(cfg.Prometheus.URL),
 		CH: chConn, Pool: pgPool, Identity: identityStore,
 		SearchURL: cfg.Services.Search, SSOManager: ssoManager,
 	})
@@ -236,18 +281,31 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 		v1.Any("/analysis", analysisProxy.GinHandler())
 		v1.Any("/analysis/*path", analysisProxy.GinHandler())
 
+		// Explicit alerting proxy routes only — no /alerts/*path wildcard because
+		// observability registers /alerts/policies and /alerts/suppressions on the same group.
 		v1.Any("/alerts", alertingProxy.GinHandler())
-		v1.Any("/alerts/*path", alertingProxy.GinHandler())
+		v1.Any("/alerts/rules", alertingProxy.GinHandler())
+		v1.Any("/alerts/rules/:id", alertingProxy.GinHandler())
+		v1.Any("/alerts/silences", alertingProxy.GinHandler())
+		v1.Any("/alerts/:id", alertingProxy.GinHandler())
+		v1.Any("/alerts/:id/acknowledge", alertingProxy.GinHandler())
+		v1.Any("/alerts/:id/suppress", alertingProxy.GinHandler())
 		v1.Any("/notifications/*path", alertingProxy.GinHandler())
 		v1.Any("/escalation/*path", alertingProxy.GinHandler())
 	}
 
-	return &App{cfg: cfg, log: log, router: router, wsHub: wsHub, pool: pgPool}, nil
+	return &App{cfg: cfg, log: log, router: router, wsHub: wsHub, pool: pgPool, finOps: finOpsSvc}, nil
 }
 
 // Run starts the HTTP server until context cancellation.
 func (a *App) Run(ctx context.Context) error {
 	metrics.StartDBPoolReporter(ctx, "gateway", "postgres", a.pool)
+
+	if a.finOps != nil {
+		cadence := DefaultFinOpsIngestCadence()
+		finops.StartScheduledIngest(ctx, a.finOps, "default", cadence, a.log)
+		finops.StartFreshnessMonitor(ctx, a.finOps, "default", time.Hour, a.log)
+	}
 
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", a.cfg.Server.Port),
@@ -298,4 +356,25 @@ func openClickHouse(ctx context.Context, dsn string) (driver.Conn, error) {
 		return nil, fmt.Errorf("clickhouse migrations: %w", err)
 	}
 	return conn, nil
+}
+
+func splitCommaBrokers(raw string) []string {
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+func DefaultFinOpsIngestCadence() time.Duration {
+	if v := os.Getenv("FINOPS_INGEST_CADENCE"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil && d > 0 {
+			return d
+		}
+	}
+	return finops.DefaultIngestCadence
 }

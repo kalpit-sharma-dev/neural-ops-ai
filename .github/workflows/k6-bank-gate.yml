@@ -1,0 +1,31 @@
+name: k6 Bank Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Gateway base URL (no /api/v1 suffix)
+        required: true
+        default: http://localhost:8080
+  schedule:
+    # Weekly smoke against staging when secrets configured (optional)
+    - cron: '0 6 * * 1'
+
+jobs:
+  k6-bank-poc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bank POC k6 profile
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || 'http://localhost:8080' }}
+          K6_TENANT: default
+        run: |
+          docker run --rm --network host \
+            -v "${{ github.workspace }}/scripts/k6:/scripts" \
+            -e BASE_URL="$BASE_URL" \
+            -e K6_TENANT="$K6_TENANT" \
+            grafana/k6 run /scripts/bank-poc-load.js
+      - name: Threshold note
+        run: |
+          echo "Gate E requires p95 < 2s and http_req_failed < 0.1% — see scripts/k6/bank-poc-load.js thresholds"

@@ -1,0 +1,2 @@
+{"provider":"gcp","accountId":"acme-payments","service":"Compute Engine","region":"us-central1","resourceId":"//compute.googleapis.com/projects/acme/zones/us-central1-a/instances/pay-1","amortizedCost":312.40,"billingPeriod":"2026-06-01","tags":{"team":"payments","env":"prod"}}
+{"provider":"gcp","accountId":"acme-payments","service":"Cloud SQL","region":"us-central1","resourceId":"ledger-sql","amortizedCost":189.20,"billingPeriod":"2026-06-01","tags":{"team":"ledger"}}

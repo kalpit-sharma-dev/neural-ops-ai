@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Last updated:** 2026-05-31  
 **Audience:** Engineering, platform/SRE, product, sales, customer success, leadership  
-**Related docs:** [AUDIT_COMPLIANCE.md](./AUDIT_COMPLIANCE.md), [README.md](../README.md), [infra/helm/neuralops/values.yaml](../infra/helm/neuralops/values.yaml)
+**Related docs:** [AUDIT_COMPLIANCE.md](./AUDIT_COMPLIANCE.md), [BANK_PRODUCTION_READINESS_ROADMAP.md](./BANK_PRODUCTION_READINESS_ROADMAP.md), [README.md](../README.md), [infra/helm/neuralops/values.yaml](../infra/helm/neuralops/values.yaml)
 
 ---
 
@@ -736,4 +736,4 @@ bash scripts/verify-mtls.sh
 
 ---
 
-*This document is the canonical guideline for shipping NeuralOps to production and selling to enterprise customers. For technical audit traceability, see [AUDIT_COMPLIANCE.md](./AUDIT_COMPLIANCE.md).*
+*This document is the canonical guideline for shipping NeuralOps to production and selling to enterprise customers. For bank/regulated buyers, use [BANK_PRODUCTION_READINESS_ROADMAP.md](./BANK_PRODUCTION_READINESS_ROADMAP.md) and gate runbooks in [docs/bank/GATE_BC_CLOSEOUT_RUNBOOK.md](./bank/GATE_BC_CLOSEOUT_RUNBOOK.md) through [GATE_EF_CLOSEOUT_RUNBOOK.md](./bank/GATE_EF_CLOSEOUT_RUNBOOK.md) (`./scripts/gate-verify.sh --gate C|D|E|F`). For technical audit traceability, see [AUDIT_COMPLIANCE.md](./AUDIT_COMPLIANCE.md).*

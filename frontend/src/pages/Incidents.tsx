@@ -11,6 +11,7 @@ import { Input } from '../components/ui/Input';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
+import { useI18n } from '../i18n/I18nProvider';
 
 function severityBadge(sev: string) {
   const map: Record<string, 'p1' | 'p2' | 'p3' | 'p4'> = {
@@ -23,6 +24,7 @@ function severityBadge(sev: string) {
 }
 
 export default function Incidents() {
+  const { tr } = useI18n();
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
@@ -53,14 +55,14 @@ export default function Incidents() {
   });
 
   return (
-    <StitchPageShell title="Incidents" subtitle="Active and recent operational incidents">
+    <StitchPageShell pageId="incidents" title="Incidents" subtitle="Active and recent operational incidents">
       <div style={{ marginBottom: 16, maxWidth: 400 }}>
         <Input
           ref={searchRef}
-          placeholder="Filter incidents…"
+          placeholder={tr('incidents.filterPlaceholder', 'Filter incidents…')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          hint="Press / to focus · j/k navigate · Enter to open"
+          hint={tr('incidents.filterHint', 'Press / to focus · j/k navigate · Enter to open')}
         />
       </div>
 
@@ -76,11 +78,11 @@ export default function Incidents() {
           <table className="incident-table">
             <thead>
               <tr>
-                <th>Severity</th>
-                <th>Title</th>
-                <th>Status</th>
-                <th>Services</th>
-                <th>Started</th>
+                <th>{tr('incidents.col.severity', 'Severity')}</th>
+                <th>{tr('incidents.col.title', 'Title')}</th>
+                <th>{tr('incidents.col.status', 'Status')}</th>
+                <th>{tr('incidents.col.services', 'Services')}</th>
+                <th>{tr('incidents.col.started', 'Started')}</th>
               </tr>
             </thead>
             <tbody>

@@ -4,6 +4,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/neuralops/platform/internal/gateway/auth"
+	"github.com/neuralops/platform/internal/streaming"
+	"github.com/neuralops/platform/internal/finops"
 	"github.com/neuralops/platform/internal/tracequery"
 	"go.uber.org/zap"
 )
@@ -21,4 +23,11 @@ type Deps struct {
 	Identity    *auth.IdentityStore
 	SearchURL   string
 	SSOManager  *auth.SSOManager
+	SRS          *SRSRepo
+	Governance   *GovernanceService
+	Cloud        *CloudCollectorService
+	SIEM         *SIEMService
+	SecCorr      *SecurityCorrelationService
+	Stream       *streaming.Publisher
+	FinOps       *finops.Service
 }

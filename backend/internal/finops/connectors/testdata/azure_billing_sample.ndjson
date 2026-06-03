@@ -1,0 +1,2 @@
+{"provider":"azure","accountId":"sub-acme-prod","service":"Virtual Machines","region":"eastus","resourceId":"/subscriptions/sub-acme/resourceGroups/payments/providers/Microsoft.Compute/virtualMachines/pay-vm-1","amortizedCost":245.80,"billingPeriod":"2026-06-01","tags":{"team":"payments"}}
+{"provider":"azure","accountId":"sub-acme-prod","service":"Azure Database for PostgreSQL","region":"eastus","resourceId":"ledger-pg","amortizedCost":156.30,"billingPeriod":"2026-06-01","tags":{"team":"ledger"}}

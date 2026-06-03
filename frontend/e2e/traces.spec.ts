@@ -7,12 +7,17 @@ test.describe('Trace explorer UI', () => {
     await expect(page.getByRole('button', { name: /search/i })).toBeVisible();
   });
 
-  test('can search and open trace detail', async ({ page }) => {
+  test('can open trace inline and on full page', async ({ page }) => {
     await page.goto('/traces');
     await page.getByRole('button', { name: /search/i }).click();
-    const traceLink = page.locator('a[href*="/traces/trace-demo"]').first();
-    await expect(traceLink).toBeVisible({ timeout: 15_000 });
-    await traceLink.click();
+    const traceRow = page.locator('.trace-row').first();
+    await expect(traceRow).toBeVisible({ timeout: 15_000 });
+    await traceRow.click();
+    await expect(page.getByRole('heading', { name: /trace detail/i })).toBeVisible();
+    await expect(page.getByText(/waterfall|flame graph/i).first()).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole('link', { name: /full page/i }).first().click();
+    await expect(page).toHaveURL(/\/traces\/trace-demo/);
     await expect(page.getByText(/waterfall|flame graph/i).first()).toBeVisible({ timeout: 15_000 });
   });
 

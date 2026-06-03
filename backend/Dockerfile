@@ -18,7 +18,7 @@ COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     set -e; \
-    for svc in gateway ingestion analysis correlation incident search alerting collector profiler; do \
+    for svc in gateway ingestion analysis correlation incident search alerting collector profiler materializer; do \
       echo "==> building ${svc}"; \
       CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o "/out/${svc}" "./cmd/${svc}"; \
     done

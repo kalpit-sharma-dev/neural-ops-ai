@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nProvider';
 import './ui.css';
 
 interface ErrorStateProps {
@@ -8,24 +9,26 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
+  const { t } = useI18n();
   return (
     <div className="ui-error">
       <AlertCircle size={20} />
       <p>{message}</p>
       {onRetry && (
         <button type="button" className="ui-error__retry" onClick={onRetry}>
-          Retry
+          {t('common.retry')}
         </button>
       )}
     </div>
   );
 }
 
-export function LoadingState({ label = 'Loading…' }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
+  const { t } = useI18n();
   return (
     <div className="ui-loading" role="status">
       <span className="ui-loading__spinner" />
-      {label}
+      {label ?? t('common.loading')}
     </div>
   );
 }

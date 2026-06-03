@@ -20,9 +20,8 @@ func ExtractTenant(defaultTenant string) gin.HandlerFunc {
 // RequireTenant aborts when tenant ID is missing from context.
 func RequireTenant(defaultTenant string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tenantID, ok := tenant.FromContext(c.Request.Context())
-		if !ok {
-			tenantID = tenant.NormalizeID(c.GetHeader(tenant.HeaderName), defaultTenant)
+		if _, ok := tenant.FromContext(c.Request.Context()); !ok {
+			tenantID := tenant.NormalizeID(c.GetHeader(tenant.HeaderName), defaultTenant)
 			if tenantID == "" {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 					"status": "error", "errorCode": "TEN002", "message": "tenant id required",

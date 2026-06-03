@@ -50,6 +50,13 @@ const SecurityAttackDetail = lazyPage(() => import('./pages/SecurityAttackDetail
 const Marketplace = lazyPage(() => import('./pages/Marketplace'));
 const TraceSettings = lazyPage(() => import('./pages/TraceSettings'));
 const CloudMonitoring = lazyPage(() => import('./pages/CloudMonitoring'));
+const QueryWorkbench = lazyPage(() => import('./pages/QueryWorkbench'));
+const CollectorsFleet = lazyPage(() => import('./pages/CollectorsFleet'));
+const AIOpsCenter = lazyPage(() => import('./pages/AIOpsCenter'));
+const CloudFinOpsNetwork = lazyPage(() => import('./pages/CloudFinOpsNetwork'));
+const BusinessObservability = lazyPage(() => import('./pages/BusinessObservability'));
+const EnterpriseGovernance = lazyPage(() => import('./pages/EnterpriseGovernance'));
+const NFRCertification = lazyPage(() => import('./pages/NFRCertification'));
 const WorkflowEditor = lazyPage(() => import('./pages/WorkflowEditor'));
 const Integrations = lazyPage(() => import('./pages/Integrations'));
 const TraceCompare = lazyPage(() => import('./pages/TraceCompare'));
@@ -162,6 +169,29 @@ const securityAttackRoute = createRoute({
 });
 const marketplaceRoute = createRoute({ getParentRoute: () => authedRoute, path: '/marketplace', component: Marketplace });
 const cloudRoute = createRoute({ getParentRoute: () => authedRoute, path: '/cloud', component: CloudMonitoring });
+const cloudFinOpsRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/cloud-finops-network',
+  component: CloudFinOpsNetwork,
+});
+const businessObservabilityRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/business-observability',
+  component: BusinessObservability,
+});
+const enterpriseGovernanceRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/enterprise-governance',
+  component: EnterpriseGovernance,
+});
+const nfrCertificationRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/nfr-certification',
+  component: NFRCertification,
+});
+const queryWorkbenchRoute = createRoute({ getParentRoute: () => authedRoute, path: '/query-workbench', component: QueryWorkbench });
+const collectorsFleetRoute = createRoute({ getParentRoute: () => authedRoute, path: '/collectors/fleet', component: CollectorsFleet });
+const aiOpsCenterRoute = createRoute({ getParentRoute: () => authedRoute, path: '/ai-ops', component: AIOpsCenter });
 const workflowEditorRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/workflows/editor',
@@ -172,6 +202,11 @@ const workflowEditorRoute = createRoute({
 });
 const integrationsRoute = createRoute({ getParentRoute: () => authedRoute, path: '/integrations', component: Integrations });
 const settingsRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings', component: Settings });
+const platformAboutRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/settings/platform',
+  component: lazyPage(() => import('./pages/PlatformAbout')),
+});
 const settingsUsersRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/users', component: SettingsUsers });
 const settingsApiKeysRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/api-keys', component: SettingsApiKeys });
 const settingsAuditRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/audit', component: SettingsAudit });
@@ -179,6 +214,26 @@ const settingsUsageRoute = createRoute({ getParentRoute: () => authedRoute, path
 const settingsSSORoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/sso', component: SettingsSSO });
 const settingsPoliciesRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/policies', component: SettingsPolicies });
 const settingsOncallRoute = createRoute({ getParentRoute: () => authedRoute, path: '/settings/oncall', component: SettingsOncall });
+const alertPoliciesRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/settings/alert-policies',
+  component: lazyPage(() => import('./pages/AlertPolicies')),
+});
+const alertSuppressionsRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/settings/alert-suppressions',
+  component: lazyPage(() => import('./pages/AlertSuppressions')),
+});
+const materializationRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/observability/materialization',
+  component: lazyPage(() => import('./pages/MaterializationDashboard')),
+});
+const securityFindingRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/security/findings/$id',
+  component: lazyPage(() => import('./pages/SecurityFindingDetail')),
+});
 const designSystemRoute = createRoute({ getParentRoute: () => authedRoute, path: '/design-system', component: DesignSystem });
 const healthRoute = createRoute({ getParentRoute: () => authedRoute, path: '/health', component: HealthPage });
 
@@ -218,10 +273,19 @@ const routeTree = rootRoute.addChildren([
     notebooksRoute,
     securityRoute,
     securityAttackRoute,
+    securityFindingRoute,
     marketplaceRoute,
     cloudRoute,
+    cloudFinOpsRoute,
+    businessObservabilityRoute,
+    enterpriseGovernanceRoute,
+    nfrCertificationRoute,
+    queryWorkbenchRoute,
+    collectorsFleetRoute,
+    aiOpsCenterRoute,
     integrationsRoute,
     settingsRoute,
+    platformAboutRoute,
     settingsUsersRoute,
     settingsApiKeysRoute,
     settingsAuditRoute,
@@ -229,6 +293,9 @@ const routeTree = rootRoute.addChildren([
     settingsSSORoute,
     settingsPoliciesRoute,
     settingsOncallRoute,
+    alertPoliciesRoute,
+    alertSuppressionsRoute,
+    materializationRoute,
     designSystemRoute,
     healthRoute,
   ]),

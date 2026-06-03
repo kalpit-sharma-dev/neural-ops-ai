@@ -3,10 +3,15 @@ import { useRouterState } from '@tanstack/react-router';
 import { ExternalLink } from 'lucide-react';
 import { PageHeader } from '../ui/PageStates';
 import { getStitchMeta, stitchPreviewUrl } from '../../lib/stitchPageMeta';
+import { useI18n } from '../../i18n/I18nProvider';
+import { pageSubtitle, pageTitle } from '../../i18n/messages';
+import { resolvePageId } from '../../i18n/routeKeys';
 
 interface StitchPageShellProps {
   title: string;
   subtitle?: string;
+  /** Override auto-detected page id for i18n title/subtitle. */
+  pageId?: string;
   /** Header right-aligned actions. */
   actions?: ReactNode;
   /** Optional breadcrumb rendered above the header. */
@@ -27,12 +32,17 @@ interface StitchPageShellProps {
 export function StitchPageShell({
   title,
   subtitle,
+  pageId,
   actions,
   breadcrumb,
   filters,
   children,
 }: StitchPageShellProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { locale } = useI18n();
+  const pid = pageId ?? resolvePageId(pathname);
+  const displayTitle = pid ? pageTitle(locale, pid, title) : title;
+  const displaySubtitle = pid ? pageSubtitle(locale, pid, subtitle) ?? subtitle : subtitle;
   const meta = getStitchMeta(pathname);
   const showDesignRef = import.meta.env.DEV && meta?.screenId;
 
@@ -57,7 +67,7 @@ export function StitchPageShell({
   return (
     <div className="stitch-page">
       {breadcrumb}
-      <PageHeader title={title} subtitle={subtitle} actions={headerActions} />
+      <PageHeader title={displayTitle} subtitle={displaySubtitle} actions={headerActions} />
       {filters && <div className="stitch-page__filters">{filters}</div>}
       {children}
     </div>

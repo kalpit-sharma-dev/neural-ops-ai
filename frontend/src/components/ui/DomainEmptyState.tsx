@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Activity, Bell, Flame, GitBranch, Globe, Server, Shield, Terminal } from 'lucide-react';
 import { EmptyState } from './EmptyState';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export type EmptyDomain =
   | 'logs'
@@ -72,13 +73,24 @@ interface DomainEmptyStateProps {
 }
 
 export function DomainEmptyState({ domain, onAction, actionLabel }: DomainEmptyStateProps) {
+  const { t } = useI18n();
   const preset = PRESETS[domain];
+  // t() falls back to the key when a translation is missing, so we keep the
+  // English preset copy as the resilient default for every locale.
+  const tr = (key: string, fallback: string) => {
+    const value = t(key);
+    return value === key ? fallback : value;
+  };
+  const presetActionKey = domain === 'logs' ? 'empty.logs.action' : undefined;
+  const presetActionLabel = presetActionKey
+    ? tr(presetActionKey, preset.actionLabel ?? '')
+    : preset.actionLabel;
   return (
     <EmptyState
-      title={preset.title}
-      description={preset.description}
+      title={tr(`empty.${domain}.title`, preset.title)}
+      description={tr(`empty.${domain}.desc`, preset.description)}
       icon={preset.icon}
-      actionLabel={actionLabel ?? preset.actionLabel}
+      actionLabel={actionLabel ?? presetActionLabel}
       onAction={onAction}
     />
   );

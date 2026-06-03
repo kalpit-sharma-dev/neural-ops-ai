@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { fetchServiceOperations, searchTraces } from '../api/observability';
+import { ExternalLink } from 'lucide-react';
+import { fetchServiceOperations, searchTraces, type TraceSummary } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
+import { TraceDetailPanel } from '../components/traces/TraceDetailPanel';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
@@ -14,9 +17,17 @@ import { chartCartesianDefaults } from '../lib/chartTheme';
 import { getChartColors } from '../lib/chartColors';
 import { useTimeBounds } from '../hooks/useTimeBounds';
 
+function selectTraceRow(e: KeyboardEvent, trace: TraceSummary, onSelect: (t: TraceSummary) => void) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    onSelect(trace);
+  }
+}
+
 export default function TraceExplorer() {
   const [service, setService] = useState('');
   const [status, setStatus] = useState('');
+  const [selected, setSelected] = useState<TraceSummary | null>(null);
   const { key: rangeKey, resolve: resolveRange } = useTimeBounds();
 
   const opsQuery = useQuery({
@@ -110,16 +121,52 @@ export default function TraceExplorer() {
       )}
 
       {data && data.length > 0 && (
-        <div className="ui-card">
-          <p className="muted">{data.length} traces</p>
-          {data.map((t) => (
-            <Link key={t.traceId} to="/traces/$traceId" params={{ traceId: t.traceId }} className="log-row">
-              <Badge variant={t.status === 'ERROR' ? 'critical' : 'healthy'}>{t.status}</Badge>
-              <span>{t.service}</span>
-              <span className="log-row__message">{t.operation}</span>
-              <span className="muted">{t.durationMs}ms · {t.spanCount} spans</span>
-            </Link>
-          ))}
+        <div className={`trace-explorer ${selected ? 'trace-explorer--detail' : ''}`}>
+          <div className="ui-card trace-explorer__list">
+            <p className="muted">{data.length} traces · click a row for inline detail</p>
+            {data.map((t) => (
+              <div
+                key={t.traceId}
+                role="button"
+                tabIndex={0}
+                className={`trace-row ${selected?.traceId === t.traceId ? 'trace-row--selected' : ''}`}
+                onClick={() => setSelected(t)}
+                onKeyDown={(e) => selectTraceRow(e, t, setSelected)}
+              >
+                <Badge variant={t.status === 'ERROR' ? 'critical' : 'healthy'} className="trace-row__status">
+                  {t.status}
+                </Badge>
+                <span className="trace-row__service">{t.service}</span>
+                <span className="trace-row__operation">{t.operation}</span>
+                <span className="trace-row__meta muted">
+                  {t.durationMs}ms · {t.spanCount} spans
+                </span>
+                <Link
+                  to="/traces/$traceId"
+                  params={{ traceId: t.traceId }}
+                  className="trace-row__open"
+                  title="Open full trace page"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink size={14} aria-hidden />
+                  Open
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <AnimatePresence>
+            {selected && (
+              <motion.div
+                className="trace-detail-panel-wrap"
+                initial={{ x: 40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 40, opacity: 0 }}
+              >
+                <TraceDetailPanel trace={selected} onClose={() => setSelected(null)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </StitchPageShell>
