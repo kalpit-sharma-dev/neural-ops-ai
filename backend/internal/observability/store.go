@@ -15,31 +15,31 @@ import (
 type Store struct {
 	mu sync.RWMutex
 
-	traces             map[string]TraceDetail
-	dashboards         map[string]Dashboard
-	logMetrics         map[string]LogMetricRule
-	logParsing         map[string]LogParsingRule
-	slos               map[string]SLO
-	workflows          map[string]Workflow
-	notebooks          map[string]Notebook
-	synthetic          map[string]SyntheticMonitor
-	syntheticRuns      map[string][]SyntheticRun
-	zones              map[string]ManagementZone
-	alertPolicies      map[string]AlertPolicy
-	suppressions       map[string]AlertSuppression
-	collectorFleet     map[string]CollectorFleetAgent
-	collectorPipelines map[string]CollectorPipeline
-	rcaByIncident      map[string]RCAResponse
-	explanations       map[string]RCAResponse
-	autofixPlans       map[string]AutoFixPlan
-	autofixActions     map[string]AutoFixActionRecord
-	cloudAssets        []CloudAsset
-	cloudAssetTopology CloudAssetTopology
-	finopsAnomalies    []FinOpsCostAnomaly
-	finopsCarbon       FinOpsCarbonFootprint
-	networkFlows       []NetworkFlow
-	networkDevices     []NetworkDevice
-	networkTopology    NetworkTopologyGraph
+	traces                    map[string]TraceDetail
+	dashboards                map[string]Dashboard
+	logMetrics                map[string]LogMetricRule
+	logParsing                map[string]LogParsingRule
+	slos                      map[string]SLO
+	workflows                 map[string]Workflow
+	notebooks                 map[string]Notebook
+	synthetic                 map[string]SyntheticMonitor
+	syntheticRuns             map[string][]SyntheticRun
+	zones                     map[string]ManagementZone
+	alertPolicies             map[string]AlertPolicy
+	suppressions              map[string]AlertSuppression
+	collectorFleet            map[string]CollectorFleetAgent
+	collectorPipelines        map[string]CollectorPipeline
+	rcaByIncident             map[string]RCAResponse
+	explanations              map[string]RCAResponse
+	autofixPlans              map[string]AutoFixPlan
+	autofixActions            map[string]AutoFixActionRecord
+	cloudAssets               []CloudAsset
+	cloudAssetTopology        CloudAssetTopology
+	finopsAnomalies           []FinOpsCostAnomaly
+	finopsCarbon              FinOpsCarbonFootprint
+	networkFlows              []NetworkFlow
+	networkDevices            []NetworkDevice
+	networkTopology           NetworkTopologyGraph
 	networkAnomalies          []NetworkAnomaly
 	rumFunnels                map[string]RUMFunnel
 	syntheticBrowserTests     map[string]SyntheticBrowserTest
@@ -82,23 +82,23 @@ type Store struct {
 // NewStore creates a store seeded with demo observability data.
 func NewStore() *Store {
 	s := &Store{
-		traces:             make(map[string]TraceDetail),
-		dashboards:         make(map[string]Dashboard),
-		logMetrics:         make(map[string]LogMetricRule),
-		logParsing:         make(map[string]LogParsingRule),
-		slos:               make(map[string]SLO),
-		workflows:          make(map[string]Workflow),
-		notebooks:          make(map[string]Notebook),
-		synthetic:          make(map[string]SyntheticMonitor),
-		syntheticRuns:      make(map[string][]SyntheticRun),
-		zones:              make(map[string]ManagementZone),
-		alertPolicies:      make(map[string]AlertPolicy),
-		suppressions:       make(map[string]AlertSuppression),
-		collectorFleet:     make(map[string]CollectorFleetAgent),
-		collectorPipelines: make(map[string]CollectorPipeline),
-		rcaByIncident:      make(map[string]RCAResponse),
-		explanations:       make(map[string]RCAResponse),
-		autofixPlans:       make(map[string]AutoFixPlan),
+		traces:                    make(map[string]TraceDetail),
+		dashboards:                make(map[string]Dashboard),
+		logMetrics:                make(map[string]LogMetricRule),
+		logParsing:                make(map[string]LogParsingRule),
+		slos:                      make(map[string]SLO),
+		workflows:                 make(map[string]Workflow),
+		notebooks:                 make(map[string]Notebook),
+		synthetic:                 make(map[string]SyntheticMonitor),
+		syntheticRuns:             make(map[string][]SyntheticRun),
+		zones:                     make(map[string]ManagementZone),
+		alertPolicies:             make(map[string]AlertPolicy),
+		suppressions:              make(map[string]AlertSuppression),
+		collectorFleet:            make(map[string]CollectorFleetAgent),
+		collectorPipelines:        make(map[string]CollectorPipeline),
+		rcaByIncident:             make(map[string]RCAResponse),
+		explanations:              make(map[string]RCAResponse),
+		autofixPlans:              make(map[string]AutoFixPlan),
 		autofixActions:            make(map[string]AutoFixActionRecord),
 		rumFunnels:                make(map[string]RUMFunnel),
 		syntheticBrowserTests:     make(map[string]SyntheticBrowserTest),
@@ -106,8 +106,8 @@ func NewStore() *Store {
 		syntheticPrivateLocations: make(map[string]SyntheticPrivateLocation),
 		businessKPIPacks:          make(map[string]BusinessKPIPack),
 		exportJobs:                make(map[string]ExportJob),
-		derivedMetrics:           make(map[string]DerivedMetric),
-		securityFindingIncidents: make(map[string]string),
+		derivedMetrics:            make(map[string]DerivedMetric),
+		securityFindingIncidents:  make(map[string]string),
 		adminUsers: []AdminUser{
 			{ID: "u1", Email: "demo@neuralops.ai", Role: "ADMIN", Active: true, TenantID: "default"},
 			{ID: "u2", Email: "sre@neuralops.ai", Role: "SRE", Active: true, TenantID: "default"},
@@ -922,10 +922,10 @@ func (s *Store) ListIntegrations() []Integration {
 }
 
 // ConnectIntegration marks an integration as connected (in-memory demo).
-func (s *Store) ConnectIntegration(id string) (Integration, bool) {
+func (s *Store) ConnectIntegration(key string) (Integration, bool) {
 	integrations := s.ListIntegrations()
 	for _, i := range integrations {
-		if i.ID == id {
+		if i.ID == key || i.IntegrationKey == key || i.Type == key {
 			i.Connected = true
 			i.Status = "connected"
 			return i, true

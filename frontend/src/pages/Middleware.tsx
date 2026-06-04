@@ -5,12 +5,17 @@ import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 export default function Middleware() {
   const { data, isLoading, error, refetch, isFetched } = useQuery({ queryKey: ['kafka-lag'], queryFn: fetchKafkaLag });
 
   return (
-    <StitchPageShell title="Middleware" subtitle="Kafka consumer lag and queue depth">
+    <StitchPageShell
+      title="Middleware"
+      subtitle="Kafka consumer lag and queue depth"
+      actions={<DataExportMenu getData={() => data ?? []} filenamePrefix="kafka-lag" disabled={!data?.length} />}
+    >
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
       {!error && isFetched && (data?.length ?? 0) === 0 && (

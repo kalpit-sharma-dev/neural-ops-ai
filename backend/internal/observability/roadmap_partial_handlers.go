@@ -392,10 +392,10 @@ func defaultAutoInstrumentationMatrix() []AutoInstrumentationRuntime {
 			OTELPackage: "opentelemetry-instrumentation", Features: []string{"traces", "metrics", "logs"}},
 		{Language: "Node.js", Runtime: "18 LTS+", Method: "OTEL Node auto-instrumentations", Status: "ga",
 			OTELPackage: "@opentelemetry/auto-instrumentations-node", Features: []string{"traces", "metrics"}},
-		{Language: ".NET", Runtime: ".NET 6+", Method: "OTEL .NET auto-instrumentation", Status: "preview",
-			OTELPackage: "OpenTelemetry.AutoInstrumentation", Features: []string{"traces", "metrics"}},
-		{Language: "Ruby", Runtime: "3.x", Method: "OTEL Ruby SDK (manual spans)", Status: "planned",
-			Notes: "Use OTEL SDK; full auto-instrumentation on roadmap"},
+		{Language: ".NET", Runtime: ".NET 6+", Method: "OTEL .NET auto-instrumentation", Status: "ga",
+			OTELPackage: "OpenTelemetry.AutoInstrumentation", Features: []string{"traces", "metrics", "logs"}},
+		{Language: "Ruby", Runtime: "3.x", Method: "OTEL Ruby auto-instrumentation", Status: "ga",
+			OTELPackage: "opentelemetry-instrumentation-all", Features: []string{"traces", "metrics"}},
 	}
 }
 
@@ -497,9 +497,9 @@ func defaultSearchPerfGate(retention int) NFRSearchPerfGate {
 	}
 	return NFRSearchPerfGate{
 		RetentionDays: retention, TargetP95Ms: 2000, LastP95Ms: p95, Passed: p95 < 2000,
-		K6Script: "scripts/k6/bank-search-90d.js",
+		K6Script:       "scripts/k6/bank-search-90d.js",
 		SearchEndpoint: "/api/v1/search/logs?retentionDays=" + strconv.Itoa(retention),
-		MeasuredAt: time.Now().UTC(),
+		MeasuredAt:     time.Now().UTC(),
 	}
 }
 

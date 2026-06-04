@@ -24,6 +24,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/grafana/pyroscope-go v1.3.1
 	github.com/jackc/pgx/v5 v5.9.2
+	github.com/neuralops/platform/pkg/nexagent/ebpf v0.0.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redis/go-redis/v9 v9.20.0
 	github.com/segmentio/kafka-go v0.4.51
@@ -219,3 +220,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/neuralops/platform/pkg/nexagent/ebpf => ./pkg/nexagent/ebpf

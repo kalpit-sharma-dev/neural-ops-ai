@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 
 const RECENT_KEY = 'neuralops-recent-txn';
@@ -58,7 +59,17 @@ export default function TransactionJourney() {
   };
 
   return (
-    <StitchPageShell title="Transaction Journey" subtitle="Trace every hop of a financial transaction">
+    <StitchPageShell
+      title="Transaction Journey"
+      subtitle="Trace every hop of a financial transaction"
+      actions={
+        <DataExportMenu
+          getData={() => (data ? [data] : [])}
+          filenamePrefix={`transaction-${searchId || 'export'}`}
+          disabled={!data}
+        />
+      }
+    >
       <Card className="ui-card" hover={false}>
         <div style={{ display: 'flex', gap: 12, maxWidth: 640, margin: '0 auto' }}>
           <input

@@ -26,3 +26,23 @@ func TestAlertRoutesNoWildcardConflict(t *testing.T) {
 	v1.Any("/alerts/:id/acknowledge", proxy)
 	v1.Any("/alerts/:id/suppress", proxy)
 }
+
+// Regression: observability incident extensions must not panic against incident proxy routes.
+func TestIncidentRoutesNoWildcardConflict(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	v1 := r.Group("/api/v1")
+
+	h := observability.NewHandler(observability.Deps{Mem: observability.NewStore()})
+	h.RegisterRoutes(v1)
+
+	proxy := func(c *gin.Context) { c.Status(http.StatusOK) }
+	v1.Any("/incidents", proxy)
+	v1.Any("/incidents/:id", proxy)
+	v1.Any("/incidents/:id/acknowledge", proxy)
+	v1.Any("/incidents/:id/resolve", proxy)
+	v1.Any("/incidents/:id/recommendations", proxy)
+	v1.Any("/incidents/:id/timeline", proxy)
+	v1.Any("/services/dependency-map", proxy)
+	v1.Any("/transactions/:txnId", proxy)
+}

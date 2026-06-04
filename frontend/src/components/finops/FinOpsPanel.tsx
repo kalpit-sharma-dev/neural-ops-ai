@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { downloadFromUrl, exportJson } from '../../utils/dataExport';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createFinOpsBudget,
@@ -943,6 +945,7 @@ export function FinOpsPanel({ costScope, provider, onScopeChange }: FinOpsPanelP
                   <th>Format</th>
                   <th>Scope</th>
                   <th>Generated</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -952,6 +955,25 @@ export function FinOpsPanel({ costScope, provider, onScopeChange }: FinOpsPanelP
                     <td>{r.format}</td>
                     <td>{r.scope}</td>
                     <td>{new Date(r.generatedAt).toLocaleString()}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="ui-button ui-button--ghost ui-button--sm"
+                        onClick={() => {
+                          if (r.url.startsWith('http')) {
+                            void downloadFromUrl(r.url, `${r.name}.${r.format}`).then(
+                              () => toast.success(`Downloaded ${r.name}`),
+                              () => toast.error('Download failed'),
+                            );
+                          } else {
+                            exportJson(r, `finops-report-${r.id}`);
+                            toast.success(`Downloaded ${r.name}`);
+                          }
+                        }}
+                      >
+                        Download
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -66,6 +66,20 @@ export async function fetchTrace(traceId: string) {
   return getData<TraceDetail>(`/apm/traces/${encodeURIComponent(traceId)}`);
 }
 
+export interface APMCodeError {
+  service: string;
+  file: string;
+  line: number;
+  message: string;
+  count: number;
+  release?: string;
+  commitSha?: string;
+}
+
+export async function fetchAPMCodeErrors(service?: string) {
+  return getData<APMCodeError[]>('/apm/code-errors', service ? { service } : undefined);
+}
+
 export async function searchTraces(body: Record<string, unknown>) {
   return postData<TraceSummary[]>('/apm/traces/search', body);
 }

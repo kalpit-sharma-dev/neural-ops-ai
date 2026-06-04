@@ -15,36 +15,45 @@ export function useLogTail(enabled: boolean, filters: { services: string[]; seve
   const [lines, setLines] = useState<LogHit[]>([]);
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
+  const retryRef = useRef(0);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clear = useCallback(() => setLines([]), []);
 
   useEffect(() => {
     if (!enabled) {
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       socketRef.current?.close();
       socketRef.current = null;
       setConnected(false);
+      retryRef.current = 0;
       return;
     }
 
-    const url = new URL(wsBase());
-    if (token) {
-      url.searchParams.set('token', token);
-    }
-    const socket = new WebSocket(url.toString());
-    socketRef.current = socket;
+    let cancelled = false;
 
-    socket.onopen = () => {
-      setConnected(true);
-      socket.send(
-        JSON.stringify({
-          services: filters.services,
-          severities: filters.severities,
-          query: filters.query,
-        }),
-      );
-    };
+    const connect = () => {
+      if (cancelled) return;
+      const url = new URL(wsBase());
+      if (token) {
+        url.searchParams.set('token', token);
+      }
+      const socket = new WebSocket(url.toString());
+      socketRef.current = socket;
 
-    socket.onmessage = (ev) => {
+      socket.onopen = () => {
+        retryRef.current = 0;
+        setConnected(true);
+        socket.send(
+          JSON.stringify({
+            services: filters.services,
+            severities: filters.severities,
+            query: filters.query,
+          }),
+        );
+      };
+
+      socket.onmessage = (ev) => {
       try {
         const row = JSON.parse(ev.data as string) as {
           timestamp: string;
@@ -72,11 +81,23 @@ export function useLogTail(enabled: boolean, filters: { services: string[]; seve
       }
     };
 
-    socket.onclose = () => setConnected(false);
-    socket.onerror = () => socket.close();
+      socket.onclose = () => {
+        setConnected(false);
+        if (cancelled) return;
+        const attempt = retryRef.current + 1;
+        retryRef.current = attempt;
+        const delay = Math.min(30_000, 500 * 2 ** attempt);
+        reconnectTimer.current = setTimeout(connect, delay);
+      };
+      socket.onerror = () => socket.close();
+    };
+
+    connect();
 
     return () => {
-      socket.close();
+      cancelled = true;
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      socketRef.current?.close();
       socketRef.current = null;
       setConnected(false);
     };

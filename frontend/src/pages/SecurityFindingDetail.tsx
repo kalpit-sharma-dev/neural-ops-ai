@@ -37,11 +37,6 @@ export default function SecurityFindingDetail() {
     <StitchPageShell
       title={f.title}
       subtitle={`${f.category} · ${f.service ?? f.asset ?? 'unknown asset'}`}
-      breadcrumb={
-        <p className="muted">
-          <Link to="/security">Security</Link> › {f.id}
-        </p>
-      }
     >
       <Card title="Finding">
         <div className="list-row">

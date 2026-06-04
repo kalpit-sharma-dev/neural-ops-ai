@@ -15,6 +15,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { useI18n } from '../i18n/I18nProvider';
 
 const ALL = 'all';
 
@@ -32,6 +33,7 @@ function categoryLabel(category: string): string {
 }
 
 export default function Marketplace() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const { data: extensions, isLoading } = useQuery({
     queryKey: ['marketplace'],
@@ -185,7 +187,7 @@ export default function Marketplace() {
                   data-testid={`marketplace-install-${ext.key}`}
                   onClick={() => openInstall(ext)}
                 >
-                  Install
+                  {t('page.marketplace.install')}
                 </Button>
               )}
             </div>
@@ -236,7 +238,7 @@ export default function Marketplace() {
               ))}
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button variant="primary" disabled={installMut.isPending} onClick={submit}>
-                  {active.installed ? 'Save changes' : 'Install'}
+                  {active.installed ? 'Save changes' : t('page.marketplace.install')}
                 </Button>
                 <Button variant="secondary" onClick={closeModal}>
                   Cancel

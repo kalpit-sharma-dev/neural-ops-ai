@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchUsage } from '../api/observability';
 import { MetricCard } from '../components/ui/MetricCard';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb, KpiRow } from '../components/stitch';
+import { StitchPageShell, KpiRow } from '../components/stitch';
 
 export default function SettingsUsage() {
   const { data, isLoading } = useQuery({ queryKey: ['admin-usage'], queryFn: fetchUsage });
@@ -11,7 +11,6 @@ export default function SettingsUsage() {
     <StitchPageShell
       title="Usage"
       subtitle="Tenant consumption metrics"
-      breadcrumb={<SettingsBreadcrumb page="Usage" />}
     >
       {isLoading && <LoadingState />}
       {data && (

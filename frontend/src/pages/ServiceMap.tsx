@@ -29,7 +29,9 @@ import { ServiceDetailPanel } from '../components/servicemap/ServiceDetailPanel'
 import { serviceMapNodeTypes, type ServiceNodeData } from '../components/servicemap/ServiceMapNode';
 import { Button } from '../components/ui/Button';
 import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
+import { LOG_SIDEBAR_TIME_PRESETS, presetShortLabel } from '../lib/timeRangePresets';
 import { useFilterStore } from '../store/filterStore';
+import { exportJson } from '../utils/dataExport';
 import { exportElementAsPng } from '../utils/exportPng';
 
 function ServiceMapCanvas() {
@@ -173,6 +175,20 @@ function ServiceMapCanvas() {
               <Button variant="ghost" size="sm" onClick={() => void exportPng()}>
                 <Download size={14} /> PNG
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!mapData}
+                onClick={() => {
+                  exportJson(
+                    { nodes: graph.nodes.map((n) => n.data), edges: graph.edges, dependencyMap: mapData },
+                    'service-map',
+                  );
+                  toast.success('Topology exported as JSON');
+                }}
+              >
+                <Download size={14} /> JSON
+              </Button>
               <div className="service-map-layout-toggle">
                 {(['layered', 'force', 'circular'] as LayoutMode[]).map((mode) => (
                   <button
@@ -196,14 +212,14 @@ function ServiceMapCanvas() {
 
             <div className="service-map-controls service-map-controls--right">
               <div className="pill-group">
-                {(['1h', '6h', '24h'] as const).map((tr) => (
+                {LOG_SIDEBAR_TIME_PRESETS.map((tr) => (
                   <button
                     key={tr}
                     type="button"
                     className={`pill ${timeRange === tr ? 'pill--active' : ''}`}
                     onClick={() => setTimeRange(tr)}
                   >
-                    {tr}
+                    {presetShortLabel(tr)}
                   </button>
                 ))}
               </div>

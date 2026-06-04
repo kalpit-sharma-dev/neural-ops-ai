@@ -7,7 +7,7 @@ import {
   fetchAlertSuppressions,
 } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -38,7 +38,6 @@ export default function AlertSuppressions() {
     <StitchPageShell
       title="Alert suppressions"
       subtitle="Maintenance windows and noise reduction rules"
-      breadcrumb={<SettingsBreadcrumb page="Suppressions" />}
     >
       <Card title="New suppression">
         <form

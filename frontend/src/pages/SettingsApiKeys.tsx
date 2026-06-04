@@ -8,7 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 
 export default function SettingsApiKeys() {
   const queryClient = useQueryClient();
@@ -31,11 +31,21 @@ export default function SettingsApiKeys() {
     <StitchPageShell
       title="API Keys"
       subtitle="Programmatic access tokens"
-      breadcrumb={<SettingsBreadcrumb page="API Keys" />}
       actions={
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Input placeholder="Key name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Key name" />
-          <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }} data-testid="settings-api-keys-toolbar">
+          <Input
+            placeholder="Key name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="Key name"
+            data-testid="settings-api-key-name"
+          />
+          <Button
+            variant="primary"
+            disabled={!name}
+            onClick={() => createMut.mutate()}
+            data-testid="settings-api-key-create"
+          >
             Create key
           </Button>
         </div>

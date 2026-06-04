@@ -40,7 +40,7 @@ Remaining-items closure (2026-06-02):
 - Docker Compose `materializer` service + `scripts/verify-materialization.sh` + integration tests
 - OpenAPI sync, CI e2e specs, TF mock test, Pulumi SDK expansion
 
-See `docs/HYPERSCALE.md` for runbooks.
+See [GAP_IMPLEMENTATION_PLAN.md](./GAP_IMPLEMENTATION_PLAN.md) for the ordered engineering backlog (partial/missing → implementation one-by-one).
 
 Deep-engineering closure (2026-06-03):
 - **NEXAGENT real pipeline** (`backend/pkg/nexagent/{collector,pipeline}`): always-on cross-platform host collector (CPU/mem/network/load via gopsutil) + Linux kernel TCP counters from procfs (`/proc/net/snmp`, `/proc/net/netstat`), batched to the durable disk spool with at-least-once flush. Unit-tested (`pipeline_test.go`).

@@ -89,5 +89,12 @@ test.describe('NeuralOps smoke tests', () => {
       await expect(page.getByTestId('usage-ai-tokens')).toBeVisible();
       await expect(page.getByTestId('usage-active-users')).toBeVisible();
     });
+
+    test('settings api keys create flow exposes stable hooks', async ({ page }) => {
+      await page.goto('/settings/api-keys', { waitUntil: 'networkidle' });
+      await expect(page.getByTestId('settings-api-keys-toolbar')).toBeVisible();
+      await expect(page.getByTestId('settings-api-key-name')).toBeVisible();
+      await expect(page.getByTestId('settings-api-key-create')).toBeVisible();
+    });
   });
 });

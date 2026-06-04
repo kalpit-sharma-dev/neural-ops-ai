@@ -8,9 +8,12 @@ import { Card } from '../components/ui/Card';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
+import { useI18n } from '../i18n/I18nProvider';
 
 export default function Security() {
+  const { t } = useI18n();
   const vulnQuery = useQuery({ queryKey: ['security-vulns'], queryFn: fetchVulnerabilities });
   const attackQuery = useQuery({ queryKey: ['security-attacks'], queryFn: fetchAttacks });
   const findingsQuery = useQuery({ queryKey: ['security-findings'], queryFn: fetchSecurityFindings });
@@ -22,7 +25,23 @@ export default function Security() {
   const error = vulnQuery.error ?? attackQuery.error ?? findingsQuery.error ?? postureQuery.error;
 
   return (
-    <StitchPageShell title="Application Security" subtitle="Runtime vulnerabilities and attack detection">
+    <StitchPageShell
+      title="Application Security"
+      subtitle="Runtime vulnerabilities and attack detection"
+      actions={
+        <DataExportMenu
+          getData={() => [
+            ...(vulnQuery.data ?? []).map((v) => ({ recordType: 'vulnerability', ...v })),
+            ...(attackQuery.data ?? []).map((a) => ({ recordType: 'attack', ...a })),
+            ...(findingsQuery.data ?? []).map((f) => ({ recordType: 'finding', ...f })),
+          ]}
+          filenamePrefix="security"
+          disabled={
+            !vulnQuery.data?.length && !attackQuery.data?.length && !findingsQuery.data?.length
+          }
+        />
+      }
+    >
       {(vulnQuery.isLoading || attackQuery.isLoading) && <LoadingState />}
       {error && (
         <ErrorState
@@ -68,7 +87,7 @@ export default function Security() {
         <div className="dashboard-row-2">
           <Card
             title="Findings"
-            action={<Button size="sm" variant="secondary" onClick={() => siemExportMut.mutate()} disabled={siemExportMut.isPending}>Export to SIEM</Button>}
+            action={<Button size="sm" variant="secondary" onClick={() => siemExportMut.mutate()} disabled={siemExportMut.isPending}>{t('page.security.exportSiem')}</Button>}
           >
             {(findingsQuery.data ?? []).map((f) => (
               <Link

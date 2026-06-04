@@ -1,21 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFilterStore, type TimeRangePreset } from '../../store/filterStore';
-
-const PRESETS: { value: Exclude<TimeRangePreset, 'custom'>; label: string }[] = [
-  { value: '1h', label: 'Last 1 hour' },
-  { value: '6h', label: 'Last 6 hours' },
-  { value: '24h', label: 'Last 24 hours' },
-  { value: '7d', label: 'Last 7 days' },
-];
-
-const PRESET_SHORT: Record<TimeRangePreset, string> = {
-  '1h': 'Last 1h',
-  '6h': 'Last 6h',
-  '24h': 'Last 24h',
-  '7d': 'Last 7d',
-  custom: 'Custom',
-};
+import { TIME_RANGE_GROUPS, presetShortLabel } from '../../lib/timeRangePresets';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -29,6 +15,15 @@ export function toLocalInputValue(date: Date): string {
 const compact = (d: Date) =>
   d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+function timezoneAbbr(): string {
+  try {
+    const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' }).formatToParts(new Date());
+    return parts.find((p) => p.type === 'timeZoneName')?.value ?? 'local';
+  } catch {
+    return 'local';
+  }
+}
+
 export function formatRangeLabel(
   timeRange: TimeRangePreset,
   customStart: Date | null,
@@ -37,7 +32,7 @@ export function formatRangeLabel(
   if (timeRange === 'custom' && customStart && customEnd) {
     return `${compact(customStart)} → ${compact(customEnd)}`;
   }
-  return PRESET_SHORT[timeRange] ?? 'Last 24h';
+  return presetShortLabel(timeRange);
 }
 
 export function TimeRangePicker() {
@@ -46,6 +41,8 @@ export function TimeRangePicker() {
   const customEnd = useFilterStore((s) => s.customEnd);
   const setTimeRange = useFilterStore((s) => s.setTimeRange);
   const setCustomRange = useFilterStore((s) => s.setCustomRange);
+  const shiftTimeRange = useFilterStore((s) => s.shiftTimeRange);
+  const snapTimeRangeToNow = useFilterStore((s) => s.snapTimeRangeToNow);
   const getTimeBounds = useFilterStore((s) => s.getTimeBounds);
 
   const [open, setOpen] = useState(false);
@@ -53,6 +50,7 @@ export function TimeRangePicker() {
   const [endInput, setEndInput] = useState('');
   const [error, setError] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const tz = timezoneAbbr();
 
   useEffect(() => {
     if (!open) return;
@@ -104,34 +102,64 @@ export function TimeRangePicker() {
 
   return (
     <div className="time-range-picker" ref={ref}>
-      <button
-        type="button"
-        className="time-range-picker__trigger"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-      >
-        <Calendar size={14} aria-hidden />
-        <span>{formatRangeLabel(timeRange, customStart, customEnd)}</span>
-      </button>
+      <div className="time-range-picker__cluster">
+        <button
+          type="button"
+          className="time-range-picker__nudge"
+          aria-label="Shift time range earlier"
+          onClick={() => shiftTimeRange(-1)}
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <button
+          type="button"
+          className="time-range-picker__trigger"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          <Calendar size={14} aria-hidden />
+          <span>{formatRangeLabel(timeRange, customStart, customEnd)}</span>
+          <span className="time-range-picker__tz">{tz}</span>
+        </button>
+        <button
+          type="button"
+          className="time-range-picker__nudge"
+          aria-label="Shift time range later"
+          onClick={() => shiftTimeRange(1)}
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
 
       {open && (
-        <div className="time-range-popover" role="dialog" aria-label="Select time range">
-          <div className="time-range-popover__presets">
-            {PRESETS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                className={`time-range-option ${timeRange === p.value ? 'time-range-option--active' : ''}`}
-                onClick={() => choosePreset(p.value)}
-              >
-                {p.label}
-              </button>
-            ))}
+        <div className="time-range-popover time-range-popover--wide" role="dialog" aria-label="Select time range">
+          <div className="time-range-popover__toolbar">
+            <button type="button" className="ui-button ui-button--ghost ui-button--sm" onClick={() => snapTimeRangeToNow()}>
+              Snap to now
+            </button>
           </div>
 
+          {TIME_RANGE_GROUPS.map((group) => (
+            <div key={group.id} className="time-range-popover__group">
+              <span className="time-range-popover__heading">{group.label}</span>
+              <div className="time-range-popover__presets">
+                {group.presets.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`time-range-option ${timeRange === p.id ? 'time-range-option--active' : ''}`}
+                    onClick={() => choosePreset(p.id)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
           <div className="time-range-popover__custom">
-            <span className="time-range-popover__heading">Custom range</span>
+            <span className="time-range-popover__heading">Custom range ({tz})</span>
             <label className="time-range-field">
               <span>Start</span>
               <input

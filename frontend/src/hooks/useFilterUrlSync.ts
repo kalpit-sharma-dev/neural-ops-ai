@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
-import { useFilterStore, type Environment, type TimeRangePreset } from '../store/filterStore';
-
-const VALID_ENV = new Set(['ALL', 'PROD', 'STAGING', 'DEV']);
-const VALID_RANGE = new Set(['1h', '6h', '24h', '7d', 'custom']);
+import { useFilterStore, type Environment, isValidTimeRangePreset } from '../store/filterStore';
 
 /** Sync global env + time range with URL search params. */
 export function useFilterUrlSync() {
@@ -17,12 +14,14 @@ export function useFilterUrlSync() {
   const setCustomRange = useFilterStore((s) => s.setCustomRange);
   const hydrated = useRef(false);
 
+  const VALID_ENV = new Set(['ALL', 'PROD', 'STAGING', 'DEV']);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const env = params.get('env');
     const range = params.get('range');
     if (env && VALID_ENV.has(env)) setEnvironment(env as Environment);
-    if (range && VALID_RANGE.has(range)) {
+    if (range && isValidTimeRangePreset(range)) {
       if (range === 'custom') {
         const from = params.get('from');
         const to = params.get('to');
@@ -32,7 +31,7 @@ export function useFilterUrlSync() {
           setCustomRange(start, end);
         }
       } else {
-        setTimeRange(range as TimeRangePreset);
+        setTimeRange(range);
       }
     }
     hydrated.current = true;

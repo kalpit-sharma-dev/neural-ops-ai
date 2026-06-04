@@ -13,7 +13,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 
 export default function SettingsOncall() {
   const queryClient = useQueryClient();
@@ -61,7 +61,6 @@ export default function SettingsOncall() {
     <StitchPageShell
       title="On-call schedules"
       subtitle="Escalation rotation and PagerDuty sync"
-      breadcrumb={<SettingsBreadcrumb page="On-call schedules" />}
     >
       <Card title="New schedule" style={{ marginBottom: 24 }}>
         <div className="form-stack">

@@ -16,10 +16,10 @@ type SupportedPlatform struct {
 
 // DiscoveredService is auto-discovered from a collector agent.
 type DiscoveredService struct {
-	AgentID     string    `json:"agentId"`
-	ServiceName string    `json:"serviceName"`
-	Language    string    `json:"language,omitempty"`
-	Port        int       `json:"port,omitempty"`
+	AgentID      string    `json:"agentId"`
+	ServiceName  string    `json:"serviceName"`
+	Language     string    `json:"language,omitempty"`
+	Port         int       `json:"port,omitempty"`
 	DiscoveredAt time.Time `json:"discoveredAt"`
 }
 
@@ -37,13 +37,13 @@ type CollectorSpoolStatus struct {
 
 // CollectorBenchmarkResult is idle resource measurement (COLL-05).
 type CollectorBenchmarkResult struct {
-	AgentID       string    `json:"agentId"`
-	CPUPercent    float64   `json:"cpuPercent"`
-	MemoryMB      float64   `json:"memoryMB"`
-	TargetCPU     float64   `json:"targetCpuPercent"`
-	TargetMemory  float64   `json:"targetMemoryMb"`
-	WithinTarget  bool      `json:"withinTarget"`
-	MeasuredAt    time.Time `json:"measuredAt"`
+	AgentID      string    `json:"agentId"`
+	CPUPercent   float64   `json:"cpuPercent"`
+	MemoryMB     float64   `json:"memoryMB"`
+	TargetCPU    float64   `json:"targetCpuPercent"`
+	TargetMemory float64   `json:"targetMemoryMb"`
+	WithinTarget bool      `json:"withinTarget"`
+	MeasuredAt   time.Time `json:"measuredAt"`
 }
 
 // CollectorVersionDrift summarizes fleet version skew (COLL-09).
@@ -67,9 +67,9 @@ type CollectorRolloutRequest struct {
 
 // CardinalityAlertPolicy configures NexQL cardinality breach alerts (MET-02).
 type CardinalityAlertPolicy struct {
-	Enabled           bool    `json:"enabled"`
-	ThresholdServices int     `json:"thresholdServices"`
-	NotifyChannel     string  `json:"notifyChannel,omitempty"`
+	Enabled           bool       `json:"enabled"`
+	ThresholdServices int        `json:"thresholdServices"`
+	NotifyChannel     string     `json:"notifyChannel,omitempty"`
 	LastBreachAt      *time.Time `json:"lastBreachAt,omitempty"`
 }
 
@@ -108,12 +108,12 @@ type APMErrorGroup struct {
 
 // APMRelease tracks deployment versions (APM-04).
 type APMRelease struct {
-	ID        string    `json:"id"`
-	Service   string    `json:"service"`
-	Version   string    `json:"version"`
-	CommitSHA string    `json:"commitSha,omitempty"`
-	DeployedAt time.Time `json:"deployedAt"`
-	Environment string  `json:"environment,omitempty"`
+	ID          string    `json:"id"`
+	Service     string    `json:"service"`
+	Version     string    `json:"version"`
+	CommitSHA   string    `json:"commitSha,omitempty"`
+	DeployedAt  time.Time `json:"deployedAt"`
+	Environment string    `json:"environment,omitempty"`
 }
 
 // ServiceCatalogEntry maps services to owners (APM-06).
@@ -125,18 +125,21 @@ type ServiceCatalogEntry struct {
 	Tier         string   `json:"tier"` // P0|P1|P2
 	Dependencies []string `json:"dependencies,omitempty"`
 	RunbookURL   string   `json:"runbookUrl,omitempty"`
+	RepoURL      string   `json:"repoUrl,omitempty"`
+	Release      string   `json:"release,omitempty"`
+	CommitSHA    string   `json:"commitSha,omitempty"`
 }
 
 // BusinessTransactionView joins traces/logs for a txn (APM-07).
 type BusinessTransactionView struct {
-	TxnID      string              `json:"txnId"`
-	Service    string              `json:"service,omitempty"`
-	Status     string              `json:"status"`
-	TraceIDs   []string            `json:"traceIds"`
-	LogCount   int                 `json:"logCount"`
-	DurationMs float64             `json:"durationMs"`
-	Spans      []Span              `json:"spans,omitempty"`
-	StartedAt  time.Time           `json:"startedAt"`
+	TxnID      string    `json:"txnId"`
+	Service    string    `json:"service,omitempty"`
+	Status     string    `json:"status"`
+	TraceIDs   []string  `json:"traceIds"`
+	LogCount   int       `json:"logCount"`
+	DurationMs float64   `json:"durationMs"`
+	Spans      []Span    `json:"spans,omitempty"`
+	StartedAt  time.Time `json:"startedAt"`
 }
 
 // LogIngestFormat describes supported log ingest paths (LOG-01).
@@ -175,11 +178,11 @@ type LogAnomaly struct {
 
 // SignalPolicy defines per-signal retention and masking (ADM-02).
 type SignalPolicy struct {
-	Signal         string `json:"signal"` // logs|traces|metrics|events
-	RetentionDays  int    `json:"retentionDays"`
-	MaskingEnabled bool   `json:"maskingEnabled"`
-	ResidencyRegion string `json:"residencyRegion,omitempty"`
-	PIIFields      []string `json:"piiFields,omitempty"`
+	Signal          string   `json:"signal"` // logs|traces|metrics|events
+	RetentionDays   int      `json:"retentionDays"`
+	MaskingEnabled  bool     `json:"maskingEnabled"`
+	ResidencyRegion string   `json:"residencyRegion,omitempty"`
+	PIIFields       []string `json:"piiFields,omitempty"`
 }
 
 // SIEMConfig holds per-tenant SIEM export targets (SEC-02).
@@ -214,10 +217,10 @@ type CloudMetricCatalogEntry struct {
 
 // DevOpsWebhookEvent is a CI/CD deploy notification (INT-01).
 type DevOpsWebhookEvent struct {
-	Provider  string    `json:"provider"`
-	Service   string    `json:"service"`
-	Version   string    `json:"version"`
-	CommitSHA string    `json:"commitSha,omitempty"`
-	Status    string    `json:"status"`
+	Provider   string    `json:"provider"`
+	Service    string    `json:"service"`
+	Version    string    `json:"version"`
+	CommitSHA  string    `json:"commitSha,omitempty"`
+	Status     string    `json:"status"`
 	ReceivedAt time.Time `json:"receivedAt"`
 }

@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 
 export default function SettingsSSO() {
   const queryClient = useQueryClient();
@@ -27,7 +27,6 @@ export default function SettingsSSO() {
     <StitchPageShell
       title="SSO / IdP"
       subtitle="OpenID Connect provider settings (live reload)"
-      breadcrumb={<SettingsBreadcrumb page="SSO / IdP" />}
     >
       <Card title="Identity provider">
         <form

@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// alert_feedback integrates with gap_closure_store fatigue weights (GAP-MET-004).
+
 // AlertQualityFeedback is user feedback on alert noise/usefulness.
 type AlertQualityFeedback struct {
 	ID        string    `json:"id"`
@@ -41,7 +43,8 @@ func (h *Handler) SubmitAlertPolicyFeedback(c *gin.Context) {
 	alertFeedbackMu.Lock()
 	alertFeedback = append(alertFeedback, fb)
 	alertFeedbackMu.Unlock()
-	writeSuccess(c, fb)
+	score := h.deps.Mem.ApplyAlertFeedbackToFatigue(c.Param("id"), body.Helpful)
+	writeSuccess(c, gin.H{"feedback": fb, "fatigueWeight": score})
 }
 
 func (h *Handler) ListAlertPolicyFeedback(c *gin.Context) {

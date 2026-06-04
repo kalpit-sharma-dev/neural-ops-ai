@@ -5,7 +5,7 @@ import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 
 export default function TraceSettings() {
   const queryClient = useQueryClient();
@@ -26,7 +26,6 @@ export default function TraceSettings() {
     <StitchPageShell
       title="Trace sampling & retention"
       subtitle="Control head/tail sampling and ClickHouse retention"
-      breadcrumb={<SettingsBreadcrumb rootLabel="Trace Explorer" rootTo="/traces" page="Sampling & retention" />}
     >
       <Card title="Policy">
         <div className="form-stack">

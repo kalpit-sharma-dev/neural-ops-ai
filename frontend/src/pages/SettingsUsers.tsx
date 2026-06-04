@@ -15,7 +15,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -86,7 +86,6 @@ export default function SettingsUsers() {
     <StitchPageShell
       title="Users"
       subtitle="Invite teammates and manage roles and access"
-      breadcrumb={<SettingsBreadcrumb page="Users" />}
     >
       <Card title="Invite user">
         <div className="users-invite">
@@ -96,6 +95,7 @@ export default function SettingsUsers() {
             placeholder="teammate@company.com"
             value={email}
             error={emailError}
+            data-testid="users-invite-email"
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitInvite();

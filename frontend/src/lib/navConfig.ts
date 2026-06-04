@@ -4,6 +4,7 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  FileText,
   Cpu,
   Radar,
   Database,
@@ -133,6 +134,13 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Shield,
         keywords: ['abac', 'msp', 'residency'],
         featureFlag: 'ENTERPRISE_GOVERNANCE',
+      },
+      {
+        id: 'reports',
+        to: '/reports',
+        label: 'Reports & exports',
+        icon: FileText,
+        keywords: ['download', 'export', 'csv', 'json'],
       },
       {
         id: 'nfr-certification',

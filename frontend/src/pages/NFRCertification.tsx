@@ -9,6 +9,7 @@ import {
   runNFRBenchmark,
   runNFRSlaCertification,
 } from '../api/observability';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -55,7 +56,27 @@ export default function NFRCertification() {
     certQuery.isLoading;
 
   return (
-    <StitchPageShell title={t('nfr.title')} subtitle={t('nfr.subtitle')}>
+    <StitchPageShell
+      title={t('nfr.title')}
+      subtitle={t('nfr.subtitle')}
+      actions={
+        certQuery.data ? (
+          <DataExportMenu
+            getData={() => [
+              {
+                certification: certQuery.data,
+                benchmarks: benchmarksQuery.data,
+                reliability: reliabilityQuery.data,
+                a11y: a11yQuery.data,
+              },
+            ]}
+            filenamePrefix="nfr-report"
+            formats={['json']}
+            label="Download report"
+          />
+        ) : null
+      }
+    >
       <div style={{ maxWidth: 220, marginBottom: 16 }} data-testid="nfr-locale-switcher">
         <Select label={t('nfr.locale')} value={locale} onChange={(e) => setLocale(e.target.value as LocaleCode)}>
           <option value="en">English</option>

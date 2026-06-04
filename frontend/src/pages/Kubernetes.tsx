@@ -9,6 +9,7 @@ import { Card } from '../components/ui/Card';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 type SortKey = 'name' | 'namespace' | 'readyReplicas' | 'replicas' | 'status' | 'node';
 type SortDir = 'asc' | 'desc';
@@ -80,7 +81,22 @@ export default function Kubernetes() {
     <StitchPageShell
       title="Kubernetes"
       subtitle="Live cluster inventory via Kubernetes API (in-cluster) or Prometheus fallback"
-      actions={<Link to="/infrastructure">← Infrastructure</Link>}
+      actions={
+        <>
+          <DataExportMenu
+            getData={() => [
+              ...(clustersQuery.data ?? []).map((c) => ({ recordType: 'cluster', ...c })),
+              ...deployments.map((d) => ({ recordType: 'deployment', ...d })),
+              ...pods.map((p) => ({ recordType: 'pod', ...p })),
+            ]}
+            filenamePrefix="kubernetes"
+            disabled={
+              !(clustersQuery.data?.length || deployments.length || pods.length)
+            }
+          />
+          <Link to="/infrastructure">← Infrastructure</Link>
+        </>
+      }
     >
       {clustersQuery.isLoading && <LoadingState />}
       {clustersQuery.error && <ErrorState message={getApiErrorMessage(clustersQuery.error)} onRetry={() => clustersQuery.refetch()} />}

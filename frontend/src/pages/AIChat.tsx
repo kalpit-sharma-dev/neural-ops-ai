@@ -8,6 +8,8 @@ import { Textarea } from '../components/ui/Textarea';
 import { PageHeader } from '../components/ui/PageStates';
 import { CitationChips } from '../components/stitch';
 import { buildPageContext, suggestedPromptsForPath } from '../lib/pageContext';
+import { useI18n } from '../i18n/I18nProvider';
+import { pageSubtitle, pageTitle } from '../i18n/messages';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -17,6 +19,7 @@ interface Message {
 }
 
 export default function AIChat() {
+  const { locale, t } = useI18n();
   const router = useRouterState();
   const pathname = router.location.pathname;
   const search = router.location.search as Record<string, unknown>;
@@ -91,7 +94,10 @@ export default function AIChat() {
 
   return (
     <div>
-      <PageHeader title="AI Assistant" subtitle="Senior SRE colleague powered by NeuralOps" />
+      <PageHeader
+        title={pageTitle(locale, 'ai-chat', 'AI Assistant')}
+        subtitle={pageSubtitle(locale, 'ai-chat', 'Senior SRE colleague powered by NeuralOps')}
+      />
 
       <p className="muted" style={{ marginBottom: 16 }}>
         Context: {pageContext.split('\n')[0]}
@@ -119,7 +125,7 @@ export default function AIChat() {
           <div className="chat-messages">
             {messages.length === 0 && (
               <p className="muted" style={{ textAlign: 'center', marginTop: 48 }}>
-                Ask anything about your logs, incidents, or deployments
+                {t('page.ai-chat.emptyHint')}
               </p>
             )}
             {messages.map((msg, i) => (

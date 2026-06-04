@@ -18,6 +18,7 @@ import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { StatusDot } from '../components/ui/StatusDot';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 
 const ENVIRONMENTS = ['PROD', 'STAGING', 'DEV'] as const;
@@ -105,6 +106,16 @@ export default function AnomalyDetection() {
     <StitchPageShell
       title="Anomaly Detection"
       subtitle={`${activeCount} active anomalies · Neural score monitoring`}
+      actions={
+        <DataExportMenu
+          getData={() => [
+            ...entityAnomalies.map((a) => ({ type: 'entity', ...a })),
+            ...historyRows,
+          ]}
+          filenamePrefix="anomalies"
+          disabled={!entityAnomalies.length && !historyRows.length}
+        />
+      }
     >
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}

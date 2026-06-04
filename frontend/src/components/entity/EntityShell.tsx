@@ -12,6 +12,7 @@ interface EntityShellProps {
   health?: string;
   activeTab?: EntityTab;
   onTabChange?: (tab: EntityTab) => void;
+  headerActions?: ReactNode;
   children: ReactNode;
 }
 
@@ -29,6 +30,7 @@ export function EntityShell({
   health,
   activeTab = 'overview',
   onTabChange,
+  headerActions,
   children,
 }: EntityShellProps) {
   const router = useRouterState();
@@ -44,6 +46,7 @@ export function EntityShell({
           <h1 style={{ margin: '4px 0' }}>{name}</h1>
           {health && <Badge variant={healthVariant}>{health}</Badge>}
         </div>
+        {headerActions && <div className="entity-shell__actions">{headerActions}</div>}
       </header>
       <nav className="tab-bar entity-shell__tabs" aria-label="Entity sections">
         {TABS.map((tab) =>

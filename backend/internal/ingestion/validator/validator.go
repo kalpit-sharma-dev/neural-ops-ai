@@ -2,6 +2,8 @@ package validator
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,7 +66,40 @@ func ValidateMetric(req *dto.MetricIngestRequest) error {
 	if req.Timestamp.IsZero() {
 		return domain.NewValidationError("timestamp", "is required")
 	}
+	if ok, reason := checkMetricLabelCardinality(req.Labels); !ok {
+		return domain.NewValidationError("labels", reason)
+	}
 	return nil
+}
+
+const defaultMaxLabelKeys = 32
+
+func checkMetricLabelCardinality(labels map[string]string) (bool, string) {
+	max := envInt("INGEST_MAX_LABEL_KEYS", defaultMaxLabelKeys)
+	if len(labels) > max {
+		return false, "label cardinality exceeds limit"
+	}
+	for k, v := range labels {
+		if len(k) > 128 || len(v) > 512 {
+			return false, "label key or value too long"
+		}
+		if strings.Contains(k, " ") {
+			return false, "invalid label key"
+		}
+	}
+	return true, ""
+}
+
+func envInt(key string, def int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		return def
+	}
+	return n
 }
 
 // ValidateEvent validates a deployment/config event request.

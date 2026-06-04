@@ -6,7 +6,8 @@ Production-grade monorepo for an AI-powered log analysis and incident management
 
 Full reference (C4, sequence, ER, component diagrams, section-wise flows):
 
-**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — system design
+- **[docs/GAP_IMPLEMENTATION_PLAN.md](docs/GAP_IMPLEMENTATION_PLAN.md)** — partial/missing backlog (implement one-by-one)
 
 ```
 backend/     Go microservices (gateway, ingestion, analysis, correlation, incident, search, alerting)
@@ -149,6 +150,7 @@ Go module: `github.com/neuralops/platform`
 | [backend/openapi/swagger.yaml](backend/openapi/swagger.yaml) | Backend Swagger/OpenAPI YAML for gateway consumers |
 | [docs/UI_IMPROVEMENT_ROADMAP.md](docs/UI_IMPROVEMENT_ROADMAP.md) | Phased, trackable UI/UX improvement backlog (checkboxes per task) |
 | [docs/PRODUCTION_AND_GTM.md](docs/PRODUCTION_AND_GTM.md) | Production ship plan, enterprise sales, pricing, and onboarding guidelines |
+| [docs/GCP_SETUP_GUIDE.md](docs/GCP_SETUP_GUIDE.md) | End-to-end GCP & GKE monitoring setup (projects, data plane, agents, FinOps) |
 | [docs/BANK_PRODUCTION_READINESS_ROADMAP.md](docs/BANK_PRODUCTION_READINESS_ROADMAP.md) | Bank prod + sales checklist (waves 0–6, gates A–F); `./scripts/gate-verify.sh --gate C` |
 | [docs/bank/README.md](docs/bank/README.md) | Bank customer pack index + gate close-out runbooks |
 | [docs/bank/README.md](docs/bank/README.md) | Bank customer pack index (security, legal, runbooks) |

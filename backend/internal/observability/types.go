@@ -383,11 +383,12 @@ type SecurityPostureCheck struct {
 
 // Integration describes a third-party integration.
 type Integration struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	Status    string `json:"status"`
-	Connected bool   `json:"connected"`
+	ID             string `json:"id"`
+	IntegrationKey string `json:"integrationKey,omitempty"`
+	Name           string `json:"name"`
+	Type           string `json:"type"`
+	Status         string `json:"status"`
+	Connected      bool   `json:"connected"`
 }
 
 // AdminUser is a tenant user for admin UI.
@@ -453,10 +454,10 @@ type UnifiedQueryHit struct {
 
 // UnifiedQueryResponse bundles results and execution metadata.
 type UnifiedQueryResponse struct {
-	Hits       []UnifiedQueryHit  `json:"hits"`
-	Count      int                `json:"count"`
-	Planner    []QueryPlannerStep `json:"planner,omitempty"`
-	Cardinality CardinalityGuard  `json:"cardinality,omitempty"`
+	Hits        []UnifiedQueryHit  `json:"hits"`
+	Count       int                `json:"count"`
+	Planner     []QueryPlannerStep `json:"planner,omitempty"`
+	Cardinality CardinalityGuard   `json:"cardinality,omitempty"`
 }
 
 // AlertPolicyRoute defines one route destination in an alert policy.
@@ -477,7 +478,7 @@ type AlertPolicy struct {
 	Expression     string             `json:"expression,omitempty"`
 	DedupeKey      string             `json:"dedupeKey,omitempty"`
 	Routes         []AlertPolicyRoute `json:"routes"`
-	Context        AlertContext         `json:"context,omitempty"`
+	Context        AlertContext       `json:"context,omitempty"`
 }
 
 // AlertSuppression defines a temporary suppression window.
@@ -528,11 +529,11 @@ type AIExplanationEvidence struct {
 
 // AIExplanationNode is one node in an explainable RCA tree.
 type AIExplanationNode struct {
-	ID         string                `json:"id"`
-	Label      string                `json:"label"`
-	Confidence float64               `json:"confidence"`
+	ID         string                  `json:"id"`
+	Label      string                  `json:"label"`
+	Confidence float64                 `json:"confidence"`
 	Evidence   []AIExplanationEvidence `json:"evidence,omitempty"`
-	Children   []AIExplanationNode   `json:"children,omitempty"`
+	Children   []AIExplanationNode     `json:"children,omitempty"`
 }
 
 // RCAResponse is causal root-cause analysis for an incident.
@@ -547,15 +548,15 @@ type RCAResponse struct {
 
 // AIForecast is a predictive capacity/SLO/incident-risk projection.
 type AIForecast struct {
-	ID             string  `json:"id"`
-	Metric         string  `json:"metric"`
-	Service        string  `json:"service,omitempty"`
-	Horizon        string  `json:"horizon"`
-	Prediction     float64 `json:"prediction"`
-	LowerBound     float64 `json:"lowerBound"`
-	UpperBound     float64 `json:"upperBound"`
-	Unit           string  `json:"unit"`
-	Recommendation string `json:"recommendation,omitempty"`
+	ID             string    `json:"id"`
+	Metric         string    `json:"metric"`
+	Service        string    `json:"service,omitempty"`
+	Horizon        string    `json:"horizon"`
+	Prediction     float64   `json:"prediction"`
+	LowerBound     float64   `json:"lowerBound"`
+	UpperBound     float64   `json:"upperBound"`
+	Unit           string    `json:"unit"`
+	Recommendation string    `json:"recommendation,omitempty"`
 	GeneratedAt    time.Time `json:"generatedAt"`
 }
 
@@ -652,11 +653,11 @@ type CloudAssetEdge struct {
 
 // FinOpsCostSeries is spend over time for a scope.
 type FinOpsCostSeries struct {
-	Scope   string              `json:"scope"`
-	Unit    string              `json:"unit"`
-	Total   float64             `json:"total"`
-	Budget  float64             `json:"budget"`
-	Points  []FinOpsCostPoint   `json:"points"`
+	Scope  string            `json:"scope"`
+	Unit   string            `json:"unit"`
+	Total  float64           `json:"total"`
+	Budget float64           `json:"budget"`
+	Points []FinOpsCostPoint `json:"points"`
 }
 
 // FinOpsCostPoint is one cost sample.
@@ -689,17 +690,17 @@ type FinOpsCarbonFootprint struct {
 
 // NetworkFlow is a sampled L4/L7 flow record.
 type NetworkFlow struct {
-	ID         string    `json:"id"`
-	Source     string    `json:"source"`
-	Destination string   `json:"destination"`
-	Protocol   string    `json:"protocol"`
-	Port       int       `json:"port"`
-	Bytes      int64     `json:"bytes"`
-	Packets    int64     `json:"packets"`
-	LatencyMs  float64   `json:"latencyMs"`
-	LossPct    float64   `json:"lossPct"`
-	JitterMs   float64   `json:"jitterMs"`
-	Timestamp  time.Time `json:"timestamp"`
+	ID          string    `json:"id"`
+	Source      string    `json:"source"`
+	Destination string    `json:"destination"`
+	Protocol    string    `json:"protocol"`
+	Port        int       `json:"port"`
+	Bytes       int64     `json:"bytes"`
+	Packets     int64     `json:"packets"`
+	LatencyMs   float64   `json:"latencyMs"`
+	LossPct     float64   `json:"lossPct"`
+	JitterMs    float64   `json:"jitterMs"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // NetworkDevice is an SNMP/monitored network appliance.
@@ -812,13 +813,13 @@ type BusinessKPIDefinition struct {
 
 // BusinessKPIPack is an installable business observability template.
 type BusinessKPIPack struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	Category    string                `json:"category"`
-	Description string                `json:"description"`
+	ID          string                  `json:"id"`
+	Name        string                  `json:"name"`
+	Category    string                  `json:"category"`
+	Description string                  `json:"description"`
 	KPIs        []BusinessKPIDefinition `json:"kpis"`
-	Connectors  []string              `json:"connectors"`
-	Enabled     bool                  `json:"enabled"`
+	Connectors  []string                `json:"connectors"`
+	Enabled     bool                    `json:"enabled"`
 }
 
 // ABACPolicyRule is one attribute-based access rule.
@@ -839,11 +840,11 @@ type ABACPolicy struct {
 
 // DataResidencyPolicy controls regional data placement.
 type DataResidencyPolicy struct {
-	PrimaryRegion      string    `json:"primaryRegion"`
-	AllowedRegions     []string  `json:"allowedRegions"`
-	PIIStorageRegion   string    `json:"piiStorageRegion"`
-	CrossBorderDenied  bool      `json:"crossBorderDenied"`
-	UpdatedAt          time.Time `json:"updatedAt"`
+	PrimaryRegion     string    `json:"primaryRegion"`
+	AllowedRegions    []string  `json:"allowedRegions"`
+	PIIStorageRegion  string    `json:"piiStorageRegion"`
+	CrossBorderDenied bool      `json:"crossBorderDenied"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 // BrandingTheme is white-label MSP branding.

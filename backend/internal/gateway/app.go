@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/neuralops/platform/internal/ai"
+	"github.com/neuralops/platform/internal/finops"
 	"github.com/neuralops/platform/internal/gateway/auth"
 	"github.com/neuralops/platform/internal/gateway/chat"
 	"github.com/neuralops/platform/internal/gateway/config"
@@ -24,12 +25,11 @@ import (
 	"github.com/neuralops/platform/internal/gateway/proxy"
 	"github.com/neuralops/platform/internal/gateway/websocket"
 	"github.com/neuralops/platform/internal/kafka"
-	"github.com/neuralops/platform/internal/finops"
 	"github.com/neuralops/platform/internal/observability"
-	"github.com/neuralops/platform/internal/streaming"
 	"github.com/neuralops/platform/internal/platform/db"
 	"github.com/neuralops/platform/internal/platform/health"
 	"github.com/neuralops/platform/internal/security"
+	"github.com/neuralops/platform/internal/streaming"
 	"github.com/neuralops/platform/internal/tracequery"
 	"github.com/neuralops/platform/pkg/metrics"
 	swaggerFiles "github.com/swaggo/files"
@@ -233,6 +233,9 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 	if err := finops.ValidateProductionFinOps(pgPool); err != nil {
 		return nil, err
 	}
+	if strings.EqualFold(strings.TrimSpace(cfg.Server.Environment), "production") && pgPool == nil {
+		return nil, fmt.Errorf("production: postgres connection required")
+	}
 	finOpsSvc := finops.NewPostgresService(pgPool, &observability.FinOpsCloudAdapter{Store: memStore})
 	finOpsAlerter := &observability.FinOpsAnomalyAlerter{Mem: memStore, Stream: streamPub}
 	finOpsSvc.SetAlerter(finOpsAlerter)
@@ -242,13 +245,13 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 	obsHandler := observability.NewHandler(observability.Deps{
 		Log: log, Mem: memStore, Spans: spanStore, PG: observability.NewPostgresRepo(pgPool),
 		Collectors: observability.NewCollectorsRepo(pgPool), SRS: srsRepo, Governance: governanceSvc,
-		Cloud: observability.NewCloudCollectorService(memStore),
-		SIEM:  observability.NewSIEMService(memStore),
+		Cloud:   observability.NewCloudCollectorService(memStore),
+		SIEM:    observability.NewSIEMService(memStore),
 		SecCorr: observability.NewSecurityCorrelationService(memStore, srsRepo),
-		Stream: streamPub,
-		FinOps: finOpsSvc,
-		Prom: observability.NewPromQLClient(cfg.Prometheus.URL),
-		CH: chConn, Pool: pgPool, Identity: identityStore,
+		Stream:  streamPub,
+		FinOps:  finOpsSvc,
+		Prom:    observability.NewPromQLClient(cfg.Prometheus.URL),
+		CH:      chConn, Pool: pgPool, Identity: identityStore,
 		SearchURL: cfg.Services.Search, SSOManager: ssoManager,
 	})
 	obsHandler.RegisterRoutes(router.Group("/api/v1"))
@@ -273,10 +276,16 @@ func NewApp(ctx context.Context, log *zap.Logger) (*App, error) {
 		v1.Any("/search", searchProxy.GinHandler())
 		v1.Any("/search/*path", searchProxy.GinHandler())
 
+		// Explicit incident proxy routes only — no /incidents/*path wildcard because
+		// observability registers /incidents/:id/war-room and /incidents/pir on the same group.
 		v1.Any("/incidents", incidentProxy.GinHandler())
-		v1.Any("/incidents/*path", incidentProxy.GinHandler())
-		v1.Any("/services/*path", incidentProxy.GinHandler())
-		v1.Any("/transactions/*path", incidentProxy.GinHandler())
+		v1.Any("/incidents/:id", incidentProxy.GinHandler())
+		v1.Any("/incidents/:id/acknowledge", incidentProxy.GinHandler())
+		v1.Any("/incidents/:id/resolve", incidentProxy.GinHandler())
+		v1.Any("/incidents/:id/recommendations", incidentProxy.GinHandler())
+		v1.Any("/incidents/:id/timeline", incidentProxy.GinHandler())
+		v1.Any("/services/dependency-map", incidentProxy.GinHandler())
+		v1.Any("/transactions/:txnId", incidentProxy.GinHandler())
 
 		v1.Any("/analysis", analysisProxy.GinHandler())
 		v1.Any("/analysis/*path", analysisProxy.GinHandler())

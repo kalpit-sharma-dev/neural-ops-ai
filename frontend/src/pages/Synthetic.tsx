@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 export default function Synthetic() {
   const [selected, setSelected] = useState('');
@@ -32,7 +33,21 @@ export default function Synthetic() {
   const maxLatency = Math.max(...locationBars.map((l) => l.avgMs), 1);
 
   return (
-    <StitchPageShell title="Synthetic Monitoring" subtitle="HTTP and browser checks with geo latency view">
+    <StitchPageShell
+      title="Synthetic Monitoring"
+      subtitle="HTTP and browser checks with geo latency view"
+      actions={
+        <DataExportMenu
+          getData={() => {
+            if (selected && runsQuery.data?.length) {
+              return runsQuery.data.map((r) => ({ monitorId: selected, ...r }));
+            }
+            return monitorsQuery.data ?? [];
+          }}
+          filenamePrefix={selected ? `synthetic-runs-${selected}` : 'synthetic-monitors'}
+        />
+      }
+    >
       {monitorsQuery.isLoading && <LoadingState />}
       {(monitorsQuery.data ?? []).map((m) => (
         <Card key={m.id} title={m.name}>

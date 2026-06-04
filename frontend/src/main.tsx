@@ -6,9 +6,11 @@ import App from './App';
 import { clearChunkReloadGuard } from './routes/lazyPage';
 import { I18nProvider } from './i18n/I18nProvider';
 import { initTheme } from './store/themeStore';
+import { useUiPreferencesStore } from './store/uiPreferencesStore';
 import './styles/global.css';
 
 initTheme();
+useUiPreferencesStore.getState().setDensity(useUiPreferencesStore.getState().density);
 clearChunkReloadGuard();
 
 const queryClient = new QueryClient({

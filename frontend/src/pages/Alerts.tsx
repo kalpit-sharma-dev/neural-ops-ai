@@ -8,6 +8,7 @@ import {
   createAlertRule,
   createChannel,
   createSilence,
+  previewAlertSilence,
   deleteAlertRule,
   deleteChannel,
   fetchAlertRules,
@@ -30,13 +31,16 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
+import { useI18n } from '../i18n/I18nProvider';
 
 const TABS = ['Active', 'Rules', 'Channels', 'Silences', 'Escalation', 'History'] as const;
 
 export default function Alerts() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<(typeof TABS)[number]>('Active');
   const [selectedAlert, setSelectedAlert] = useState<AlertRecord | null>(null);
   const queryClient = useQueryClient();
@@ -111,12 +115,25 @@ export default function Alerts() {
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [activeAlerts]);
 
-  const silencePreviewCount = useMemo(() => {
+  const clientSilencePreviewCount = useMemo(() => {
     const pattern = silenceForm.servicePattern.trim();
     if (!pattern) return activeAlerts.length;
     const re = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`, 'i');
     return activeAlerts.filter((a) => re.test(a.service)).length;
   }, [activeAlerts, silenceForm.servicePattern]);
+
+  const silencePreviewQuery = useQuery({
+    queryKey: ['silence-preview', silenceForm.servicePattern],
+    queryFn: () =>
+      previewAlertSilence({
+        servicePattern: silenceForm.servicePattern.trim() || '*',
+      }),
+    enabled: tab === 'Silences',
+    staleTime: 10_000,
+  });
+
+  const silencePreviewCount =
+    silencePreviewQuery.data?.matchedAlerts ?? clientSilencePreviewCount;
 
   const validateRuleForm = () => {
     const errors: Record<string, string> = {};
@@ -255,7 +272,36 @@ export default function Alerts() {
   });
 
   return (
-    <StitchPageShell title="Alerts" subtitle="Rules, channels, silences, and firing alerts">
+    <StitchPageShell
+      title="Alerts"
+      subtitle="Rules, channels, silences, and firing alerts"
+      actions={
+        <DataExportMenu
+          getData={() => {
+            if (tab === 'Active' || tab === 'History') return alertsQuery.data ?? [];
+            if (tab === 'Rules') return rulesQuery.data ?? [];
+            if (tab === 'Silences') return silencesQuery.data ?? [];
+            if (tab === 'Channels') return channelsQuery.data ?? [];
+            if (tab === 'Escalation') return escalationQuery.data ?? [];
+            return [];
+          }}
+          filenamePrefix={`alerts-${tab.toLowerCase()}`}
+          disabled={
+            tab === 'Active' || tab === 'History'
+              ? !alertsQuery.data?.length
+              : tab === 'Rules'
+                ? !rulesQuery.data?.length
+                : tab === 'Silences'
+                  ? !silencesQuery.data?.length
+                  : tab === 'Channels'
+                    ? !channelsQuery.data?.length
+                    : tab === 'Escalation'
+                      ? !escalationQuery.data?.length
+                      : true
+          }
+        />
+      }
+    >
       <div className="tab-bar" style={{ marginBottom: 24 }}>
         {TABS.map((t) => (
           <button
@@ -331,6 +377,24 @@ export default function Alerts() {
                         <strong style={{ marginLeft: 8 }}>{alert.title}</strong>
                         <p className="muted">{alert.status}</p>
                         <p>{alert.description}</p>
+                        {(() => {
+                          const policy = policyForAlert(alert);
+                          if (!policy) return null;
+                          return (
+                            <div className="alert-row-context muted" data-testid={`alert-policy-context-${alert.id}`}>
+                              <span>
+                                Policy: <Link to="/settings/alert-policies" onClick={(e) => e.stopPropagation()}>{policy.name}</Link>
+                              </span>
+                              {policy.context?.owner && <span> · Owner: {policy.context.owner}</span>}
+                              {policy.context?.runbookUrl && (
+                                <span>
+                                  {' '}
+                                  · <a href={policy.context.runbookUrl} onClick={(e) => e.stopPropagation()}>Runbook</a>
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }} onClick={(e) => e.stopPropagation()}>
@@ -532,8 +596,15 @@ export default function Alerts() {
             <div className="form-stack">
               <Input label="Service pattern" placeholder="* or payment-*" value={silenceForm.servicePattern} onChange={(e) => setSilenceForm({ ...silenceForm, servicePattern: e.target.value })} />
               <Input label="Reason" value={silenceForm.reason} onChange={(e) => setSilenceForm({ ...silenceForm, reason: e.target.value })} />
-              <p className="muted" style={{ margin: 0 }}>
-                Preview: would silence <strong>{silencePreviewCount}</strong> active alert{silencePreviewCount === 1 ? '' : 's'}
+              <p className="muted" style={{ margin: 0 }} data-testid="silence-preview">
+                {silencePreviewQuery.isFetching
+                  ? t('page.alerts.silencePreviewLoading')
+                  : (
+                    <>
+                      {t('page.alerts.silencePreview')}{' '}
+                      <strong>{silencePreviewCount}</strong> {t('page.alerts.silencePreviewActive')}
+                    </>
+                  )}
               </p>
               <Select value={silenceForm.duration} onChange={(e) => setSilenceForm({ ...silenceForm, duration: e.target.value })}>
                 <option value="30m">30 minutes</option>
@@ -541,7 +612,7 @@ export default function Alerts() {
                 <option value="4h">4 hours</option>
                 <option value="24h">24 hours</option>
               </Select>
-              <Button variant="primary" onClick={() => createSilenceMut.mutate()}>Create silence</Button>
+              <Button variant="primary" onClick={() => createSilenceMut.mutate()}>{t('page.alerts.createSilence')}</Button>
             </div>
           </Card>
           <Card title="Active silences">

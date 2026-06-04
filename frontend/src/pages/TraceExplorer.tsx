@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ExternalLink } from 'lucide-react';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { fetchServiceOperations, searchTraces, type TraceSummary } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
 import { TraceDetailPanel } from '../components/traces/TraceDetailPanel';
@@ -68,7 +69,12 @@ export default function TraceExplorer() {
     <StitchPageShell
       title="Trace Explorer"
       subtitle="Search distributed traces and open waterfall views"
-      actions={<Link to="/traces/compare" search={{ a: undefined, b: undefined }}>Compare traces</Link>}
+      actions={
+        <>
+          <DataExportMenu getData={() => data ?? []} filenamePrefix="traces" disabled={!data?.length} />
+          <Link to="/traces/compare" search={{ a: undefined, b: undefined }}>Compare traces</Link>
+        </>
+      }
     >
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>

@@ -13,6 +13,7 @@ import { Button } from '../components/ui/Button';
 import { LoadingState } from '../components/ui/PageStates';
 import { Badge } from '../components/ui/Badge';
 import { useI18n } from '../i18n/I18nProvider';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 export default function MaterializationDashboard() {
   const { t } = useI18n();
@@ -32,8 +33,19 @@ export default function MaterializationDashboard() {
     enabled: !!metricId,
   });
 
+  const exportRows = () => [
+    ...(scoresQuery.data ?? []).map((s) => ({ recordType: 'alert_score', ...s })),
+    ...(samplesQuery.data ?? []).map((s) => ({ ...s, recordType: 'derived_sample', metricId })),
+  ];
+
   return (
-    <StitchPageShell title={t('mat.title')} subtitle={t('mat.subtitle')}>
+    <StitchPageShell
+      title={t('mat.title')}
+      subtitle={t('mat.subtitle')}
+      actions={
+        <DataExportMenu getData={exportRows} filenamePrefix="materialization" disabled={exportRows().length === 0} />
+      }
+    >
       <Card title={t('mat.alertScores')}>
         <Select label={t('mat.policy')} value={policyId} onChange={(e) => setPolicyId(e.target.value)}>
           <option value="">—</option>

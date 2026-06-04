@@ -58,7 +58,7 @@ jobs:
       - name: Install Playwright browsers
         run: cd frontend && npx playwright install chromium --with-deps
       - name: Playwright smoke (UI roadmap)
-        run: cd frontend && npm run test:e2e -- e2e/smoke.spec.ts e2e/ui-roadmap.spec.ts e2e/srs-routes.spec.ts e2e/alert-policy-trigger.spec.ts e2e/materialization.spec.ts
+        run: cd frontend && npm run test:e2e -- e2e/smoke.spec.ts e2e/ui-actions.spec.ts e2e/ui-roadmap.spec.ts e2e/srs-routes.spec.ts e2e/alert-policy-trigger.spec.ts e2e/materialization.spec.ts
         continue-on-error: true
       - name: axe accessibility (critical/serious)
         run: cd frontend && npm run test:e2e -- e2e/a11y.spec.ts
@@ -120,13 +120,20 @@ jobs:
             -e BASE_URL=http://localhost:8080 \
             -e K6_TENANT=00000000-0000-0000-0000-000000000002 \
             grafana/k6 run /scripts/bank-poc-load.js
-      - name: k6 bank ingest profile
+      - name: k6 bank ingest profile (signed evidence)
         run: |
-          docker run --rm --network host \
-            -v "${{ github.workspace }}/scripts/k6:/scripts" \
-            -e BASE_URL=http://localhost:8080 \
-            -e K6_TENANT=00000000-0000-0000-0000-000000000002 \
-            grafana/k6 run --vus 5 --duration 30s /scripts/bank-ingest-load.js
+          EVIDENCE_DIR="${{ github.workspace }}/docs/evidence" \
+          K6_INGEST_DURATION=30s K6_INGEST_RATE=20 \
+          K6_TENANT=00000000-0000-0000-0000-000000000002 \
+          BASE_URL=http://localhost:8080 \
+          bash scripts/verify-bank-ingest-load.sh
+      - name: Upload bank ingest evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bank-ingest-load-evidence
+          path: docs/evidence/bank-ingest-load-*.json
+          if-no-files-found: warn
       - name: NFR certification (live, gated, signed report)
         run: |
           NEURALOPS_API_URL=http://localhost:8080/api/v1 \

@@ -21,6 +21,7 @@ const ROUTE_TABLE: Array<{ prefix: string; id: string }> = [
   { prefix: '/cloud-finops-network', id: 'cloud-finops-network' },
   { prefix: '/business-observability', id: 'business-observability' },
   { prefix: '/enterprise-governance', id: 'enterprise-governance' },
+  { prefix: '/reports', id: 'reports' },
   { prefix: '/nfr-certification', id: 'nfr-certification' },
   { prefix: '/query-workbench', id: 'query-workbench' },
   { prefix: '/collectors/fleet', id: 'collectors-fleet' },

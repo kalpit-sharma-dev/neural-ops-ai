@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell, KpiRow } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 
 export default function RUM() {
@@ -45,9 +46,12 @@ export default function RUM() {
       title="Real User Monitoring"
       subtitle="Browser sessions, Core Web Vitals, session replay"
       actions={
-        <a href="/rum/neuralops-rum.js" download="neuralops-rum.js" className="muted">
-          Download RUM SDK
-        </a>
+        <>
+          <DataExportMenu getData={() => data ?? []} filenamePrefix="rum-sessions" disabled={!data?.length} />
+          <a href="/rum/neuralops-rum.js" download="neuralops-rum.js" className="muted">
+            Download RUM SDK
+          </a>
+        </>
       }
     >
       {isLoading && <LoadingState />}

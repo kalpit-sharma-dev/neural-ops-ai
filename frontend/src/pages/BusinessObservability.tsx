@@ -21,6 +21,7 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Badge } from '../components/ui/Badge';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 const TABS = ['RUM funnels', 'Synthetic studio', 'Business KPI packs'] as const;
 
@@ -123,6 +124,22 @@ export default function BusinessObservability() {
     <StitchPageShell
       title="Business observability"
       subtitle="RUM funnels, synthetic browser/mobile checks, and KPI pack library."
+      actions={
+        <DataExportMenu
+          getData={() => {
+            if (tab === 'RUM funnels') return funnelsQuery.data ?? [];
+            if (tab === 'Synthetic studio') {
+              return [
+                ...(browserQuery.data ?? []).map((r) => ({ recordType: 'browser_test', ...r })),
+                ...(mobileQuery.data ?? []).map((r) => ({ recordType: 'mobile_test', ...r })),
+                ...(locQuery.data ?? []).map((r) => ({ recordType: 'private_location', ...r })),
+              ];
+            }
+            return kpiQuery.data ?? [];
+          }}
+          filenamePrefix="business-observability"
+        />
+      }
     >
       <div className="tab-bar" style={{ marginBottom: 24 }}>
         {TABS.map((t) => (

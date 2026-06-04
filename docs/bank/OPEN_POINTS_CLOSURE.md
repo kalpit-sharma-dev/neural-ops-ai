@@ -3,6 +3,8 @@
 **Updated:** 2026-06-03  
 **Purpose:** Single view of what is **closed in repo** vs **requires customer/ops execution**.
 
+**Engineering backlog (implement one-by-one):** [GAP_IMPLEMENTATION_PLAN.md](../GAP_IMPLEMENTATION_PLAN.md) · [GAP_IMPLEMENTATION_STATUS.md](../GAP_IMPLEMENTATION_STATUS.md)
+
 ---
 
 ## Closed in repo (no further engineering)

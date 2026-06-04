@@ -12,7 +12,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
+import { useI18n } from '../i18n/I18nProvider';
 
 const CONFIG_FIELDS: Record<string, { key: string; label: string; secret?: boolean }[]> = {
   jira: [
@@ -51,6 +52,7 @@ const CONFIG_FIELDS: Record<string, { key: string; label: string; secret?: boole
 const OAUTH_KEYS = new Set(['jira', 'slack', 'servicenow']);
 
 export default function Integrations() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['integrations'], queryFn: fetchIntegrations });
   const [modalKey, setModalKey] = useState<string | null>(null);
@@ -89,7 +91,6 @@ export default function Integrations() {
     <StitchPageShell
       title="Integrations"
       subtitle="Third-party connections"
-      breadcrumb={<SettingsBreadcrumb page="Integrations" />}
     >
       {isLoading && <LoadingState />}
       <div className="settings-grid">
@@ -110,7 +111,7 @@ export default function Integrations() {
                 {!i.connected && (
                   <>
                     <Button variant="secondary" size="sm" onClick={() => openConnect(key)} data-testid={`integrations-connect-${key}`}>
-                      Connect
+                      {t('page.integrations.connect')}
                     </Button>
                     {OAUTH_KEYS.has(key) && (
                       <Button variant="secondary" size="sm" onClick={() => { window.location.href = integrationOAuthStartUrl(key); }} data-testid={`integrations-oauth-${key}`}>

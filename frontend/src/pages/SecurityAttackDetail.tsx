@@ -19,17 +19,7 @@ export default function SecurityAttackDetail() {
   });
 
   return (
-    <StitchPageShell
-      title={data?.type ?? 'Attack detail'}
-      subtitle="Runtime attack event"
-      breadcrumb={
-        <nav className="settings-breadcrumb" aria-label="Breadcrumb">
-          <Link to="/security" className="settings-breadcrumb__link">Application Security</Link>
-          <span className="settings-breadcrumb__sep">/</span>
-          <span className="settings-breadcrumb__current" aria-current="page">{data?.type ?? 'Attack'}</span>
-        </nav>
-      }
-    >
+    <StitchPageShell title={data?.type ?? 'Attack detail'} subtitle="Runtime attack event">
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}
 

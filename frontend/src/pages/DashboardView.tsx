@@ -9,6 +9,7 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { Card } from '../components/ui/Card';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Button } from '../components/ui/Button';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 import { useTimeBounds } from '../hooks/useTimeBounds';
@@ -102,7 +103,22 @@ export default function DashboardView() {
         title={dashQuery.data?.name ?? 'Dashboard'}
         subtitle={dashQuery.data?.description ?? 'Drag tiles to reorder — layout saved locally'}
         actions={
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <DataExportMenu
+              getData={() =>
+                dashQuery.data
+                  ? [
+                      {
+                        dashboard: dashQuery.data,
+                        tiles: orderedTiles,
+                        sampleSeries: chartData,
+                      },
+                    ]
+                  : []
+              }
+              filenamePrefix={`dashboard-${id}`}
+              disabled={!dashQuery.data}
+            />
             {editMode ? (
               <Link to="/dashboards/$id" params={{ id }} search={{ edit: undefined }}>Done editing</Link>
             ) : (

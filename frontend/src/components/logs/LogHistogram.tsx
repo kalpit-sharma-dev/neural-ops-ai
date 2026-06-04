@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import { useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, Brush, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { chartAxisProps, chartTooltipStyle } from '../../lib/chartTheme';
 import type { LogHit } from '../../api/types';
 
@@ -10,6 +10,8 @@ interface LogHistogramProps {
 }
 
 export function LogHistogram({ hits, bucketMinutes = 15, onBrush }: LogHistogramProps) {
+  const [brushRange, setBrushRange] = useState<{ startIndex: number; endIndex: number } | null>(null);
+
   const data = useMemo(() => {
     if (hits.length === 0) return [];
     const bucketMs = bucketMinutes * 60 * 1000;
@@ -21,7 +23,8 @@ export function LogHistogram({ hits, bucketMinutes = 15, onBrush }: LogHistogram
     });
     return Array.from(buckets.entries())
       .sort(([a], [b]) => a - b)
-      .map(([ts, count]) => ({
+      .map(([ts, count], index) => ({
+        index,
         label: new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         count,
         start: new Date(ts),
@@ -29,11 +32,26 @@ export function LogHistogram({ hits, bucketMinutes = 15, onBrush }: LogHistogram
       }));
   }, [hits, bucketMinutes]);
 
+  useEffect(() => {
+    setBrushRange(null);
+  }, [hits]);
+
   if (data.length === 0) return null;
 
+  const applyBrush = (startIndex: number, endIndex: number) => {
+    const startRow = data[startIndex];
+    const endRow = data[endIndex];
+    if (startRow?.start && endRow?.end && onBrush) {
+      onBrush(startRow.start, endRow.end);
+    }
+  };
+
   return (
-    <div className="log-histogram" role="img" aria-label="Log volume over time">
-      <ResponsiveContainer width="100%" height={72}>
+    <div className="log-histogram" role="img" aria-label="Log volume over time — click or drag to narrow range">
+      {onBrush && (
+        <p className="log-histogram__hint muted">Click a bar or drag the brush below to filter by time</p>
+      )}
+      <ResponsiveContainer width="100%" height={onBrush ? 96 : 72}>
         <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <XAxis dataKey="label" {...chartAxisProps()} />
           <Tooltip contentStyle={chartTooltipStyle()} />
@@ -47,8 +65,30 @@ export function LogHistogram({ hits, bucketMinutes = 15, onBrush }: LogHistogram
             }}
             style={{ cursor: onBrush ? 'pointer' : 'default' }}
           />
+          {onBrush && data.length > 2 && (
+            <Brush
+              dataKey="label"
+              height={22}
+              stroke="var(--accent-primary)"
+              fill="var(--accent-primary-subtle)"
+              onChange={(range) => {
+                if (range && typeof range.startIndex === 'number' && typeof range.endIndex === 'number') {
+                  setBrushRange({ startIndex: range.startIndex, endIndex: range.endIndex });
+                }
+              }}
+            />
+          )}
         </BarChart>
       </ResponsiveContainer>
+      {brushRange && onBrush && (
+        <button
+          type="button"
+          className="ui-button ui-button--ghost ui-button--sm log-histogram__apply"
+          onClick={() => applyBrush(brushRange.startIndex, brushRange.endIndex)}
+        >
+          Apply brush selection
+        </button>
+      )}
     </div>
   );
 }

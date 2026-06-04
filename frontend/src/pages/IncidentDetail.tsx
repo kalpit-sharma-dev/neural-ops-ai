@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 import toast from 'react-hot-toast';
 import { Share2, TrendingUp } from 'lucide-react';
@@ -27,6 +27,7 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StatusDot } from '../components/ui/StatusDot';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { useRealtimeStore } from '../store/realtimeStore';
 
 const TABS = ['Overview', 'Timeline', 'Logs', 'Traces', 'Metrics', 'AI Analysis', 'Recommendations'] as const;
@@ -183,9 +184,6 @@ export default function IncidentDetail() {
   return (
     <div className="incident-detail-page">
       <header className="incident-detail-header">
-        <p className="muted incident-breadcrumb">
-          <Link to="/incidents">Incidents</Link> › {incident.title}
-        </p>
         <div className="incident-detail-header__row">
           <div>
             <h1>{incident.title}</h1>
@@ -199,6 +197,21 @@ export default function IncidentDetail() {
             </div>
           </div>
           <div className="incident-detail-actions">
+            <DataExportMenu
+              getData={() =>
+                incident
+                  ? [
+                      {
+                        incident,
+                        timeline: timelineQuery.data?.timeline ?? [],
+                        narrative: timelineQuery.data?.narrative,
+                      },
+                    ]
+                  : []
+              }
+              filenamePrefix={`incident-${id}`}
+              disabled={!incident}
+            />
             <Button variant="ghost" onClick={share}>
               <Share2 size={14} /> Share
             </Button>

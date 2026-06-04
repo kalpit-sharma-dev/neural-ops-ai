@@ -19,6 +19,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);
@@ -110,10 +111,24 @@ export default function AIOpsCenter() {
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
 
+  const exportRows = () => {
+    const rows: Record<string, unknown>[] = [];
+    if (rcaQuery.data) rows.push({ ...rcaQuery.data, recordType: 'rca', incidentId });
+    if (forecastMut.data) {
+      rows.push({ ...forecastMut.data, recordType: 'forecast', metric: forecastMetric, service: forecastService });
+    }
+    if (plan) rows.push({ recordType: 'autofix_plan', ...plan });
+    if (action) rows.push({ recordType: 'autofix_action', ...action });
+    return rows;
+  };
+
   return (
     <StitchPageShell
       title="AI Ops Center"
       subtitle="Explainable RCA, capacity forecasting, and guarded AutoFix remediation."
+      actions={
+        <DataExportMenu getData={exportRows} filenamePrefix="aiops" disabled={exportRows().length === 0} />
+      }
     >
       <div style={{ display: 'grid', gap: 24 }}>
         <Card title="Root cause analysis" data-testid="aiops-rca-card">

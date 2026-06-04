@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 import { useTimeBounds } from '../hooks/useTimeBounds';
@@ -107,7 +108,22 @@ export default function Notebooks() {
   const chartDefaults = chartCartesianDefaults();
 
   return (
-    <StitchPageShell title="Notebooks" subtitle="Saved analysis notebooks">
+    <StitchPageShell
+      title="Notebooks"
+      subtitle="Saved analysis notebooks"
+      actions={
+        <DataExportMenu
+          getData={() =>
+            (data ?? []).map((n) => ({
+              ...n,
+              cellOutputs: results[n.id] ?? [],
+            }))
+          }
+          filenamePrefix="notebooks"
+          disabled={!data?.length}
+        />
+      }
+    >
       <Card title="New notebook" style={{ marginBottom: 24 }}>
         <div className="form-stack">
           <Input label="Notebook name" placeholder="Weekly error review" value={name} onChange={(e) => setName(e.target.value)} />

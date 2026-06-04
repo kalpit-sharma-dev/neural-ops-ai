@@ -26,5 +26,8 @@ func (c *Config) ValidateProduction() error {
 	if c.Auth.JWTPrivateKeyPEM == "" && c.Auth.JWTPublicKeyPEM == "" {
 		return fmt.Errorf("%s: JWT key pair must be configured (not dev defaults)", env)
 	}
+	if strings.TrimSpace(c.Postgres.DSN) == "" {
+		return fmt.Errorf("%s: postgres.dsn is required (in-memory demo mode disabled)", env)
+	}
 	return nil
 }

@@ -19,14 +19,17 @@ import {
   type QueryExplainResponse,
 } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
+import { useI18n } from '../i18n/I18nProvider';
 
 export default function QueryWorkbench() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [query, setQuery] = useState('error rate payment-service');
   const [from, setFrom] = useState<'all' | 'logs' | 'metrics' | 'traces' | 'events'>('all');
@@ -153,7 +156,11 @@ export default function QueryWorkbench() {
   }, [hits]);
 
   return (
-    <StitchPageShell title="Query Workbench" subtitle="NexQL cross-signal search with explain plan and saved queries">
+    <StitchPageShell
+      title="Query Workbench"
+      subtitle="NexQL cross-signal search with explain plan and saved queries"
+      actions={<DataExportMenu getData={() => hits} filenamePrefix="query-results" disabled={!hits.length} />}
+    >
       <Card title="Unified query">
         <div className="form-stack">
           <Input label="Query" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -169,10 +176,10 @@ export default function QueryWorkbench() {
           </Select>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Button variant="secondary" onClick={() => explainMut.mutate()} disabled={explainMut.isPending || !query.trim()}>
-              Explain plan
+              {t('page.query-workbench.explain')}
             </Button>
             <Button variant="primary" onClick={() => runMut.mutate()} disabled={runMut.isPending || !query.trim()}>
-              Run query
+              {t('page.query-workbench.runQuery')}
             </Button>
           </div>
           {explain && (

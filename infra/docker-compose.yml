@@ -113,11 +113,12 @@ services:
     networks:
       - neuralops-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health | grep -q '\"status\":\"\\(green\\|yellow\\)'"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      # wait_for_status blocks until shards recover (avoids false RED failures on cold start)
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=60s' >/dev/null"]
+      interval: 15s
+      timeout: 65s
+      retries: 8
+      start_period: 120s
 
   qdrant:
     image: qdrant/qdrant:v1.12.0

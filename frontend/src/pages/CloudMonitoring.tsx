@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 const PROVIDERS = ['aws', 'azure', 'gcp'] as const;
 
@@ -29,7 +30,32 @@ export default function CloudMonitoring() {
   });
 
   return (
-    <StitchPageShell title="Cloud monitoring" subtitle="AWS, Azure, and GCP observability dashboards">
+    <StitchPageShell
+      title="Cloud monitoring"
+      subtitle="AWS, Azure, and GCP observability dashboards"
+      actions={
+        <DataExportMenu
+          getData={() => {
+            const rows: Record<string, unknown>[] = (data ?? []).map((d) => ({ ...d, recordType: 'dashboard', provider }));
+            if (series?.points?.length) {
+              rows.push(
+                ...series.points.map((p) => ({
+                  recordType: 'metric_point',
+                  provider,
+                  metric: selectedMetric,
+                  region: series.region,
+                  unit: series.unit,
+                  ...p,
+                })),
+              );
+            }
+            if (serverless?.length) rows.push(...serverless.map((f) => ({ recordType: 'serverless', ...f })));
+            return rows;
+          }}
+          filenamePrefix={`cloud-monitoring-${provider}`}
+        />
+      }
+    >
       <div className="tab-bar" style={{ marginBottom: 24 }}>
         {PROVIDERS.map((p) => (
           <button

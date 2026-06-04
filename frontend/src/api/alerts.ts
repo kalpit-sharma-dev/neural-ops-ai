@@ -103,6 +103,19 @@ export async function createSilence(body: {
   return postData<Silence>('/alerts/silences', body);
 }
 
+export interface SilencePreviewResult {
+  matchedAlerts: number;
+  wouldSuppress: boolean;
+}
+
+export async function previewAlertSilence(body: {
+  servicePattern?: string;
+  service?: string;
+  matchers?: Record<string, string>;
+}) {
+  return postData<SilencePreviewResult>('/alerts/silences/preview', body);
+}
+
 export interface EscalationLevel {
   level: number;
   after: string;

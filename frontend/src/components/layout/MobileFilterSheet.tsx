@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useFilterStore, type Environment, type TimeRangePreset } from '../../store/filterStore';
+import { TIME_RANGE_GROUPS } from '../../lib/timeRangePresets';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { toLocalInputValue } from './TimeRangePicker';
@@ -74,10 +75,11 @@ export function MobileFilterSheet({ open, onOpenChange }: MobileFilterSheetProps
             <option value="DEV">DEV</option>
           </Select>
           <Select label="Time range" value={timeRange} onChange={(e) => setTimeRange(e.target.value as TimeRangePreset)}>
-            <option value="1h">Last 1h</option>
-            <option value="6h">Last 6h</option>
-            <option value="24h">Last 24h</option>
-            <option value="7d">Last 7d</option>
+            {TIME_RANGE_GROUPS.flatMap((g) => g.presets).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
             <option value="custom">Custom range</option>
           </Select>
           {timeRange === 'custom' && (

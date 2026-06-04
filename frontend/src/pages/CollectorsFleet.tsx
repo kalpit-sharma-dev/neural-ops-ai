@@ -11,6 +11,7 @@ import {
   type CollectorPipelineStage,
 } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -115,7 +116,20 @@ export default function CollectorsFleet() {
   });
 
   return (
-    <StitchPageShell title="Collectors Fleet" subtitle="Agent enrollment, health, and pipeline lifecycle">
+    <StitchPageShell
+      title="Collectors Fleet"
+      subtitle="Agent enrollment, health, and pipeline lifecycle"
+      actions={
+        <DataExportMenu
+          getData={() => [
+            ...(fleetQuery.data ?? []).map((a) => ({ recordType: 'agent', ...a })),
+            ...(pipelinesQuery.data ?? []).map((p) => ({ recordType: 'pipeline', ...p })),
+          ]}
+          filenamePrefix="collectors-fleet"
+          disabled={!fleetQuery.data?.length && !pipelinesQuery.data?.length}
+        />
+      }
+    >
       <div className="dashboard-row-2">
         <Card title="Enroll collector agent">
           <div className="form-stack">

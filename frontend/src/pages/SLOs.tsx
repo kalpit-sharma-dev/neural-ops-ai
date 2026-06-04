@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 
 export default function SLOs() {
@@ -43,7 +44,13 @@ export default function SLOs() {
   });
 
   return (
-    <StitchPageShell title="SLOs" subtitle="Service level objectives and error budgets">
+    <StitchPageShell
+      title="SLOs"
+      subtitle="Service level objectives and error budgets"
+      actions={
+        <DataExportMenu getData={() => data ?? []} filenamePrefix="slos" disabled={!data?.length} />
+      }
+    >
       <div className="dashboard-row-2" style={{ marginBottom: 24 }}>
         <Card title="Create SLO">
           <div className="form-stack">

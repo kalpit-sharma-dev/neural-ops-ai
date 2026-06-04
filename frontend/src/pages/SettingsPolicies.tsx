@@ -5,7 +5,7 @@ import { getApiErrorMessage } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 
 export default function SettingsPolicies() {
   const queryClient = useQueryClient();
@@ -26,7 +26,6 @@ export default function SettingsPolicies() {
     <StitchPageShell
       title="Tenant policies"
       subtitle="Retention and ingestion limits"
-      breadcrumb={<SettingsBreadcrumb page="Tenant policies" />}
     >
       <Card title="Data governance">
         <form

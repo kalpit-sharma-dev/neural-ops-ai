@@ -9,12 +9,12 @@ import (
 
 // LogTierPolicy defines hot/warm/cold retention per signal (LOG-05).
 type LogTierPolicy struct {
-	TenantID       string    `json:"tenantId"`
-	HotRetentionDays  int    `json:"hotRetentionDays"`
-	WarmRetentionDays int    `json:"warmRetentionDays"`
-	ColdRetentionDays int    `json:"coldRetentionDays"`
-	RestoreSLAHours   int    `json:"restoreSlaHours"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	TenantID          string    `json:"tenantId"`
+	HotRetentionDays  int       `json:"hotRetentionDays"`
+	WarmRetentionDays int       `json:"warmRetentionDays"`
+	ColdRetentionDays int       `json:"coldRetentionDays"`
+	RestoreSLAHours   int       `json:"restoreSlaHours"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 func (h *Handler) registerLogRoutes(v1 *gin.RouterGroup) {
@@ -22,6 +22,7 @@ func (h *Handler) registerLogRoutes(v1 *gin.RouterGroup) {
 	{
 		logs.GET("/tiering", h.GetLogTierPolicy)
 		logs.PUT("/tiering", h.UpdateLogTierPolicy)
+		logs.GET("/patterns", h.GetLogPatterns)
 	}
 }
 

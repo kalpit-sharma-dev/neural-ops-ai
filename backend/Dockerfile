@@ -10,6 +10,8 @@ RUN apk add --no-cache git ca-certificates
 WORKDIR /src
 
 COPY go.mod go.sum ./
+# Nested module required by root replace before go mod download.
+COPY pkg/nexagent/ebpf/go.mod pkg/nexagent/ebpf/go.sum ./pkg/nexagent/ebpf/
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 

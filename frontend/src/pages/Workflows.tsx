@@ -19,6 +19,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Input } from '../components/ui/Input';
 import { MetricCard } from '../components/ui/MetricCard';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { KpiRow, StitchPageShell } from '../components/stitch';
 
 export default function Workflows() {
@@ -87,7 +88,12 @@ export default function Workflows() {
     <StitchPageShell
       title="Workflows"
       subtitle="Automation and remediation"
-      actions={<Link to="/workflows/editor" search={{ id: undefined }}>Visual editor →</Link>}
+      actions={
+        <>
+          <DataExportMenu getData={() => workflows} filenamePrefix="workflows" disabled={!workflows.length} />
+          <Link to="/workflows/editor" search={{ id: undefined }}>Visual editor →</Link>
+        </>
+      }
     >
       {workflows.length > 0 && (
         <KpiRow columns={3}>
@@ -99,9 +105,25 @@ export default function Workflows() {
 
       <Card title="Create workflow">
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input label="Trigger" placeholder="incident.p1" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
-          <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
+          <Input
+            label="Name"
+            value={name}
+            data-testid="workflows-create-name"
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Input
+            label="Trigger"
+            placeholder="incident.p1"
+            value={trigger}
+            data-testid="workflows-create-trigger"
+            onChange={(e) => setTrigger(e.target.value)}
+          />
+          <Button
+            variant="primary"
+            disabled={!name}
+            data-testid="workflows-create-btn"
+            onClick={() => createMut.mutate()}
+          >
             <Plus size={15} /> Create
           </Button>
         </div>

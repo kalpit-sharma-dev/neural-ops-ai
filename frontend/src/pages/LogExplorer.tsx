@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AnimatePresence, motion } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
-import { Bookmark, Copy, Download, Link2, Sparkles, Trash2 } from 'lucide-react';
+import { Bookmark, Copy, Sparkles, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { aiSearch, searchLogs } from '../api/search';
 import { fetchDashboardOverview } from '../api/dashboard';
@@ -21,11 +21,14 @@ import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { ErrorState, LoadingState, PageHeader } from '../components/ui/PageStates';
 import { useFilterStore } from '../store/filterStore';
 import { useAuthStore } from '../store/authStore';
+import { LogQueryActions } from '../components/logs/LogQueryActions';
 import { highlightMatches, hasStackTrace } from '../utils/highlightText';
-import { buildShareLink, exportLogsCsv, exportLogsJson } from '../utils/logExport';
+import { buildLogFilterExpression } from '../utils/logExport';
 import { deleteSavedSearch, listSavedSearches, saveSearch, type SavedSearch } from '../lib/savedSearches';
 import { useLogTail } from '../hooks/useLogTail';
 import { loadLogColumns, saveLogColumns, type LogColumnPref } from '../lib/logColumnPrefs';
+import { useI18n } from '../i18n/I18nProvider';
+import { pageSubtitle, pageTitle } from '../i18n/messages';
 
 type SearchMode = 'text' | 'regex' | 'ai';
 
@@ -53,6 +56,7 @@ function applyClientFilters(hits: LogHit[], filters: ReturnType<typeof useFilter
 }
 
 export default function LogExplorer() {
+  const { locale, t } = useI18n();
   const urlSearch = useSearch({ strict: false }) as {
     service?: string;
     traceId?: string;
@@ -103,6 +107,32 @@ export default function LogExplorer() {
     return getTimeBounds();
   }, [urlSearch.from, urlSearch.to, getTimeBounds]);
 
+  const filterExpression = useMemo(
+    () =>
+      buildLogFilterExpression({
+        query: mode === 'text' ? query : mode === 'regex' ? `regex:${query}` : query,
+        services,
+        severities,
+        host,
+        pod,
+        environment,
+      }),
+    [query, mode, services, severities, host, pod, environment],
+  );
+
+  const searchParams = useMemo(
+    () => ({
+      query: mode === 'text' ? query : undefined,
+      messageRegex: mode === 'regex' ? query : undefined,
+      host: host || undefined,
+      pod: pod || undefined,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      size: 1000,
+    }),
+    [query, mode, host, pod, start, end],
+  );
+
   const dashboardQuery = useQuery({
     queryKey: ['dashboard-overview'],
     queryFn: fetchDashboardOverview,
@@ -123,15 +153,7 @@ export default function LogExplorer() {
         const result = await aiSearch(query, 500);
         return result.results;
       }
-      return searchLogs({
-        query: mode === 'text' ? query : undefined,
-        messageRegex: mode === 'regex' ? query : undefined,
-        host: host || undefined,
-        pod: pod || undefined,
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
-        size: 1000,
-      });
+      return searchLogs(searchParams);
     },
     enabled: query.length > 0 && !(liveTail && !tailPaused),
     refetchInterval: liveTail && !tailPaused ? false : undefined,
@@ -177,11 +199,10 @@ export default function LogExplorer() {
     toast.success('Trace ID copied');
   }, []);
 
-  const shareLink = useCallback(() => {
-    const link = buildShareLink(query, start.toISOString(), end.toISOString(), { mode });
-    void navigator.clipboard.writeText(link);
-    toast.success('Share link copied');
-  }, [query, start, end, mode]);
+  const excludeFromQuery = useCallback((term: string) => {
+    const exclusion = `-NOT "${term.replace(/"/g, '\\"')}"`;
+    setQuery((q) => (q.trim() ? `${q.trim()} ${exclusion}` : exclusion));
+  }, []);
 
   const clearTail = () => {
     tail.clear();
@@ -207,7 +228,10 @@ export default function LogExplorer() {
 
   return (
     <div>
-      <PageHeader title="Log Explorer" subtitle="Search and analyze logs with AI-powered filters" />
+      <PageHeader
+        title={pageTitle(locale, 'logs', 'Log Explorer')}
+        subtitle={pageSubtitle(locale, 'logs', 'Search and analyze logs with AI-powered filters')}
+      />
 
       <div className={`log-explorer ${selected ? 'log-explorer--detail' : ''}`}>
         <LogFiltersSidebar
@@ -219,7 +243,7 @@ export default function LogExplorer() {
         <section className="log-stream">
           <div className="log-stream__header">
             <SearchInput
-              placeholder="Search logs… or try 'payment failures after 10pm' (AI)"
+              placeholder={t('page.logs.searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               shortcut="⌘K"
@@ -232,7 +256,7 @@ export default function LogExplorer() {
               ))}
               <label className="checkbox-row log-stream__live">
                 <input type="checkbox" checked={liveTail} onChange={(e) => setLiveTail(e.target.checked)} />
-                Live tail {liveTail && (tail.connected ? '(WS)' : '(connecting…)')}
+                {t('page.logs.liveTail')} {liveTail && (tail.connected ? '(WS)' : '(connecting…)')}
               </label>
               {liveTail && (
                 <>
@@ -281,6 +305,16 @@ export default function LogExplorer() {
               ))}
             </div>
           </div>
+
+          {(filterExpression || services.length > 0 || severities.length > 0) && (
+            <div className="log-filter-bar">
+              <span className="log-filter-bar__label">Active filter</span>
+              <code className="log-filter-bar__expr">{filterExpression || query}</code>
+              <span className="log-filter-bar__range muted">
+                {format(start, 'MMM d HH:mm')} → {format(end, 'MMM d HH:mm')}
+              </span>
+            </div>
+          )}
 
           {hits.length > 0 && (
             <LogHistogram
@@ -402,17 +436,17 @@ export default function LogExplorer() {
               {searchQuery.data?.total ?? hits.length} results · {searchQuery.data?.tookMs ?? 0}ms
               {liveTail && (tailPaused ? ' · tail paused' : ' · live')}
             </span>
-            <div className="log-stream__export">
-              <Button variant="ghost" size="sm" disabled={!hits.length} onClick={() => exportLogsJson(hits, query)}>
-                <Download size={14} /> JSON
-              </Button>
-              <Button variant="ghost" size="sm" disabled={!hits.length} onClick={() => exportLogsCsv(hits)}>
-                <Download size={14} /> CSV
-              </Button>
-              <Button variant="ghost" size="sm" disabled={!query} onClick={shareLink}>
-                <Link2 size={14} /> Share
-              </Button>
-            </div>
+            <LogQueryActions
+              query={query}
+              mode={mode}
+              hits={hits}
+              start={start}
+              end={end}
+              searchParams={searchParams}
+              filterExpression={filterExpression}
+              onExcludeQuery={excludeFromQuery}
+              disabled={!query}
+            />
           </footer>
         </section>
 

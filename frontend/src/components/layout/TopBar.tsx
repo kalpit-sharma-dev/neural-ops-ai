@@ -3,7 +3,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useRealtimeStore } from '../../store/realtimeStore';
 import { logoutSession } from '../../api/auth';
 import { SearchInput } from '../ui/SearchInput';
-import { Bell, LogOut, Menu, Monitor, Moon, Network, Sun } from 'lucide-react';
+import { Bell, LogOut, Menu, Monitor, Moon, Rows3, Network, Sun } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import toast from 'react-hot-toast';
 import { useThemeStore, type ThemePreference } from '../../store/themeStore';
@@ -12,7 +12,9 @@ import { useSidebarStore } from './Sidebar';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { EnvPillBar } from './EnvPillBar';
 import { TimeRangePicker } from './TimeRangePicker';
+import { RefreshControl } from './RefreshControl';
 import { LocaleSwitcher } from './LocaleSwitcher';
+import { useUiPreferencesStore } from '../../store/uiPreferencesStore';
 
 const THEME_LABEL: Record<ThemePreference, string> = {
   light: 'Light',
@@ -31,6 +33,8 @@ export function TopBar() {
   const connected = useRealtimeStore((s) => s.connected);
   const preference = useThemeStore((s) => s.preference);
   const cyclePreference = useThemeStore((s) => s.cyclePreference);
+  const density = useUiPreferencesStore((s) => s.density);
+  const cycleDensity = useUiPreferencesStore((s) => s.cycleDensity);
   const setPaletteOpen = useCommandPaletteStore((s) => s.setOpen);
   const setMobileNav = useSidebarStore((s) => s.setMobileOpen);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -72,6 +76,7 @@ export function TopBar() {
         <div className="topbar__controls topbar__controls--desktop">
           <EnvPillBar />
           <TimeRangePicker />
+          <RefreshControl />
           <SearchInput
             placeholder="Search… (⌘K)"
             className="topbar__search"
@@ -93,6 +98,15 @@ export function TopBar() {
 
         <div className="topbar__actions">
           <LocaleSwitcher />
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={cycleDensity}
+            aria-label={`Table density: ${density}. Click to toggle.`}
+            title={`Density: ${density}`}
+          >
+            <Rows3 size={18} />
+          </button>
           <button
             type="button"
             className="theme-toggle"

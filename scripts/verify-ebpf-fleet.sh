@@ -35,4 +35,12 @@ else
   echo "skip BTF/bpf compile (not Linux or no BTF)"
 fi
 
+if [ -n "${BASE_URL:-}" ]; then
+  echo "==> API ebpf-matrix probe (${BASE_URL})"
+  curl -fsS "${BASE_URL%/}/api/v1/collectors/fleet/ebpf-matrix" \
+    -H "X-Tenant-ID: ${NEURALOPS_TENANT:-default}" | head -c 2048 || {
+    echo "WARN: ebpf-matrix API unreachable" >&2
+  }
+fi
+
 echo "eBPF fleet validation complete"

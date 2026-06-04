@@ -10,6 +10,7 @@ import { Card } from '../components/ui/Card';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { MetricCard } from '../components/ui/MetricCard';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { KpiRow, StitchPageShell } from '../components/stitch';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 import { useTimeBounds } from '../hooks/useTimeBounds';
@@ -64,6 +65,13 @@ export default function EntityPage() {
     );
   }
 
+  const exportRows = () => {
+    if (tab === 'traces') return tracesQuery.data ?? [];
+    if (tab === 'metrics') return latencyQuery.data?.points ?? [];
+    if (tab === 'overview' && node) return [{ entityId: id, node }];
+    return [{ entityType, entityId: id, displayName: node?.displayName ?? id, health }];
+  };
+
   return (
     <EntityShell
       entityType={entityType}
@@ -72,6 +80,13 @@ export default function EntityPage() {
       health={health}
       activeTab={tab}
       onTabChange={setTab}
+      headerActions={
+        <DataExportMenu
+          getData={exportRows}
+          filenamePrefix={`entity-${entityType}-${id}-${tab}`}
+          disabled={tab === 'logs'}
+        />
+      }
     >
       {topologyQuery.isLoading && tab === 'overview' && <LoadingState />}
       {topologyQuery.error && <ErrorState message={getApiErrorMessage(topologyQuery.error)} onRetry={() => topologyQuery.refetch()} />}

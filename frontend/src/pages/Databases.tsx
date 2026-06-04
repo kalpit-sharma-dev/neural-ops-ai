@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 type StmtSort = 'avgMs' | 'calls' | 'totalMs';
 
@@ -44,7 +45,21 @@ export default function Databases() {
   };
 
   return (
-    <StitchPageShell title="Databases" subtitle="Query performance and connection pools">
+    <StitchPageShell
+      title="Databases"
+      subtitle="Query performance and connection pools"
+      actions={
+        <DataExportMenu
+          getData={() => {
+            if (selected && sortedStatements.length) {
+              return sortedStatements.map((s) => ({ databaseId: selected, ...s }));
+            }
+            return dbQuery.data ?? [];
+          }}
+          filenamePrefix={selected ? `database-statements-${selected}` : 'databases'}
+        />
+      }
+    >
       {dbQuery.isLoading && <LoadingState />}
       {dbQuery.error && <ErrorState message={getApiErrorMessage(dbQuery.error)} onRetry={() => dbQuery.refetch()} />}
       {!dbQuery.error && dbQuery.isFetched && (dbQuery.data?.length ?? 0) === 0 && (

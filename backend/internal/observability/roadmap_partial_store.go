@@ -64,7 +64,8 @@ func defaultSignalPolicies() []SignalPolicy {
 
 func defaultServiceCatalog() []ServiceCatalogEntry {
 	return []ServiceCatalogEntry{
-		{Service: "payment-service", DisplayName: "Payments API", OwnerTeam: "payments-platform", OwnerEmail: "payments-oncall@bank.example", Tier: "P0", RunbookURL: "/docs/RUNBOOK.md#payment-service"},
+		{Service: "payment-service", DisplayName: "Payments API", OwnerTeam: "payments-platform", OwnerEmail: "payments-oncall@bank.example", Tier: "P0",
+			RunbookURL: "/docs/RUNBOOK.md#payment-service", RepoURL: "https://github.com/acme/payment-service", Release: "2026.06.02.4", CommitSHA: "a1b2c3d4"},
 		{Service: "ledger-service", DisplayName: "Core Ledger", OwnerTeam: "ledger", OwnerEmail: "ledger-oncall@bank.example", Tier: "P0", Dependencies: []string{"payment-service"}},
 		{Service: "api-gateway", DisplayName: "API Gateway", OwnerTeam: "platform", OwnerEmail: "platform-oncall@bank.example", Tier: "P1"},
 	}
@@ -497,13 +498,13 @@ func (s *Store) RecordDevOpsDeploy(provider, service, version, commit string) De
 
 func (s *Store) IntegrationsWithDevOps() []Integration {
 	return []Integration{
-		{ID: "int-1", Name: "Slack", Type: "slack", Status: "connected", Connected: true},
-		{ID: "int-2", Name: "Jira", Type: "jira", Status: "disconnected", Connected: false},
-		{ID: "int-3", Name: "PagerDuty", Type: "pagerduty", Status: "connected", Connected: true},
-		{ID: "int-4", Name: "GitHub", Type: "github", Status: "disconnected", Connected: false},
-		{ID: "int-5", Name: "GitLab", Type: "gitlab", Status: "disconnected", Connected: false},
-		{ID: "int-6", Name: "Jenkins", Type: "jenkins", Status: "disconnected", Connected: false},
-		{ID: "int-7", Name: "ServiceNow", Type: "servicenow", Status: "disconnected", Connected: false},
+		{ID: "int-1", IntegrationKey: "slack", Name: "Slack", Type: "slack", Status: "connected", Connected: true},
+		{ID: "int-2", IntegrationKey: "jira", Name: "Jira", Type: "jira", Status: "disconnected", Connected: false},
+		{ID: "int-3", IntegrationKey: "pagerduty", Name: "PagerDuty", Type: "pagerduty", Status: "connected", Connected: true},
+		{ID: "int-4", IntegrationKey: "github", Name: "GitHub", Type: "github", Status: "disconnected", Connected: false},
+		{ID: "int-5", IntegrationKey: "gitlab", Name: "GitLab", Type: "gitlab", Status: "disconnected", Connected: false},
+		{ID: "int-6", IntegrationKey: "jenkins", Name: "Jenkins", Type: "jenkins", Status: "disconnected", Connected: false},
+		{ID: "int-7", IntegrationKey: "servicenow", Name: "ServiceNow", Type: "servicenow", Status: "disconnected", Connected: false},
 	}
 }
 
@@ -631,4 +632,3 @@ func (s *Store) EBPFFlowSamples(host string) []EBPFFlowSample {
 	}
 	return out
 }
-

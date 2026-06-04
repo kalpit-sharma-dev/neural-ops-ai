@@ -11,7 +11,7 @@ import {
   type AlertPolicy,
 } from '../api/observability';
 import { getApiErrorMessage } from '../api/client';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -86,7 +86,6 @@ export default function AlertPolicies() {
     <StitchPageShell
       title="Alert policies"
       subtitle="Routing, escalation, runbook context, and materialized fatigue scores"
-      breadcrumb={<SettingsBreadcrumb page="Alert policies" />}
     >
       <Card title="Create policy">
         <form

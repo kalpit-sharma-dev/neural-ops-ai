@@ -22,6 +22,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { StatusDot } from '../components/ui/StatusDot';
 import { CardSkeleton } from '../components/ui/Skeleton';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { ErrorState, PageHeader } from '../components/ui/PageStates';
 import { KpiRow } from '../components/stitch';
 import type { IncidentSummary } from '../api/types';
@@ -145,6 +146,12 @@ export default function Dashboard() {
               {tr('dashboard.updated', 'Updated')}{' '}
               {formatDistanceToNow(dataUpdatedAt ? new Date(dataUpdatedAt) : lastRefresh, { addSuffix: true })}
             </span>
+            <DataExportMenu
+              getData={() => (data ? [data] : [])}
+              filenamePrefix="dashboard-overview"
+              formats={['json']}
+              label="Export"
+            />
             <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isFetching}>
               <RefreshCw size={14} className={isFetching ? 'spin' : ''} /> {tr('dashboard.refresh', 'Refresh')}
             </Button>

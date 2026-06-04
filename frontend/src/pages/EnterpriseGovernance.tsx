@@ -23,6 +23,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 const TABS = ['ABAC', 'Residency', 'Multi-region', 'Branding', 'MSP tenants', 'Exports'] as const;
 
@@ -144,7 +145,33 @@ export default function EnterpriseGovernance() {
   }, [brandingQuery.data]);
 
   return (
-    <StitchPageShell title="Enterprise governance" subtitle="ABAC, residency, MSP white-label, and export connectors.">
+    <StitchPageShell
+      title="Enterprise governance"
+      subtitle="ABAC, residency, MSP white-label, and export connectors."
+      actions={
+        <DataExportMenu
+          getData={() => {
+            switch (tab) {
+              case 'ABAC':
+                return abacQuery.data ? [abacQuery.data] : [];
+              case 'Residency':
+                return residencyQuery.data ? [residencyQuery.data] : [];
+              case 'Multi-region':
+                return regionsQuery.data ? [regionsQuery.data] : [];
+              case 'Branding':
+                return brandingQuery.data ? [brandingQuery.data] : [];
+              case 'MSP tenants':
+                return mspQuery.data ?? [];
+              case 'Exports':
+                return lastExport ? [lastExport] : [];
+              default:
+                return [];
+            }
+          }}
+          filenamePrefix={`governance-${tab.replace(/\s+/g, '-').toLowerCase()}`}
+        />
+      }
+    >
       <div className="tab-bar" style={{ marginBottom: 24 }}>
         {TABS.map((t) => (
           <button

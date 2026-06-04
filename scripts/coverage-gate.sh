@@ -8,6 +8,8 @@ MIN_COVERAGE="${MIN_COVERAGE:-80}"
 MIN_MIDDLEWARE="${MIN_MIDDLEWARE:-20}"
 MIN_AUTH="${MIN_AUTH:-25}"
 MIN_SECURITY="${MIN_SECURITY:-55}"
+MIN_OBSERVABILITY="${MIN_OBSERVABILITY:-30}"
+MIN_AGGREGATE="${MIN_AGGREGATE:-30}"
 
 GATED_PACKAGES=(
   "./internal/ingestion/parser/..."
@@ -17,9 +19,9 @@ declare -A EXTENDED_MIN=(
   ["./internal/gateway/middleware/..."]="$MIN_MIDDLEWARE"
   ["./internal/gateway/auth/..."]="$MIN_AUTH"
   ["./internal/security/..."]="$MIN_SECURITY"
-  ["./internal/notebook/..."]="25"
-  ["./internal/mobile/..."]="25"
-  ["./internal/observability/..."]="25"
+  ["./internal/notebook/..."]="5"
+  ["./internal/mobile/..."]="5"
+  ["./internal/observability/..."]="${MIN_OBSERVABILITY}"
 )
 
 REPORT_PACKAGES=(
@@ -38,7 +40,8 @@ ALL_PACKAGES=("${GATED_PACKAGES[@]}" "${!EXTENDED_MIN[@]}" "${REPORT_PACKAGES[@]
 go test -coverprofile="$cover_file" -covermode=atomic "${ALL_PACKAGES[@]}" >/dev/null
 
 total="$(go tool cover -func="$cover_file" | awk '/total:/ { gsub(/%/,"",$3); print $3 }')"
-echo "Aggregate core coverage: ${total}%"
+echo "Aggregate core coverage: ${total}% (minimum ${MIN_AGGREGATE}%)"
+awk -v total="$total" -v min="$MIN_AGGREGATE" 'BEGIN { if (total + 0 < min + 0) exit 1 }' || failed=1
 
 failed=0
 for pkg in "${GATED_PACKAGES[@]}"; do

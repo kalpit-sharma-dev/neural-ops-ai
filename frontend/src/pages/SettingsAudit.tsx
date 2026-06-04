@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAuditLog } from '../api/observability';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
+import { StitchPageShell } from '../components/stitch';
 
 export default function SettingsAudit() {
   const { data, isLoading } = useQuery({ queryKey: ['admin-audit'], queryFn: fetchAuditLog });
@@ -11,7 +12,9 @@ export default function SettingsAudit() {
     <StitchPageShell
       title="Audit Log"
       subtitle="Configuration and security events"
-      breadcrumb={<SettingsBreadcrumb page="Audit Log" />}
+      actions={
+        <DataExportMenu getData={() => data ?? []} filenamePrefix="audit-log" disabled={!data?.length} />
+      }
     >
       {isLoading && <LoadingState />}
       <Card title="Recent events">

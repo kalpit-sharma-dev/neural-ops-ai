@@ -7,14 +7,17 @@ import { PromQLEditor } from '../components/metrics/PromQLEditor';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { Select } from '../components/ui/Select';
 import { chartCartesianDefaults } from '../lib/chartTheme';
 import { useTimeBounds } from '../hooks/useTimeBounds';
+import { useI18n } from '../i18n/I18nProvider';
 
 type ChartType = 'line' | 'bar' | 'stat' | 'table';
 
 export default function MetricsExplorer() {
+  const { t } = useI18n();
   const [metric, setMetric] = useState('latency_p95');
   const [service, setService] = useState('payment-service');
   const [chartType, setChartType] = useState<ChartType>('line');
@@ -66,7 +69,18 @@ export default function MetricsExplorer() {
   };
 
   return (
-    <StitchPageShell title="Metrics Explorer" subtitle="Browse catalog metrics or run PromQL">
+    <StitchPageShell
+      title="Metrics Explorer"
+      subtitle="Browse catalog metrics or run PromQL"
+      actions={
+        <DataExportMenu
+          getData={() => activeSeries?.points ?? []}
+          filenamePrefix={usePromql ? 'metrics-promql' : `metrics-${metric}`}
+          meta={{ service, promql: usePromql ? promql : undefined }}
+          disabled={!activeSeries?.points?.length}
+        />
+      }
+    >
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div className="pill-group">
           {(['line', 'bar', 'stat', 'table'] as ChartType[]).map((t) => (
@@ -106,7 +120,7 @@ export default function MetricsExplorer() {
       {usePromql && (
         <div style={{ marginBottom: 24 }}>
           <PromQLEditor value={promql} onChange={setPromql} onRun={runPromql} error={promqlError} />
-          <Button variant="primary" style={{ marginTop: 8 }} onClick={runPromql}>Run query</Button>
+          <Button variant="primary" style={{ marginTop: 8 }} onClick={runPromql}>{t('page.metrics.runQuery')}</Button>
         </div>
       )}
 

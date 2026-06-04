@@ -10,6 +10,7 @@ import { Card } from '../components/ui/Card';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
 import { StitchPageShell } from '../components/stitch';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 
 function sparkline(points: number[]) {
   return points.map((value, i) => ({ i, value }));
@@ -28,7 +29,12 @@ export default function Infrastructure() {
     <StitchPageShell
       title="Infrastructure"
       subtitle="Host monitoring"
-      actions={<Link to="/kubernetes">Kubernetes →</Link>}
+      actions={
+        <>
+          <DataExportMenu getData={() => data ?? []} filenamePrefix="infrastructure-hosts" disabled={!data?.length} />
+          <Link to="/kubernetes">Kubernetes →</Link>
+        </>
+      }
     >
       {isLoading && <LoadingState />}
       {error && <ErrorState message={getApiErrorMessage(error)} onRetry={() => refetch()} />}

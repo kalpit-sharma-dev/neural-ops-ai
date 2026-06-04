@@ -57,6 +57,7 @@ const CloudFinOpsNetwork = lazyPage(() => import('./pages/CloudFinOpsNetwork'));
 const BusinessObservability = lazyPage(() => import('./pages/BusinessObservability'));
 const EnterpriseGovernance = lazyPage(() => import('./pages/EnterpriseGovernance'));
 const NFRCertification = lazyPage(() => import('./pages/NFRCertification'));
+const ReportsHub = lazyPage(() => import('./pages/ReportsHub'));
 const WorkflowEditor = lazyPage(() => import('./pages/WorkflowEditor'));
 const Integrations = lazyPage(() => import('./pages/Integrations'));
 const TraceCompare = lazyPage(() => import('./pages/TraceCompare'));
@@ -189,6 +190,11 @@ const nfrCertificationRoute = createRoute({
   path: '/nfr-certification',
   component: NFRCertification,
 });
+const reportsRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/reports',
+  component: ReportsHub,
+});
 const queryWorkbenchRoute = createRoute({ getParentRoute: () => authedRoute, path: '/query-workbench', component: QueryWorkbench });
 const collectorsFleetRoute = createRoute({ getParentRoute: () => authedRoute, path: '/collectors/fleet', component: CollectorsFleet });
 const aiOpsCenterRoute = createRoute({ getParentRoute: () => authedRoute, path: '/ai-ops', component: AIOpsCenter });
@@ -280,6 +286,7 @@ const routeTree = rootRoute.addChildren([
     businessObservabilityRoute,
     enterpriseGovernanceRoute,
     nfrCertificationRoute,
+    reportsRoute,
     queryWorkbenchRoute,
     collectorsFleetRoute,
     aiOpsCenterRoute,

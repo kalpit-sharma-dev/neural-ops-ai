@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { fetchPlatformInfo, type PlatformCapabilities } from '../api/client';
-import { StitchPageShell, SettingsBreadcrumb } from '../components/stitch';
+import { StitchPageShell } from '../components/stitch';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { LoadingState } from '../components/ui/PageStates';
@@ -36,7 +36,6 @@ export default function PlatformAbout() {
       pageId="platform-about"
       title="Platform capabilities"
       subtitle="Open standards, AI-native workflows, and unified observability vs tool sprawl"
-      breadcrumb={<SettingsBreadcrumb page="Platform" />}
     >
       {isLoading && <LoadingState />}
       {data?.capabilities && (

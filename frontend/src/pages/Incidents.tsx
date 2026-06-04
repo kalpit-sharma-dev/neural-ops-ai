@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { DomainEmptyState } from '../components/ui/DomainEmptyState';
 import { Input } from '../components/ui/Input';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { useI18n } from '../i18n/I18nProvider';
@@ -55,7 +56,14 @@ export default function Incidents() {
   });
 
   return (
-    <StitchPageShell pageId="incidents" title="Incidents" subtitle="Active and recent operational incidents">
+    <StitchPageShell
+      pageId="incidents"
+      title="Incidents"
+      subtitle="Active and recent operational incidents"
+      actions={
+        <DataExportMenu getData={() => filtered} filenamePrefix="incidents" disabled={!filtered.length} />
+      }
+    >
       <div style={{ marginBottom: 16, maxWidth: 400 }}>
         <Input
           ref={searchRef}

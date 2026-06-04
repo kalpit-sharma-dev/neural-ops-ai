@@ -32,6 +32,7 @@ func (h *Handler) registerCoreRoutes(v1 *gin.RouterGroup) {
 		collectors.PUT("/pipelines/:id", h.UpdateCollectorPipeline)
 		collectors.POST("/pipelines/:id/validate", h.ValidateCollectorPipeline)
 		collectors.GET("/autoinstrumentation", h.ListAutoInstrumentation)
+		collectors.GET("/fleet/ebpf-matrix", h.GetCollectorEBPFMatrix)
 	}
 
 	v1.GET("/metrics/catalog", h.MetricCatalog)
@@ -141,4 +142,5 @@ func (h *Handler) registerDomainRoutes(v1 *gin.RouterGroup) {
 	h.RegisterDepthRoutes(v1)
 	h.RegisterExtendedRoutes(v1)
 	h.registerExtensionRoutes(v1)
+	h.registerGapClosureRoutes(v1)
 }

@@ -10,7 +10,8 @@ interface SettingsBreadcrumbProps {
 }
 
 /**
- * Breadcrumb for settings sub-pages: Settings → {page}.
+ * @deprecated Use global `PageNavigationBar` in Layout (back + full route trail).
+ * Kept for optional per-page overrides via StitchPageShell `breadcrumb` prop.
  */
 export function SettingsBreadcrumb({
   page,

@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ErrorState, LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 
 export default function TraceCompare() {
@@ -46,7 +47,20 @@ export default function TraceCompare() {
     <StitchPageShell
       title="Compare traces"
       subtitle="Side-by-side waterfall comparison"
-      actions={<Link to="/traces">← Trace explorer</Link>}
+      actions={
+        <>
+          <DataExportMenu
+            getData={() =>
+              queryA.data && queryB.data
+                ? [{ traceA: queryA.data, traceB: queryB.data }]
+                : []
+            }
+            filenamePrefix="trace-compare"
+            disabled={!queryA.data || !queryB.data}
+          />
+          <Link to="/traces">← Trace explorer</Link>
+        </>
+      }
     >
       <div className="ui-card trace-compare-picker" style={{ marginBottom: 24 }}>
         <div className="form-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>

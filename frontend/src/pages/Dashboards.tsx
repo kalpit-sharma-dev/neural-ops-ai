@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { LoadingState } from '../components/ui/PageStates';
+import { DataExportMenu } from '../components/ui/DataExportMenu';
 import { StitchPageShell } from '../components/stitch';
 
 export default function Dashboards() {
@@ -41,7 +42,8 @@ export default function Dashboards() {
       title="Dashboards"
       subtitle="Custom observability dashboards"
       actions={
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <DataExportMenu getData={() => data ?? []} filenamePrefix="dashboards-list" disabled={!data?.length} />
           <input placeholder="Dashboard name" value={name} onChange={(e) => setName(e.target.value)} />
           <Button variant="primary" disabled={!name} onClick={() => createMut.mutate()}>
             Create dashboard
